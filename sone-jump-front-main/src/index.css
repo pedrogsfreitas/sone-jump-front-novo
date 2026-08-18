@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root {
+  background-color: black; 
+  color: white; 
+}
+
+@layer base {
+  body {
+    @apply min-h-screen font-sans antialiased;
+    background-color: #000;
+    background-image: url('./assets/bg-fundo-sone.jpg');
+    background-repeat: repeat;
+  }
+}

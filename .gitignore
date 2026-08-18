@@ -1,0 +1,6 @@
+# Claude Code session/tooling state — not project code
+.claude/
+
+# OS cruft
+.DS_Store
+Thumbs.db

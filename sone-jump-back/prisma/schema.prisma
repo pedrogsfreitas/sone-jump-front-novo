@@ -1,0 +1,813 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// Identity
+// ============================================================
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  email        String @unique
+  username     String @unique
+  passwordHash String
+  fullName     String
+
+  // CPF is never stored in plain text. cpfHash (HMAC-SHA256, deterministic) enforces
+  // uniqueness/lookup without decrypting; cpfEncrypted (AES-256-GCM) is kept only for
+  // the rare case the real value must be recovered (e.g. invoicing).
+  cpfHash      String @unique
+  cpfEncrypted String
+  phone        String
+
+  role   Role    @default(STUDENT)
+  // Admin-controlled account suspension (soft ban) — distinct from deleting the row.
+  active Boolean @default(true)
+
+  bio         String?
+  headline    String?
+  location    String?
+  avatarColor String  @default("purple")
+  focusMode   Boolean @default(false)
+
+  xpTotal           Int       @default(0)
+  level             Int       @default(1)
+  streakCurrentDays Int       @default(0)
+  streakLongestDays Int       @default(0)
+  // Date (no time) of the last logged study session, used to tell "studied again
+  // today", "studied yesterday, streak continues" and "streak broken" apart.
+  lastStudyDate     DateTime? @db.Date
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastAccessAt DateTime?
+
+  refreshTokens        RefreshToken[]
+  onboardingProfile    OnboardingProfile?
+  roadmapProgress      UserRoadmapProgress[]
+  skillProgress        UserSkillProgress[]
+  bookmarks            UserBookmark[]
+  studySessions        StudySession[]
+  goals                Goal[]
+  challengeCompletions UserChallengeCompletion[]
+  certifications       UserCertification[]
+  portfolioProjects    PortfolioProject[]
+  posts                Post[]
+  postLikes            PostLike[]
+  postComments         PostComment[]
+  groupMemberships     GroupMember[]
+  jobApplications      JobApplication[]
+  mentorProfile        Mentor?
+  mentorshipsAsMentee  MentorshipSession[]       @relation("MenteeSessions")
+  liveQuestions        LiveQuestion[]
+  liveQuestionVotes    LiveQuestionVote[]
+  hostedLives          LiveSession[]             @relation("LiveHost")
+  subscriptions        Subscription[]
+  referralCode         ReferralCode?
+  referralsMade        Referral[]                @relation("Referrer")
+  referralReceived     Referral?                 @relation("Referred")
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+
+  @@index([role])
+}
+
+model RefreshToken {
+  id                  String    @id @default(cuid())
+  userId              Int
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash           String    @unique
+  expiresAt           DateTime
+  revokedAt           DateTime?
+  replacedByTokenHash String?
+  createdAt           DateTime  @default(now())
+
+  @@index([userId])
+}
+
+enum OnboardingGoal {
+  PRIMEIRO_EMPREGO
+  TRANSICAO
+  EVOLUCAO
+  FREELANCER
+}
+
+enum OnboardingArea {
+  FRONTEND
+  BACKEND
+  DATA_SCIENCE
+  DEVOPS
+  MOBILE
+  UX_UI
+}
+
+enum OnboardingLevel {
+  INICIANTE
+  BASICO
+  EXPERIENTE
+  SENIOR
+}
+
+enum OnboardingWeeklyTime {
+  H2_4
+  H5_8
+  H9_15
+  H15_PLUS
+}
+
+model OnboardingProfile {
+  userId     Int                  @id
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal       OnboardingGoal
+  area       OnboardingArea
+  level      OnboardingLevel
+  weeklyTime OnboardingWeeklyTime
+  createdAt  DateTime             @default(now())
+}
+
+// ============================================================
+// Learning: skills, roadmap, catalog, progress
+// ============================================================
+
+model Skill {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  category String?
+
+  roadmapNodes      RoadmapNode[]
+  userProgress      UserSkillProgress[]
+  jobRequirements   JobSkillRequirement[]
+  mentorSpecialties MentorSpecialty[]
+  challengeTags     ChallengeSkill[]
+}
+
+model UserSkillProgress {
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId   Int
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  pct       Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, skillId])
+}
+
+model Trail {
+  id        Int      @id @default(autoincrement())
+  name      String
+  category  String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  modules TrailModule[]
+}
+
+model TrailModule {
+  id              Int    @id @default(autoincrement())
+  trailId         Int
+  trail           Trail  @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  title           String
+  durationMinutes Int
+  lessons         Int
+  orderIndex      Int
+
+  @@index([trailId])
+}
+
+enum RoadmapCategory {
+  FUNDAMENTOS
+  CORE
+  FRAMEWORKS
+  AVANCADO
+  CARREIRA
+}
+
+model RoadmapNode {
+  id             String          @id @default(cuid())
+  name           String
+  category       RoadmapCategory
+  estimatedHours Int
+  description    String
+  orderIndex     Int
+  skillId        Int?
+  skill          Skill?          @relation(fields: [skillId], references: [id])
+
+  prerequisiteNodeId String?
+  prerequisiteNode   RoadmapNode?  @relation("RoadmapNodePrerequisite", fields: [prerequisiteNodeId], references: [id])
+  unlocks            RoadmapNode[] @relation("RoadmapNodePrerequisite")
+
+  resources RoadmapNodeResource[]
+  progress  UserRoadmapProgress[]
+}
+
+model RoadmapNodeResource {
+  id     Int         @id @default(autoincrement())
+  nodeId String
+  node   RoadmapNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  label  String
+  url    String?
+}
+
+enum RoadmapNodeStatus {
+  LOCKED
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+}
+
+model UserRoadmapProgress {
+  userId      Int
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nodeId      String
+  node        RoadmapNode       @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  status      RoadmapNodeStatus @default(LOCKED)
+  completedAt DateTime?
+
+  @@id([userId, nodeId])
+}
+
+enum ContentType {
+  CURSO
+  VIDEO
+  ARTIGO
+  PROJETO
+}
+
+enum ContentPlatform {
+  ALURA
+  UDEMY
+  YOUTUBE
+  DIO
+  ROCKETSEAT
+  INTERNO
+  GITHUB
+  BLOG
+}
+
+enum ContentLevel {
+  INICIANTE
+  INTERMEDIARIO
+  AVANCADO
+}
+
+enum ContentStatus {
+  PUBLICADO
+  RASCUNHO
+  ARQUIVADO
+}
+
+model ContentItem {
+  id              Int             @id @default(autoincrement())
+  title           String
+  platform        ContentPlatform
+  type            ContentType
+  durationMinutes Int
+  level           ContentLevel
+  rating          Decimal         @default(0) @db.Decimal(2, 1)
+  description     String
+  url             String?
+  thumbnailEmoji  String?
+  // Only PUBLICADO items are ever returned by the public /api/catalog list.
+  status          ContentStatus   @default(PUBLICADO)
+  createdAt       DateTime        @default(now())
+
+  prerequisites ContentPrerequisite[]
+  syllabus      ContentSyllabusItem[]
+  bookmarks     UserBookmark[]
+}
+
+model ContentPrerequisite {
+  id        Int         @id @default(autoincrement())
+  contentId Int
+  content   ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  label     String
+}
+
+model ContentSyllabusItem {
+  id         Int         @id @default(autoincrement())
+  contentId  Int
+  content    ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  orderIndex Int
+  title      String
+}
+
+model UserBookmark {
+  userId    Int
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId Int
+  content   ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@id([userId, contentId])
+}
+
+model StudySession {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic           String
+  occurredOn      DateTime @db.Date
+  durationMinutes Int
+  xpEarned        Int
+  subjectTag      String?
+  createdAt       DateTime @default(now())
+
+  @@index([userId, occurredOn])
+}
+
+model Goal {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  targetPct   Int       @default(100)
+  currentPct  Int       @default(0)
+  dueDate     DateTime? @db.Date
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+enum ChallengeDifficulty {
+  INICIANTE
+  INTERMEDIARIO
+  AVANCADO
+}
+
+model Challenge {
+  id          Int                 @id @default(autoincrement())
+  title       String
+  difficulty  ChallengeDifficulty
+  xpReward    Int
+  timeLabel   String
+  description String
+  createdAt   DateTime            @default(now())
+
+  tags        ChallengeSkill[]
+  completions UserChallengeCompletion[]
+}
+
+model ChallengeSkill {
+  challengeId Int
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  skillId     Int
+  skill       Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([challengeId, skillId])
+}
+
+model UserChallengeCompletion {
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId Int
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  completedAt DateTime  @default(now())
+
+  @@id([userId, challengeId])
+}
+
+model Certification {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  earnedBy UserCertification[]
+}
+
+model UserCertification {
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certificationId Int
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  earnedAt        DateTime?
+  credentialUrl   String?
+
+  @@id([userId, certificationId])
+}
+
+model PortfolioProject {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  stackTags String[]
+  githubUrl String?
+  demoUrl   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum DemandLevel {
+  BAIXA
+  MEDIA
+  ALTA
+}
+
+model Career {
+  id              String      @id @default(cuid())
+  title           String
+  iconKey         String
+  salaryMin       Int
+  salaryMax       Int
+  avgMonthsMin    Int
+  avgMonthsMax    Int
+  description     String
+  jobsDemandLevel DemandLevel
+  difficultyLevel DemandLevel
+}
+
+// ============================================================
+// Community
+// ============================================================
+
+enum PostType {
+  ACHIEVEMENT
+  COURSE
+  STREAK
+  GENERAL
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  type      PostType @default(GENERAL)
+  content   String
+  createdAt DateTime @default(now())
+
+  likes    PostLike[]
+  comments PostComment[]
+
+  @@index([authorId])
+}
+
+model PostLike {
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
+}
+
+model PostComment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+}
+
+model Group {
+  id   Int     @id @default(autoincrement())
+  name String  @unique
+  icon String?
+
+  members GroupMember[]
+}
+
+model GroupMember {
+  userId   Int
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId  Int
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@id([userId, groupId])
+}
+
+// ============================================================
+// Job market & partners
+// ============================================================
+
+enum IntegrationType {
+  CONTEUDO
+  VAGAS
+  CERTIFICACAO
+  API
+  MENTORIA
+}
+
+enum PartnerStatus {
+  ATIVO
+  INATIVO
+  PENDENTE
+}
+
+model Partner {
+  id          Int             @id @default(autoincrement())
+  name        String
+  logoUrl     String?
+  type        IntegrationType
+  status      PartnerStatus   @default(PENDENTE)
+  description String
+  since       DateTime?
+  createdAt   DateTime        @default(now())
+
+  jobs Job[]
+}
+
+enum RemoteType {
+  REMOTO
+  HIBRIDO
+  PRESENCIAL
+}
+
+model Job {
+  id             Int        @id @default(autoincrement())
+  title          String
+  companyName    String
+  companyLogoUrl String?
+  location       String
+  remoteType     RemoteType
+  salaryMin      Int?
+  salaryMax      Int?
+  description    String
+  partnerId      Int?
+  partner        Partner?   @relation(fields: [partnerId], references: [id])
+  createdAt      DateTime   @default(now())
+
+  skills       JobSkillRequirement[]
+  applications JobApplication[]
+}
+
+model JobSkillRequirement {
+  jobId   Int
+  job     Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skillId Int
+  skill   Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, skillId])
+}
+
+enum JobApplicationStatus {
+  APLICADO
+  VISUALIZADO
+  REJEITADO
+  ACEITO
+}
+
+model JobApplication {
+  id        Int                  @id @default(autoincrement())
+  jobId     Int
+  job       Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    JobApplicationStatus @default(APLICADO)
+  appliedAt DateTime             @default(now())
+
+  @@unique([jobId, userId])
+}
+
+// ============================================================
+// Mentorship & lives
+// ============================================================
+
+model Mentor {
+  userId           Int     @id
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName      String?
+  ratingAvg        Decimal @default(0) @db.Decimal(2, 1)
+  sessionsCount    Int     @default(0)
+  hourlyPriceCents Int?
+  currency         String  @default("BRL")
+
+  specialties MentorSpecialty[]
+  sessions    MentorshipSession[]
+}
+
+model MentorSpecialty {
+  mentorId Int
+  mentor   Mentor @relation(fields: [mentorId], references: [userId], onDelete: Cascade)
+  skillId  Int
+  skill    Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([mentorId, skillId])
+}
+
+enum MentorshipStatus {
+  SOLICITADA
+  CONFIRMADA
+  CONCLUIDA
+  CANCELADA
+}
+
+model MentorshipSession {
+  id              Int              @id @default(autoincrement())
+  mentorId        Int
+  mentor          Mentor           @relation(fields: [mentorId], references: [userId], onDelete: Cascade)
+  menteeId        Int
+  mentee          User             @relation("MenteeSessions", fields: [menteeId], references: [id], onDelete: Cascade)
+  scheduledAt     DateTime
+  durationMinutes Int              @default(60)
+  status          MentorshipStatus @default(SOLICITADA)
+  meetingUrl      String?
+  topic           String?
+  createdAt       DateTime         @default(now())
+
+  @@index([mentorId])
+  @@index([menteeId])
+}
+
+enum LiveStatus {
+  AGENDADA
+  AO_VIVO
+  ENCERRADA
+}
+
+model LiveSession {
+  id          Int        @id @default(autoincrement())
+  title       String
+  hostId      Int
+  host        User       @relation("LiveHost", fields: [hostId], references: [id])
+  scheduledAt DateTime
+  status      LiveStatus @default(AGENDADA)
+  videoUrl    String?
+  viewerCount Int        @default(0)
+  topics      String[]
+  createdAt   DateTime   @default(now())
+
+  questions LiveQuestion[]
+}
+
+model LiveQuestion {
+  id            Int         @id @default(autoincrement())
+  liveSessionId Int
+  liveSession   LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text          String
+  votes         Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  voters LiveQuestionVote[]
+
+  @@index([liveSessionId])
+}
+
+model LiveQuestionVote {
+  userId     Int
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId Int
+  question   LiveQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+
+  @@id([userId, questionId])
+}
+
+model Recording {
+  id              Int      @id @default(autoincrement())
+  title           String
+  videoUrl        String
+  viewCount       Int      @default(0)
+  durationMinutes Int
+  createdAt       DateTime @default(now())
+}
+
+// ============================================================
+// Monetization
+// ============================================================
+
+enum PlanKey {
+  FREE
+  PRO
+  PREMIUM
+}
+
+model Plan {
+  id                Int      @id @default(autoincrement())
+  key               PlanKey  @unique
+  name              String
+  priceMonthlyCents Int
+  priceAnnualCents  Int
+  features          String[]
+
+  subscriptions Subscription[]
+}
+
+enum BillingCycle {
+  MENSAL
+  ANUAL
+}
+
+enum SubscriptionStatus {
+  PENDENTE
+  ATIVA
+  CANCELADA
+  INADIMPLENTE
+  TRIAL
+}
+
+model Subscription {
+  id                            Int                @id @default(autoincrement())
+  userId                        Int
+  user                          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId                        Int
+  plan                          Plan               @relation(fields: [planId], references: [id])
+  billingCycle                  BillingCycle
+  status                        SubscriptionStatus @default(ATIVA)
+  currentPeriodEnd              DateTime
+  paymentProviderCustomerId     String?
+  paymentProviderSubscriptionId String?
+  createdAt                     DateTime           @default(now())
+
+  payments Payment[]
+
+  @@index([userId])
+}
+
+enum PaymentStatus {
+  PENDENTE
+  PAGO
+  FALHOU
+  REEMBOLSADO
+}
+
+model Payment {
+  id                Int           @id @default(autoincrement())
+  subscriptionId    Int
+  subscription      Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amountCents       Int
+  currency          String        @default("BRL")
+  status            PaymentStatus @default(PENDENTE)
+  providerPaymentId String?
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+
+  @@index([subscriptionId])
+}
+
+model ReferralCode {
+  userId    Int      @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String   @unique
+  createdAt DateTime @default(now())
+}
+
+enum ReferralStatus {
+  CADASTRADO
+  CONVERTIDO
+}
+
+model Referral {
+  id              Int            @id @default(autoincrement())
+  referrerUserId  Int
+  referrer        User           @relation("Referrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  referredUserId  Int            @unique
+  referred        User           @relation("Referred", fields: [referredUserId], references: [id], onDelete: Cascade)
+  status          ReferralStatus @default(CADASTRADO)
+  commissionCents Int            @default(0)
+  createdAt       DateTime       @default(now())
+
+  @@index([referrerUserId])
+}
+
+// ============================================================
+// Notifications & admin observability
+// ============================================================
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  adminUserId Int
+  adminUser   User     @relation(fields: [adminUserId], references: [id])
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([adminUserId])
+  @@index([entityType, entityId])
+}
