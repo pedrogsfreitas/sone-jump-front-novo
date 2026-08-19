@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Map, BookOpen, TrendingUp, Award,
   Users, Briefcase, UserCheck, Video, User, CreditCard,
@@ -7,6 +7,12 @@ import {
 } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import { clearToken, getToken, isTokenValid } from '../services/auth-storage'
+import { getMe, type UserProfile } from '../services/users/users'
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?'
+}
 
 const navItems = [
   { to: '/app/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -24,8 +30,16 @@ const navItems = [
 
 export default function AppLayout() {
   const navigate = useNavigate()
+  const [user, setUser] = useState<UserProfile | null>(null)
+
   useEffect(() => {
-    if (!isTokenValid(getToken())) navigate('/login')
+    if (!isTokenValid(getToken())) {
+      navigate('/login')
+      return
+    }
+    getMe()
+      .then(setUser)
+      .catch(() => {})
   }, [navigate])
 
   const handleLogout = () => {
@@ -54,11 +68,13 @@ export default function AppLayout() {
         <div className="p-4 border-b border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-              JS
+              {user ? initials(user.fullName) : '...'}
             </div>
             <div className="min-w-0">
-              <p className="text-white text-sm font-semibold truncate">João Silva</p>
-              <p className="text-zinc-500 text-xs truncate">Nível 7 · 1.240 XP</p>
+              <p className="text-white text-sm font-semibold truncate">{user?.fullName ?? 'Carregando...'}</p>
+              <p className="text-zinc-500 text-xs truncate">
+                {user ? `Nível ${user.level} · ${user.xpTotal.toLocaleString('pt-BR')} XP` : ''}
+              </p>
             </div>
           </div>
         </div>
@@ -85,8 +101,11 @@ export default function AppLayout() {
 
         {/* Bottom */}
         <div className="p-3 border-t border-zinc-800 space-y-0.5">
+          {/* No dedicated settings screen/endpoint yet (email/password change isn't
+              built) — points at Profile, which already covers the account fields
+              that do exist, instead of a dead route. */}
           <NavLink
-            to="/app/settings"
+            to="/app/profile"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all"
           >
             <Settings className="w-4 h-4" />
