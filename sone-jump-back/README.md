@@ -329,9 +329,51 @@ reais ao back. Progresso:
     claim não bloqueia o login). Testado criando um usuário novo pelo
     link de indicação do `joaoteste`: após o primeiro login do indicado,
     o contador "Indicações" do `joaoteste` foi de 0 para 1.
-- **Restante**: 7e (Admin).
+- **7e (concluída)**: Painel Admin — Dashboard, Usuários, Trilhas, Conteúdos,
+  Parceiros, Relatórios. Sem mudança de back, só consumo real do que já
+  existia (`admin/users`, `admin/trails`, `admin/content`, `admin/partners`,
+  `admin/reports` completos desde a Fase 6/revisão).
+  - Sidebar do admin trocou "Admin User" hardcoded pelo nome real
+    (`GET /api/users/me`), mesmo padrão do `AppLayout`.
+  - Dashboard: cards, gráfico de crescimento mensal e atividade recente
+    100% de `GET /api/admin/reports/dashboard` — o feed de atividade
+    mostra eventos reais (cadastro, post na comunidade, conclusão de nó do
+    roadmap), não texto inventado. Removido o painel "Usuários por Trilha"
+    (doughnut) do mock — não existe matrícula por trilha rastreada no
+    back (`Trail` é só uma agrupação administrativa de conteúdo, distinta
+    do grafo do `RoadmapNode` que o aluno realmente percorre — ver nota no
+    `admin-trails.service.ts`).
+  - Usuários: busca, filtros, estatísticas e a troca de cargo/suspensão
+    testadas ao vivo — inclusive o guard "você não pode suspender a
+    própria conta" retornando erro real. Removido o botão "Ver perfil"
+    (sem tela de detalhe) e trocado "Editar" por um `<select>` de cargo
+    inline, que já é uma ação real (`PATCH .../role`).
+  - Trilhas: CRUD completo de trilha e de módulo testado (criar, ativar/
+    desativar, adicionar módulo, remover módulo, excluir trilha com
+    confirmação em dois cliques). Colunas "Matriculados"/"Conclusão" do
+    mock removidas da tabela — sempre 0 (não rastreado ainda), o que
+    ficaria estranho repetido em toda linha; os agregados nos cards do
+    topo continuam mostrando isso honestamente.
+  - Conteúdos: CRUD completo testado (criar, editar, excluir). Removida a
+    métrica "Total de Views" (sem campo no `ContentItem`) e trocada por
+    "Nota Média" (real, calculada das notas existentes); tipos/plataformas
+    agora são os reais do enum (`CURSO` além de vídeo/artigo/projeto — o
+    mock tinha "Quiz"/"PDF" que não existem como tipo de conteúdo no
+    back).
+  - Parceiros: CRUD completo testado, incluindo troca de status inline.
+    O card "X conteúdos" do mock virou "X vagas", calculado cruzando
+    `GET /api/jobs` com o parceiro (dado real; não existe relação
+    Partner↔ContentItem no schema, só Partner↔Job). Removido o dropzone
+    de upload de logo (sem storage de arquivo no back) — substituído por
+    um campo de URL, mesmo padrão usado em outras telas com imagem.
+  - Relatórios: métricas, funil de conversão e coortes de retenção 100%
+    de `GET /api/admin/reports/{overview,funnel,cohorts}`, com seletor de
+    período real. Removida a tabela "Engajamento por Conteúdo" (views/
+    tempo médio/conclusão por conteúdo não existem no back). Botão CSV
+    passou a gerar e baixar um CSV de verdade no cliente a partir dos
+    dados já carregados (sem endpoint novo); botão de PDF removido (sem
+    geração de PDF implementada).
 
-## O que ainda falta para o front funcionar de ponta a ponta
-
-Escopo restante da Fase 7 (7c, 7d, 7e acima). A base de autenticação já
-está pronta pra suportar isso.
+**Fase 7 completa** — todas as 7 sub-fases (7a–7e) migraram o front de
+dados 100% mockados para consumo real da API, com todo fluxo principal
+testado ao vivo no navegador.

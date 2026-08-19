@@ -1,11 +1,17 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, BookOpen, FileText, Handshake, BarChart2,
   LogOut, Shield
 } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import { clearToken, getRole, getToken, isTokenValid } from '../services/auth-storage'
+import { getMe, type UserProfile } from '../services/users/users'
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?'
+}
 
 const adminNav = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -18,6 +24,7 @@ const adminNav = [
 
 export default function AdminLayout() {
   const navigate = useNavigate()
+  const [admin, setAdmin] = useState<UserProfile | null>(null)
 
   useEffect(() => {
     const token = getToken()
@@ -27,7 +34,11 @@ export default function AdminLayout() {
     }
     // Authenticated but not an admin: send them back into the app rather than
     // /login (they do have a valid session — they just can't be here).
-    if (getRole(token) !== 'ADMIN') navigate('/app/dashboard')
+    if (getRole(token) !== 'ADMIN') {
+      navigate('/app/dashboard')
+      return
+    }
+    getMe().then(setAdmin).catch(() => {})
   }, [navigate])
 
   const handleLogout = () => {
@@ -54,10 +65,10 @@ export default function AdminLayout() {
         <div className="p-4 border-b border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white font-bold text-sm">
-              AD
+              {admin ? initials(admin.fullName) : '...'}
             </div>
             <div>
-              <p className="text-white text-sm font-semibold">Admin User</p>
+              <p className="text-white text-sm font-semibold truncate">{admin?.fullName ?? 'Carregando...'}</p>
               <p className="text-zinc-500 text-xs">Administrador</p>
             </div>
           </div>
