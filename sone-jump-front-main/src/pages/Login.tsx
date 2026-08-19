@@ -2,8 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { login } from "../services/login/login";
+import { claimReferral } from "../services/referrals/referrals";
 import { ApiError } from "../services/api";
 import { setToken } from "../services/auth-storage";
+
+const PENDING_REFERRAL_KEY = "pendingReferralCode";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,6 +29,14 @@ export default function Login() {
       setIsLoading(true);
       const { token } = await login({ username, password });
       setToken(token);
+
+      const pendingRef = localStorage.getItem(PENDING_REFERRAL_KEY);
+      if (pendingRef) {
+        localStorage.removeItem(PENDING_REFERRAL_KEY);
+        // Best-effort: own code, already-claimed, etc. shouldn't block login.
+        await claimReferral(pendingRef).catch(() => {});
+      }
+
       navigate("/app/dashboard");
     } catch (error) {
       setErrorMessage(error instanceof ApiError ? error.message : "Erro ao entrar.");

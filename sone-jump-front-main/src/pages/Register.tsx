@@ -1,9 +1,12 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { register as registerUser } from "../services/login/login";
 
+const PENDING_REFERRAL_KEY = "pendingReferralCode";
+
 export default function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [cpf, setCpf] = useState("");
@@ -56,6 +59,11 @@ export default function Register() {
         email,
         password,
       });
+
+      // No session exists yet to call POST /api/referrals/claim (it requires
+      // auth) — stash the code and Login.tsx claims it once, after sign-in.
+      const ref = searchParams.get("ref");
+      if (ref) localStorage.setItem(PENDING_REFERRAL_KEY, ref);
 
       navigate("/login");
     } catch (error) {

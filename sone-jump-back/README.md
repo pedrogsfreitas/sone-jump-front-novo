@@ -305,7 +305,31 @@ reais ao back. Progresso:
   - Lives: pergunta em Q&A e upvote testados de ponta a ponta na live
     seedada como `AO_VIVO`; removida a seção "Code Review Ao Vivo" do
     mock (100% fabricada, sem model no back).
-- **Restante**: 7d (Planos), 7e (Admin).
+- **7d (concluída)**: Planos, Assinatura, Pagamento (fluxo simulado), Indicação
+  — sem mudança de back, só consumo real do que já existia (`plans`,
+  `subscriptions`, `referrals` completos).
+  - Assinatura/checkout/simulação de pagamento/cancelamento testados de
+    ponta a ponta: assinar Pro → painel "Pagamento pendente" com o valor
+    real → simular aprovação → card vira "Plano Atual" com botão de
+    cancelar → cancelar reverte pro Gratuito. Tudo confirmado sobrevivendo
+    a reload.
+  - Removida a tabela "Comparativo de Funcionalidades" do mock — era uma
+    matriz de booleans por funcionalidade que não existe no back (só há
+    `features: string[]` por plano, já usado nos cards); os preços
+    mensal/anual e a lista de benefícios por plano agora vêm 100% de
+    `GET /api/plans`, sem nenhum item inventado.
+  - Removido o botão "Falar com Vendas" (B2B) — não há endpoint de
+    contato/lead; a seção ficou só como texto informativo.
+  - **Indicação, com o loop completo testado**: `Planos.tsx` mostra
+    código e link reais (`GET /api/referrals/me`); como
+    `POST /api/referrals/claim` exige login e `Register.tsx` não
+    autentica ninguém automaticamente, o código da URL (`?ref=`) é
+    guardado no `localStorage` no cadastro e reivindicado uma vez pelo
+    `Login.tsx` logo após o primeiro login (melhor esforço — erro de
+    claim não bloqueia o login). Testado criando um usuário novo pelo
+    link de indicação do `joaoteste`: após o primeiro login do indicado,
+    o contador "Indicações" do `joaoteste` foi de 0 para 1.
+- **Restante**: 7e (Admin).
 
 ## O que ainda falta para o front funcionar de ponta a ponta
 
