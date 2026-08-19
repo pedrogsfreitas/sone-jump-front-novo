@@ -253,9 +253,61 @@ corrigidas:**
   enviadas a lugar nenhum (não existe endpoint pra isso — é trabalho de
   Fase 7).
 
+## Fase 7 — conectando o front de verdade (em andamento)
+
+Cada sub-fase troca os dados mockados de um grupo de páginas pelas chamadas
+reais ao back. Progresso:
+
+- **7a (concluída)**: Dashboard, Roadmap, Catálogo, Progresso, Skills,
+  Perfil — sem mudança de back, só consumo real do que já existia.
+- **7b (concluída)**: Comunidade, Mercado, Carreiras (`/explore`).
+  - **`GET /api/careers` deixou de exigir `JwtAuthGuard`.** A tela
+    `/explore` é uma landing pública (fora do `/app`, sem login) que
+    precisa mostrar as 6 carreiras antes do usuário se cadastrar — igual a
+    uma página de preços. O endpoint só devolve dado de catálogo (título,
+    faixa salarial, tempo médio), sem nada específico de usuário, então
+    torná-lo público é seguro. Testado sem token e com token, os dois
+    funcionam.
+  - Comunidade: publicar post, curtir/descurtir, comentar e entrar/sair de
+    grupo testados de ponta a ponta no navegador, com persistência
+    confirmada após reload. O widget "Vagas Compartilhadas" agora chama o
+    mesmo `GET /api/jobs` do Mercado (antes eram dados mockados
+    duplicados) e o widget "Próximas Sessões" reaproveita `GET /api/lives`
+    (dado real, já existente desde a Fase 4).
+  - "Top Ranking" (Comunidade) e "Salários por Nível" / "Habilidades em
+    Alta" / "Empresas que Contratam" / análise de LinkedIn com IA
+    (Mercado) foram removidos — eram conteúdo 100% fabricado no mock, sem
+    modelo nenhum no back, e a decisão da Fase 7 é não inventar dado nem
+    fingir feature que não existe.
+  - Mercado: candidatura a vaga (`POST /api/jobs/:id/apply`) testada,
+    incluindo idempotência (segunda tentativa vira botão desabilitado
+    "Candidatura Enviada", back retorna 409 se forçado).
+- **7c (concluída)**: Mentoria, Lives — sem mudança de back, só consumo real
+  do que já existia (`mentors`, `mentorship-sessions`, `lives` completos).
+  - Mentoria: solicitar mentoria (`POST /api/mentorship-sessions`) e
+    cancelar (`PATCH .../cancel`) testados de ponta a ponta, com sessão
+    real aparecendo em "Aguardando confirmação" e depois em "Cancelada" no
+    histórico após reload.
+  - **Bug real encontrado e corrigido no front**: depois de cancelar uma
+    sessão, a tela quebrava (`Cannot read properties of undefined`) porque
+    o `PATCH /api/mentorship-sessions/:id/cancel` devolve a linha crua do
+    Prisma, sem o `include` do mentor — o front tentava ler
+    `session.mentor.user.fullName` de um objeto que não tinha `mentor`.
+    Corrigido no front (busca a lista completa de novo após cancelar, em
+    vez de usar a resposta crua do PATCH); não mudei o endpoint porque o
+    comportamento dele é consistente com `confirm`/`complete`, que também
+    devolvem a linha crua — o contrato do front é que estava errado.
+  - Removidos os filtros de "Área"/"Nível" na busca de mentor e a aba
+    "Simulação de Entrevista com IA" (com "Analisar CV com IA") —
+    nenhum dos dois tem campo ou endpoint correspondente no back; o
+    checklist de CV e as dicas de entrevista continuam como conteúdo de
+    referência estático (não são dado de usuário).
+  - Lives: pergunta em Q&A e upvote testados de ponta a ponta na live
+    seedada como `AO_VIVO`; removida a seção "Code Review Ao Vivo" do
+    mock (100% fabricada, sem model no back).
+- **Restante**: 7d (Planos), 7e (Admin).
+
 ## O que ainda falta para o front funcionar de ponta a ponta
 
-Escopo restante da Fase 7 — cada página trocar seus dados mockados pelas
-chamadas reais aos ~15 módulos do back (Roadmap, Catálogo, Progresso, Skills,
-Comunidade, Mercado, Mentoria, Lives, Planos, Admin). A base de autenticação
-acima já está pronta pra suportar isso.
+Escopo restante da Fase 7 (7c, 7d, 7e acima). A base de autenticação já
+está pronta pra suportar isso.

@@ -1,128 +1,192 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ThumbsUp,
   MessageCircle,
-  Repeat2,
   Send,
   Trophy,
   Users,
   Calendar,
   Briefcase,
-  Star,
   Flame,
   BookOpen,
 } from "lucide-react";
+import {
+  getPosts,
+  createPost,
+  likePost,
+  unlikePost,
+  getComments,
+  addComment,
+  getGroups,
+  joinGroup,
+  leaveGroup,
+  type Post,
+  type Comment,
+  type Group,
+} from "../../services/community/community";
+import { getJobs, type Job } from "../../services/jobs/jobs";
+import { getLives, type LiveSession } from "../../services/lives/lives";
+import { ApiError } from "../../services/api";
 
-const posts = [
-  {
-    id: 1,
-    name: "Ana Beatriz",
-    initial: "A",
-    color: "bg-purple-600",
-    time: "há 2 horas",
-    type: "achievement",
-    content: "🏆 Acabei de desbloquear o selo de JavaScript Essencial! Foram semanas de dedicação mas valeu muito. Obrigada comunidade pelo apoio!",
-    likes: 34,
-    comments: 8,
-    shares: 3,
-  },
-  {
-    id: 2,
-    name: "Carlos Eduardo",
-    initial: "C",
-    color: "bg-blue-600",
-    time: "há 4 horas",
-    type: "course",
-    content: "✅ Concluí o módulo de React Hooks! Context API, useReducer e useCallback agora fazem muito mais sentido. Próxima parada: TypeScript 🚀",
-    likes: 21,
-    comments: 5,
-    shares: 1,
-  },
-  {
-    id: 3,
-    name: "Mariana Souza",
-    initial: "M",
-    color: "bg-green-600",
-    time: "há 6 horas",
-    type: "streak",
-    content: "🔥 14 dias de sequência! Nunca estudei tanto na minha vida. A plataforma me ajudou a criar o hábito que eu sempre precisei. Quem mais está na sequência?",
-    likes: 58,
-    comments: 14,
-    shares: 7,
-  },
-  {
-    id: 4,
-    name: "Felipe Rocha",
-    initial: "F",
-    color: "bg-orange-600",
-    time: "há 10 horas",
-    type: "achievement",
-    content: "🎯 Finalizei meu primeiro projeto do portfolio: um dashboard de finanças com React + Recharts. Deixei o link no meu perfil. Feedback é bem-vindo!",
-    likes: 45,
-    comments: 12,
-    shares: 5,
-  },
-  {
-    id: 5,
-    name: "Juliana Lima",
-    initial: "J",
-    color: "bg-pink-600",
-    time: "há 1 dia",
-    type: "course",
-    content: "📚 Terminei o curso de Node.js e API REST. Consegui deployar minha primeira API no Railway. Senti que virei uma dev de verdade hoje 😄",
-    likes: 67,
-    comments: 20,
-    shares: 9,
-  },
-];
-
-const topUsers = [
-  { name: "Pedro Alves", xp: 4850, initial: "P", color: "bg-yellow-500", medal: "🥇" },
-  { name: "Larissa Costa", xp: 4210, initial: "L", color: "bg-zinc-400", medal: "🥈" },
-  { name: "Renato Dias", xp: 3980, initial: "R", color: "bg-orange-500", medal: "🥉" },
-  { name: "Sofia Martins", xp: 3540, initial: "S", color: "bg-purple-500", medal: "4º" },
-  { name: "Thiago Nunes", xp: 3120, initial: "T", color: "bg-blue-500", medal: "5º" },
-];
-
-const groups = [
-  { name: "Frontend", icon: "⚛️", members: 1240, color: "text-blue-400" },
-  { name: "Backend", icon: "🖥️", members: 890, color: "text-green-400" },
-  { name: "Data Science", icon: "📊", members: 670, color: "text-yellow-400" },
-  { name: "DevOps", icon: "🔧", members: 430, color: "text-orange-400" },
-];
-
-const upcomingSessions = [
-  { title: "Live: Construindo uma API com Fastify", date: "Seg, 24 Jun", time: "19h00" },
-  { title: "Workshop: TypeScript do Zero ao Deploy", date: "Qua, 26 Jun", time: "20h00" },
-];
-
-const jobs = [
-  { company: "Nubank", role: "Frontend Dev Jr", tag: "Remoto" },
-  { company: "iFood", role: "React Developer", tag: "Híbrido" },
-  { company: "Totvs", role: "Fullstack Jr", tag: "SP" },
-];
-
-const postTypeIcon: Record<string, React.ReactNode> = {
-  achievement: <Trophy className="w-3.5 h-3.5 text-yellow-400" />,
-  course: <BookOpen className="w-3.5 h-3.5 text-blue-400" />,
-  streak: <Flame className="w-3.5 h-3.5 text-orange-400" />,
+const AVATAR_COLORS: Record<string, string> = {
+  purple: "bg-purple-600",
+  blue: "bg-blue-600",
+  green: "bg-green-600",
+  orange: "bg-orange-600",
+  pink: "bg-pink-600",
+  yellow: "bg-yellow-500",
 };
 
-export default function Community() {
-  const [postText, setPostText] = useState("");
-  const [liked, setLiked] = useState<Set<number>>(new Set());
+function avatarClass(color: string): string {
+  return AVATAR_COLORS[color] ?? "bg-purple-600";
+}
 
-  const toggleLike = (id: number) => {
-    setLiked((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+function initial(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || "?";
+}
+
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "agora mesmo";
+  if (minutes < 60) return `há ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `há ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `há ${days}d`;
+}
+
+const postTypeLabel: Record<Post["type"], { label: string; icon: React.ReactNode }> = {
+  ACHIEVEMENT: { label: "Conquista", icon: <Trophy className="w-3.5 h-3.5 text-yellow-400" /> },
+  COURSE: { label: "Curso", icon: <BookOpen className="w-3.5 h-3.5 text-blue-400" /> },
+  STREAK: { label: "Sequência", icon: <Flame className="w-3.5 h-3.5 text-orange-400" /> },
+  GENERAL: { label: "", icon: null },
+};
+
+// "Top Ranking" widget removed — no user-ranking model in the backend yet,
+// same documented gap as Dashboard's stat cards (see Dashboard.tsx).
+export default function Community() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [lives, setLives] = useState<LiveSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [postText, setPostText] = useState("");
+  const [posting, setPosting] = useState(false);
+
+  const [openComments, setOpenComments] = useState<number | null>(null);
+  const [comments, setComments] = useState<Record<number, Comment[]>>({});
+  const [commentText, setCommentText] = useState("");
+
+  useEffect(() => {
+    Promise.all([getPosts(), getGroups(), getJobs(), getLives()])
+      .then(([p, g, j, l]) => {
+        setPosts(p);
+        setGroups(g);
+        setJobs(j.slice(0, 3));
+        setLives(
+          l
+            .filter((s) => s.status === "AGENDADA")
+            .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+            .slice(0, 2),
+        );
+      })
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Erro ao carregar comunidade."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handlePublish() {
+    if (!postText.trim()) return;
+    setPosting(true);
+    try {
+      await createPost(postText.trim());
+      setPostText("");
+      const fresh = await getPosts();
+      setPosts(fresh);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erro ao publicar.");
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function toggleLike(post: Post) {
+    const wasLiked = post.likedByMe;
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === post.id
+          ? { ...p, likedByMe: !wasLiked, likesCount: p.likesCount + (wasLiked ? -1 : 1) }
+          : p,
+      ),
+    );
+    try {
+      await (wasLiked ? unlikePost(post.id) : likePost(post.id));
+    } catch {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === post.id
+            ? { ...p, likedByMe: wasLiked, likesCount: p.likesCount + (wasLiked ? 1 : -1) }
+            : p,
+        ),
+      );
+    }
+  }
+
+  async function toggleComments(postId: number) {
+    if (openComments === postId) {
+      setOpenComments(null);
+      return;
+    }
+    setOpenComments(postId);
+    if (!comments[postId]) {
+      try {
+        const list = await getComments(postId);
+        setComments((prev) => ({ ...prev, [postId]: list }));
+      } catch {
+        // leave panel open, empty — user can retry by closing/reopening
       }
-      return next;
-    });
-  };
+    }
+  }
+
+  async function handleAddComment(postId: number) {
+    if (!commentText.trim()) return;
+    try {
+      const created = await addComment(postId, commentText.trim());
+      setComments((prev) => ({ ...prev, [postId]: [...(prev[postId] ?? []), created] }));
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p)),
+      );
+      setCommentText("");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erro ao comentar.");
+    }
+  }
+
+  async function toggleGroup(group: Group) {
+    const wasJoined = group.joined;
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.id === group.id
+          ? { ...g, joined: !wasJoined, membersCount: g.membersCount + (wasJoined ? -1 : 1) }
+          : g,
+      ),
+    );
+    try {
+      await (wasJoined ? leaveGroup(group.id) : joinGroup(group.id));
+    } catch {
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === group.id
+            ? { ...g, joined: wasJoined, membersCount: g.membersCount + (wasJoined ? 1 : -1) }
+            : g,
+        ),
+      );
+    }
+  }
+
+  if (loading) return <div className="min-h-screen bg-[#050505] text-zinc-400 p-6">Carregando comunidade...</div>;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6">
@@ -130,6 +194,8 @@ export default function Community() {
         <h1 className="text-2xl font-bold text-white">Comunidade</h1>
         <p className="text-zinc-400 text-sm mt-1">Compartilhe conquistas, conecte-se e cresça junto</p>
       </div>
+
+      {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Main Feed */}
@@ -145,34 +211,42 @@ export default function Community() {
             />
             <div className="flex justify-end mt-3">
               <button
+                onClick={handlePublish}
                 className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                disabled={!postText.trim()}
+                disabled={!postText.trim() || posting}
               >
                 <Send className="w-4 h-4" />
-                Publicar
+                {posting ? "Publicando..." : "Publicar"}
               </button>
             </div>
           </div>
 
           {/* Feed Posts */}
+          {posts.length === 0 && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-center text-sm text-zinc-500">
+              Nenhuma publicação ainda. Seja o primeiro a compartilhar!
+            </div>
+          )}
           {posts.map((post) => (
             <div key={post.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
               {/* Post Header */}
               <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-full ${post.color} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
-                  {post.initial}
+                <div
+                  className={`w-10 h-10 rounded-full ${avatarClass(post.author.avatarColor)} flex items-center justify-center text-white font-bold text-sm shrink-0`}
+                >
+                  {initial(post.author.fullName)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-white">{post.name}</span>
-                    <span className="flex items-center gap-1 text-xs text-zinc-500">
-                      {postTypeIcon[post.type]}
-                      {post.type === "achievement" && "Conquista"}
-                      {post.type === "course" && "Curso"}
-                      {post.type === "streak" && "Sequência"}
-                    </span>
+                    <span className="text-sm font-semibold text-white">{post.author.fullName}</span>
+                    {postTypeLabel[post.type].label && (
+                      <span className="flex items-center gap-1 text-xs text-zinc-500">
+                        {postTypeLabel[post.type].icon}
+                        {postTypeLabel[post.type].label}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-zinc-500">{post.time}</p>
+                  <p className="text-xs text-zinc-500">{timeAgo(post.createdAt)}</p>
                 </div>
               </div>
 
@@ -182,54 +256,65 @@ export default function Community() {
               {/* Reactions */}
               <div className="flex items-center gap-1 pt-1 border-t border-zinc-800">
                 <button
-                  onClick={() => toggleLike(post.id)}
+                  onClick={() => toggleLike(post)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    liked.has(post.id)
+                    post.likedByMe
                       ? "bg-purple-500/20 text-purple-400"
                       : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
                   }`}
                 >
                   <ThumbsUp className="w-3.5 h-3.5" />
-                  {post.likes + (liked.has(post.id) ? 1 : 0)}
+                  {post.likesCount}
                 </button>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors">
+                <button
+                  onClick={() => toggleComments(post.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+                >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  {post.comments}
-                </button>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors">
-                  <Repeat2 className="w-3.5 h-3.5" />
-                  {post.shares}
+                  {post.commentsCount}
                 </button>
               </div>
+
+              {/* Comments panel */}
+              {openComments === post.id && (
+                <div className="pt-2 border-t border-zinc-800 space-y-3">
+                  {(comments[post.id] ?? []).map((c) => (
+                    <div key={c.id} className="flex items-start gap-2">
+                      <div
+                        className={`w-7 h-7 rounded-full ${avatarClass(c.author.avatarColor)} flex items-center justify-center text-white text-xs font-bold shrink-0`}
+                      >
+                        {initial(c.author.fullName)}
+                      </div>
+                      <div className="flex-1 min-w-0 bg-zinc-800 rounded-lg px-3 py-2">
+                        <p className="text-xs font-semibold text-white">{c.author.fullName}</p>
+                        <p className="text-xs text-zinc-300 mt-0.5">{c.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <input
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddComment(post.id)}
+                      placeholder="Escreva um comentário..."
+                      className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                    />
+                    <button
+                      onClick={() => handleAddComment(post.id)}
+                      disabled={!commentText.trim()}
+                      className="shrink-0 text-xs bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      Enviar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
 
         {/* Sidebar */}
         <div className="w-full lg:w-80 shrink-0 space-y-5">
-          {/* Top Ranking */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="w-4 h-4 text-yellow-400" />
-              <h3 className="text-sm font-semibold text-white">Top Ranking</h3>
-            </div>
-            <div className="space-y-3">
-              {topUsers.map((u) => (
-                <div key={u.name} className="flex items-center gap-3">
-                  <span className="text-sm w-6 text-center">{u.medal}</span>
-                  <div className={`w-8 h-8 rounded-full ${u.color} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                    {u.initial}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{u.name}</p>
-                    <p className="text-xs text-zinc-500">{u.xp.toLocaleString("pt-BR")} XP</p>
-                  </div>
-                  <Star className="w-3.5 h-3.5 text-yellow-500/60" />
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Groups */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-4">
@@ -238,14 +323,21 @@ export default function Community() {
             </div>
             <div className="space-y-3">
               {groups.map((g) => (
-                <div key={g.name} className="flex items-center gap-3">
+                <div key={g.id} className="flex items-center gap-3">
                   <span className="text-lg">{g.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-white">{g.name}</p>
-                    <p className="text-xs text-zinc-500">{g.members.toLocaleString("pt-BR")} membros</p>
+                    <p className="text-xs text-zinc-500">{g.membersCount.toLocaleString("pt-BR")} membros</p>
                   </div>
-                  <button className="text-xs border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 px-3 py-1 rounded-full transition-colors">
-                    Entrar
+                  <button
+                    onClick={() => toggleGroup(g)}
+                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                      g.joined
+                        ? "bg-purple-600 text-white hover:bg-purple-500"
+                        : "border border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
+                    }`}
+                  >
+                    {g.joined ? "Participando" : "Entrar"}
                   </button>
                 </div>
               ))}
@@ -253,52 +345,58 @@ export default function Community() {
           </div>
 
           {/* Upcoming Sessions */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-4 h-4 text-blue-400" />
-              <h3 className="text-sm font-semibold text-white">Próximas Sessões</h3>
-            </div>
-            <div className="space-y-3">
-              {upcomingSessions.map((s) => (
-                <div key={s.title} className="bg-zinc-800 rounded-lg p-3 space-y-2">
-                  <p className="text-xs font-medium text-white leading-snug">{s.title}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-500">{s.date} · {s.time}</span>
-                    <button className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-full transition-colors">
-                      Participar
-                    </button>
+          {lives.length > 0 && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-semibold text-white">Próximas Sessões</h3>
+              </div>
+              <div className="space-y-3">
+                {lives.map((s) => (
+                  <div key={s.id} className="bg-zinc-800 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-medium text-white leading-snug">{s.title}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-zinc-500">
+                        {new Date(s.scheduledAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Jobs Board */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="w-4 h-4 text-green-400" />
-              <h3 className="text-sm font-semibold text-white">Vagas Compartilhadas</h3>
-            </div>
-            <div className="space-y-3">
-              {jobs.map((j) => (
-                <div key={j.role + j.company} className="flex items-center gap-3 bg-zinc-800 rounded-lg p-3">
-                  <div className="w-8 h-8 rounded-lg bg-zinc-700 flex items-center justify-center shrink-0">
-                    <Briefcase className="w-4 h-4 text-zinc-400" />
+          {jobs.length > 0 && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Briefcase className="w-4 h-4 text-green-400" />
+                <h3 className="text-sm font-semibold text-white">Vagas Compartilhadas</h3>
+              </div>
+              <div className="space-y-3">
+                {jobs.map((j) => (
+                  <div key={j.id} className="flex items-center gap-3 bg-zinc-800 rounded-lg p-3">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-700 flex items-center justify-center shrink-0">
+                      <Briefcase className="w-4 h-4 text-zinc-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-white truncate">{j.title}</p>
+                      <p className="text-xs text-zinc-500">{j.companyName}</p>
+                    </div>
+                    <span className="shrink-0 text-xs bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full">
+                      {j.remoteType === "REMOTO" ? "Remoto" : j.remoteType === "HIBRIDO" ? "Híbrido" : j.location}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{j.role}</p>
-                    <p className="text-xs text-zinc-500">{j.company}</p>
-                  </div>
-                  <span className="shrink-0 text-xs bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full">
-                    {j.tag}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+              <a
+                href="/app/market"
+                className="block w-full mt-3 text-xs text-purple-400 hover:text-purple-300 transition-colors text-center py-1"
+              >
+                Ver todas as vagas →
+              </a>
             </div>
-            <button className="w-full mt-3 text-xs text-purple-400 hover:text-purple-300 transition-colors text-center py-1">
-              Ver todas as vagas →
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

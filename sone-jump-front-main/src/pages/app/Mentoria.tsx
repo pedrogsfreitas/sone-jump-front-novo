@@ -1,8 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Star,
-  CheckCircle2,
-  XCircle,
   Video,
   ChevronDown,
   ChevronUp,
@@ -11,90 +9,53 @@ import {
   User,
   BookOpen,
 } from "lucide-react";
+import { getMentors, type Mentor } from "../../services/mentors/mentors";
+import {
+  getMySessions,
+  requestSession,
+  cancelSession,
+  type MentorshipSession,
+} from "../../services/mentorship-sessions/mentorship-sessions";
+import { ApiError } from "../../services/api";
+import { formatDate } from "../../utils/format";
 
 type Tab = "encontrar" | "minhas" | "primeiro";
 
-const mentors = [
-  {
-    id: 1,
-    initial: "A",
-    color: "bg-purple-600",
-    name: "Ana Souza",
-    role: "Senior Frontend Engineer",
-    company: "Nubank",
-    specialties: ["React", "TypeScript", "Performance"],
-    rating: 4.9,
-    sessions: 128,
-    price: "Grátis",
-    priceStyle: "text-green-400",
-  },
-  {
-    id: 2,
-    initial: "R",
-    color: "bg-blue-600",
-    name: "Rafael Mendes",
-    role: "Tech Lead",
-    company: "iFood",
-    specialties: ["Node.js", "Arquitetura", "AWS"],
-    rating: 4.8,
-    sessions: 94,
-    price: "R$ 80/hora",
-    priceStyle: "text-purple-400",
-  },
-  {
-    id: 3,
-    initial: "C",
-    color: "bg-orange-500",
-    name: "Camila Torres",
-    role: "Fullstack Developer",
-    company: "Stone",
-    specialties: ["Next.js", "GraphQL", "Testes"],
-    rating: 5.0,
-    sessions: 57,
-    price: "R$ 60/hora",
-    priceStyle: "text-purple-400",
-  },
-  {
-    id: 4,
-    initial: "G",
-    color: "bg-green-600",
-    name: "Gabriel Lima",
-    role: "Mobile Engineer",
-    company: "PicPay",
-    specialties: ["React Native", "Expo", "CI/CD"],
-    rating: 4.7,
-    sessions: 73,
-    price: "Grátis",
-    priceStyle: "text-green-400",
-  },
-];
+const AVATAR_COLORS: Record<string, string> = {
+  purple: "bg-purple-600",
+  blue: "bg-blue-600",
+  green: "bg-green-600",
+  orange: "bg-orange-600",
+  pink: "bg-pink-600",
+  yellow: "bg-yellow-500",
+};
 
-const sessionHistory = [
-  {
-    mentor: "Ana Souza",
-    topic: "Hooks avançados no React",
-    date: "12/06/2025",
-    status: "Concluída",
-  },
-  {
-    mentor: "Rafael Mendes",
-    topic: "Arquitetura de microsserviços",
-    date: "05/06/2025",
-    status: "Concluída",
-  },
-  {
-    mentor: "Camila Torres",
-    topic: "Estratégias de testes unitários",
-    date: "28/05/2025",
-    status: "Concluída",
-  },
-];
+function avatarClass(color: string): string {
+  return AVATAR_COLORS[color] ?? "bg-purple-600";
+}
+
+function initial(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || "?";
+}
+
+function formatPrice(cents: number | null, currency: string): { text: string; style: string } {
+  if (cents === null || cents === 0) return { text: "Grátis", style: "text-green-400" };
+  const value = (cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 });
+  return { text: `${currency === "BRL" ? "R$" : currency} ${value}/hora`, style: "text-purple-400" };
+}
+
+const STATUS_LABEL: Record<MentorshipSession["status"], { text: string; className: string }> = {
+  SOLICITADA: { text: "Aguardando confirmação", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  CONFIRMADA: { text: "Confirmada", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  CONCLUIDA: { text: "Concluída", className: "bg-green-500/10 text-green-400 border-green-500/20" },
+  CANCELADA: { text: "Cancelada", className: "bg-red-500/10 text-red-400 border-red-500/20" },
+};
 
 const cvChecklist = [
-  { label: "Foto profissional", done: true },
-  { label: "Resumo objetivo", done: true },
-  { label: "Stack listada", done: false },
-  { label: "Projetos com links", done: false },
+  "Foto profissional",
+  "Resumo objetivo",
+  "Stack listada",
+  "Projetos com links",
 ];
 
 const interviewTips = [
@@ -116,18 +77,13 @@ const interviewTips = [
   },
 ];
 
-const areas = ["Todos", "Frontend", "Backend", "Mobile", "DevOps", "Data"];
-const levels = ["Todos", "Júnior", "Pleno", "Sênior"];
-
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`w-3 h-3 ${
-            i <= Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "text-zinc-600"
-          }`}
+          className={`w-3 h-3 ${i <= Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "text-zinc-600"}`}
         />
       ))}
       <span className="text-zinc-300 text-xs ml-1">{rating.toFixed(1)}</span>
@@ -144,11 +100,7 @@ function TipAccordion({ tip }: { tip: (typeof interviewTips)[0] }) {
         onClick={() => setOpen((v) => !v)}
       >
         <span className="text-zinc-200 text-sm font-medium">{tip.title}</span>
-        {open ? (
-          <ChevronUp className="w-4 h-4 text-zinc-400 shrink-0" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-zinc-400 shrink-0" />
-        )}
+        {open ? <ChevronUp className="w-4 h-4 text-zinc-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-zinc-400 shrink-0" />}
       </button>
       {open && (
         <div className="bg-zinc-900/50 px-4 py-3 border-t border-zinc-800">
@@ -161,8 +113,68 @@ function TipAccordion({ tip }: { tip: (typeof interviewTips)[0] }) {
 
 export default function Mentoria() {
   const [tab, setTab] = useState<Tab>("encontrar");
-  const [area, setArea] = useState("Todos");
-  const [level, setLevel] = useState("Todos");
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [sessions, setSessions] = useState<MentorshipSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [requestFormFor, setRequestFormFor] = useState<number | null>(null);
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [topic, setTopic] = useState("");
+  const [requesting, setRequesting] = useState(false);
+  const [requestedOk, setRequestedOk] = useState<number | null>(null);
+
+  useEffect(() => {
+    Promise.all([getMentors(), getMySessions()])
+      .then(([m, s]) => {
+        setMentors(m);
+        setSessions(s);
+      })
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Erro ao carregar mentoria."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleRequestSession(mentorId: number) {
+    if (!scheduledAt) return;
+    setRequesting(true);
+    try {
+      await requestSession({
+        mentorId,
+        scheduledAt: new Date(scheduledAt).toISOString(),
+        topic: topic.trim() || undefined,
+      });
+      const fresh = await getMySessions();
+      setSessions(fresh);
+      setRequestFormFor(null);
+      setScheduledAt("");
+      setTopic("");
+      setRequestedOk(mentorId);
+      setTimeout(() => setRequestedOk(null), 3000);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erro ao solicitar mentoria.");
+    } finally {
+      setRequesting(false);
+    }
+  }
+
+  async function handleCancel(sessionId: number) {
+    try {
+      // cancelSession()'s response is a raw Prisma row without the `mentor`
+      // relation — refetch the full list instead of splicing it into state.
+      await cancelSession(sessionId);
+      const fresh = await getMySessions();
+      setSessions(fresh);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erro ao cancelar sessão.");
+    }
+  }
+
+  if (loading) return <div className="min-h-screen bg-[#050505] text-zinc-400 p-6">Carregando mentoria...</div>;
+
+  const upcoming = sessions
+    .filter((s) => s.status === "SOLICITADA" || s.status === "CONFIRMADA")
+    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0];
+  const history = sessions.filter((s) => s.id !== upcoming?.id);
 
   return (
     <div className="min-h-screen bg-[#050505] p-6 space-y-6">
@@ -173,6 +185,8 @@ export default function Mentoria() {
           Acelere sua carreira com mentores experientes do mercado tech.
         </p>
       </div>
+
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       {/* Tab Switcher */}
       <div className="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1 w-fit gap-1">
@@ -187,9 +201,7 @@ export default function Mentoria() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              tab === t.id
-                ? "bg-purple-600 text-white"
-                : "text-zinc-400 hover:text-zinc-200"
+              tab === t.id ? "bg-purple-600 text-white" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
             {t.label}
@@ -200,90 +212,86 @@ export default function Mentoria() {
       {/* ── Tab: Encontrar Mentor ── */}
       {tab === "encontrar" && (
         <div className="space-y-5">
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-zinc-400 text-xs">Área</label>
-              <div className="flex gap-1 flex-wrap">
-                {areas.map((a) => (
-                  <button
-                    key={a}
-                    onClick={() => setArea(a)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                      area === a
-                        ? "bg-purple-600 border-purple-500 text-white"
-                        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
-                    }`}
-                  >
-                    {a}
-                  </button>
-                ))}
-              </div>
+          {mentors.length === 0 && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center text-sm text-zinc-500">
+              Nenhum mentor disponível no momento.
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-zinc-400 text-xs">Nível</label>
-              <div className="flex gap-1">
-                {levels.map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLevel(l)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                      level === l
-                        ? "bg-purple-600 border-purple-500 text-white"
-                        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
-                    }`}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Mentor Cards */}
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {mentors.map((m) => (
-              <div
-                key={m.id}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex flex-col gap-3 hover:border-purple-500/40 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-12 h-12 rounded-xl ${m.color} flex items-center justify-center text-white font-bold text-lg`}
-                  >
-                    {m.initial}
+            {mentors.map((m) => {
+              const price = formatPrice(m.hourlyPriceCents, m.currency);
+              return (
+                <div
+                  key={m.userId}
+                  className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex flex-col gap-3 hover:border-purple-500/40 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl ${avatarClass(m.avatarColor)} flex items-center justify-center text-white font-bold text-lg`}>
+                      {initial(m.name)}
+                    </div>
+                    <div>
+                      <p className="text-white font-semibold text-sm">{m.name}</p>
+                      {m.headline && <p className="text-zinc-400 text-xs">{m.headline}</p>}
+                      {m.companyName && <p className="text-zinc-500 text-xs">{m.companyName}</p>}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm">{m.name}</p>
-                    <p className="text-zinc-400 text-xs">{m.role}</p>
-                    <p className="text-zinc-500 text-xs">{m.company}</p>
+
+                  <div className="flex flex-wrap gap-1">
+                    {m.specialties.map((s) => (
+                      <span key={s} className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md border border-zinc-700">
+                        {s}
+                      </span>
+                    ))}
                   </div>
-                </div>
 
-                <div className="flex flex-wrap gap-1">
-                  {m.specialties.map((s) => (
-                    <span
-                      key={s}
-                      className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md border border-zinc-700"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
+                  <div className="flex items-center justify-between">
+                    <StarRating rating={m.rating} />
+                    <span className="text-zinc-500 text-xs">{m.sessionsCount} mentorias realizadas</span>
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <StarRating rating={m.rating} />
-                  <span className="text-zinc-500 text-xs">{m.sessions} mentorias realizadas</span>
-                </div>
+                  <div className="flex items-center justify-between">
+                    <span className={`font-semibold text-sm ${price.style}`}>{price.text}</span>
+                    {requestedOk === m.userId ? (
+                      <span className="text-green-400 text-xs font-semibold">Solicitação enviada!</span>
+                    ) : (
+                      <button
+                        onClick={() => setRequestFormFor(requestFormFor === m.userId ? null : m.userId)}
+                        className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+                      >
+                        Solicitar Mentoria
+                      </button>
+                    )}
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <span className={`font-semibold text-sm ${m.priceStyle}`}>{m.price}</span>
-                  <button className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors">
-                    Solicitar Mentoria
-                  </button>
+                  {requestFormFor === m.userId && (
+                    <div className="pt-3 border-t border-zinc-800 space-y-2">
+                      <label className="text-zinc-400 text-xs block">Data e horário</label>
+                      <input
+                        type="datetime-local"
+                        value={scheduledAt}
+                        onChange={(e) => setScheduledAt(e.target.value)}
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                      />
+                      <label className="text-zinc-400 text-xs block">Tema (opcional)</label>
+                      <input
+                        type="text"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder="Ex: Revisão de portfólio"
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                      />
+                      <button
+                        onClick={() => handleRequestSession(m.userId)}
+                        disabled={!scheduledAt || requesting}
+                        className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+                      >
+                        {requesting ? "Enviando..." : "Confirmar Solicitação"}
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -292,137 +300,120 @@ export default function Mentoria() {
       {tab === "minhas" && (
         <div className="space-y-6">
           {/* Active Session */}
-          <div className="bg-gradient-to-r from-purple-900/40 to-violet-900/40 border border-purple-500/30 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                A
-              </div>
-              <div>
-                <p className="text-white font-semibold">Ana Souza</p>
-                <p className="text-zinc-400 text-sm">Senior Frontend Engineer · Nubank</p>
-                <div className="flex items-center gap-3 mt-1 text-xs text-zinc-400">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    25/06/2025
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    19:00 – 20:00
-                  </span>
+          {upcoming ? (
+            <div className="bg-gradient-to-r from-purple-900/40 to-violet-900/40 border border-purple-500/30 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl ${avatarClass(upcoming.mentor.user.avatarColor)} flex items-center justify-center text-white font-bold text-lg`}>
+                  {initial(upcoming.mentor.user.fullName)}
+                </div>
+                <div>
+                  <p className="text-white font-semibold">{upcoming.mentor.user.fullName}</p>
+                  {upcoming.topic && <p className="text-zinc-400 text-sm">{upcoming.topic}</p>}
+                  <div className="flex items-center gap-3 mt-1 text-xs text-zinc-400">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(upcoming.scheduledAt)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {new Date(upcoming.scheduledAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} · {upcoming.durationMinutes}min
+                    </span>
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center gap-2">
+                {upcoming.status === "CONFIRMADA" && upcoming.meetingUrl ? (
+                  <a
+                    href={upcoming.meetingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm px-5 py-3 rounded-xl transition-colors"
+                  >
+                    <Video className="w-4 h-4" />
+                    Entrar na Reunião
+                  </a>
+                ) : (
+                  <span className={`text-xs px-3 py-1.5 rounded-full border ${STATUS_LABEL[upcoming.status].className}`}>
+                    {STATUS_LABEL[upcoming.status].text}
+                  </span>
+                )}
+                <button
+                  onClick={() => handleCancel(upcoming.id)}
+                  className="text-xs text-zinc-400 hover:text-red-400 px-3 py-1.5 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
-            <button className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm px-5 py-3 rounded-xl transition-colors">
-              <Video className="w-4 h-4" />
-              Entrar na Reunião
-            </button>
-          </div>
+          ) : (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center text-sm text-zinc-500">
+              Nenhuma mentoria agendada. Que tal encontrar um mentor?
+            </div>
+          )}
 
           {/* Session History */}
-          <div>
-            <h3 className="text-white font-semibold mb-3">Histórico de Sessões</h3>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-800">
-                    <th className="text-zinc-400 font-medium px-4 py-3 text-left">Mentor</th>
-                    <th className="text-zinc-400 font-medium px-4 py-3 text-left">Tema</th>
-                    <th className="text-zinc-400 font-medium px-4 py-3 text-left">Data</th>
-                    <th className="text-zinc-400 font-medium px-4 py-3 text-left">Status</th>
-                    <th className="text-zinc-400 font-medium px-4 py-3 text-left"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sessionHistory.map((s, i) => (
-                    <tr
-                      key={i}
-                      className={i < sessionHistory.length - 1 ? "border-b border-zinc-800" : ""}
-                    >
-                      <td className="px-4 py-3 text-zinc-200">{s.mentor}</td>
-                      <td className="px-4 py-3 text-zinc-400">{s.topic}</td>
-                      <td className="px-4 py-3 text-zinc-400">{s.date}</td>
-                      <td className="px-4 py-3">
-                        <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-xs px-2 py-0.5 rounded-full">
-                          {s.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button className="text-purple-400 hover:text-purple-300 text-xs transition-colors">
-                          Ver Notas
-                        </button>
-                      </td>
+          {history.length > 0 && (
+            <div>
+              <h3 className="text-white font-semibold mb-3">Histórico de Sessões</h3>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-800">
+                      <th className="text-zinc-400 font-medium px-4 py-3 text-left">Mentor</th>
+                      <th className="text-zinc-400 font-medium px-4 py-3 text-left">Tema</th>
+                      <th className="text-zinc-400 font-medium px-4 py-3 text-left">Data</th>
+                      <th className="text-zinc-400 font-medium px-4 py-3 text-left">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {history.map((s, i) => (
+                      <tr key={s.id} className={i < history.length - 1 ? "border-b border-zinc-800" : ""}>
+                        <td className="px-4 py-3 text-zinc-200">{s.mentor.user.fullName}</td>
+                        <td className="px-4 py-3 text-zinc-400">{s.topic ?? "—"}</td>
+                        <td className="px-4 py-3 text-zinc-400">{formatDate(s.scheduledAt)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_LABEL[s.status].className}`}>
+                            {STATUS_LABEL[s.status].text}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* ── Tab: Primeiro Emprego ── */}
+      {/* ── Tab: Primeiro Emprego (conteúdo de referência, estático) ── */}
       {tab === "primeiro" && (
         <div className="space-y-5">
           {/* CV Review */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-2">
               <User className="w-5 h-5 text-purple-400" />
-              <h3 className="text-white font-semibold">Revisão de Currículo</h3>
+              <h3 className="text-white font-semibold">Checklist de Currículo</h3>
             </div>
             <p className="text-zinc-400 text-sm">
-              Verifique os pontos essenciais do seu CV antes de enviar para vagas.
+              Pontos essenciais para verificar no seu CV antes de enviar para vagas.
             </p>
             <div className="space-y-2">
               {cvChecklist.map((item) => (
-                <div key={item.label} className="flex items-center gap-3">
-                  {item.done ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-                  ) : (
-                    <XCircle className="w-4 h-4 text-red-400 shrink-0" />
-                  )}
-                  <span
-                    className={`text-sm ${item.done ? "text-zinc-300" : "text-zinc-500 line-through"}`}
-                  >
-                    {item.label}
-                  </span>
+                <div key={item} className="flex items-center gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+                  <span className="text-sm text-zinc-300">{item}</span>
                 </div>
               ))}
             </div>
-            <button className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-colors">
-              Analisar CV com IA
-            </button>
-          </div>
-
-          {/* Interview Simulation */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-purple-400" />
-              <h3 className="text-white font-semibold">Simulação de Entrevista</h3>
-            </div>
-            <p className="text-zinc-400 text-sm">
-              Pratique com perguntas reais de entrevistas técnicas e receba feedback da IA.
-            </p>
-            <div>
-              <label className="text-zinc-400 text-xs mb-2 block">Nível de dificuldade</label>
-              <div className="flex gap-2">
-                {["Iniciante", "Intermediário", "Avançado"].map((d) => (
-                  <button
-                    key={d}
-                    className="flex-1 py-2 border border-zinc-700 rounded-xl text-zinc-400 text-xs hover:border-purple-500 hover:text-purple-300 transition-colors"
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <button className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-sm font-semibold transition-all">
-              Simular Entrevista Técnica
-            </button>
           </div>
 
           {/* Interview Tips Accordion */}
           <div>
-            <h3 className="text-white font-semibold mb-3">Dicas para Entrevistas</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <BookOpen className="w-5 h-5 text-purple-400" />
+              <h3 className="text-white font-semibold">Dicas para Entrevistas</h3>
+            </div>
             <div className="space-y-2">
               {interviewTips.map((tip) => (
                 <TipAccordion key={tip.title} tip={tip} />

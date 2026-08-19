@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Monitor,
@@ -5,7 +6,7 @@ import {
   BarChart2,
   GitBranch,
   Smartphone,
-  Layers,
+  Palette,
   ArrowRight,
   Zap,
   Users,
@@ -14,113 +15,54 @@ import {
 } from "lucide-react";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import { getCareers, type Career, type DemandLevel } from "../services/careers/careers";
+import { ApiError } from "../services/api";
 
-interface Career {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-  gradient: string;
-  salaryRange: string;
-  avgTime: string;
-  description: string;
+const ICONS: Record<string, React.ReactNode> = {
+  monitor: <Monitor size={32} />,
+  server: <Server size={32} />,
+  chart: <BarChart2 size={32} />,
+  "git-branch": <GitBranch size={32} />,
+  smartphone: <Smartphone size={32} />,
+  palette: <Palette size={32} />,
+};
+
+const GRADIENTS: Record<string, string> = {
+  monitor: "from-purple-600 to-blue-600",
+  server: "from-green-600 to-teal-600",
+  chart: "from-amber-500 to-orange-600",
+  "git-branch": "from-red-600 to-pink-600",
+  smartphone: "from-cyan-500 to-blue-500",
+  palette: "from-violet-600 to-purple-600",
+};
+
+const DEMAND_LABEL: Record<DemandLevel, string> = { BAIXA: "Baixa", MEDIA: "Média", ALTA: "Alta" };
+const DEMAND_COLOR: Record<DemandLevel, string> = {
+  BAIXA: "text-red-400",
+  MEDIA: "text-yellow-400",
+  ALTA: "text-green-400",
+};
+
+function salaryRange(min: number, max: number): string {
+  return `R$ ${min.toLocaleString("pt-BR")} - R$ ${max.toLocaleString("pt-BR")}`;
 }
 
-const careers: Career[] = [
-  {
-    id: "frontend",
-    title: "Frontend Developer",
-    icon: <Monitor size={32} />,
-    gradient: "from-purple-600 to-blue-600",
-    salaryRange: "R$ 4.000 - R$ 18.000",
-    avgTime: "8-12 meses",
-    description: "Crie interfaces modernas e interativas para web.",
-  },
-  {
-    id: "backend",
-    title: "Backend Developer",
-    icon: <Server size={32} />,
-    gradient: "from-green-600 to-teal-600",
-    salaryRange: "R$ 5.000 - R$ 22.000",
-    avgTime: "10-14 meses",
-    description: "Desenvolva APIs e sistemas robustos no servidor.",
-  },
-  {
-    id: "data-science",
-    title: "Data Scientist",
-    icon: <BarChart2 size={32} />,
-    gradient: "from-amber-500 to-orange-600",
-    salaryRange: "R$ 6.000 - R$ 25.000",
-    avgTime: "12-18 meses",
-    description: "Extraia insights e construa modelos preditivos.",
-  },
-  {
-    id: "devops",
-    title: "DevOps Engineer",
-    icon: <GitBranch size={32} />,
-    gradient: "from-red-600 to-pink-600",
-    salaryRange: "R$ 7.000 - R$ 28.000",
-    avgTime: "14-20 meses",
-    description: "Automatize pipelines e gerencie infraestrutura.",
-  },
-  {
-    id: "mobile",
-    title: "Mobile Developer",
-    icon: <Smartphone size={32} />,
-    gradient: "from-cyan-500 to-blue-500",
-    salaryRange: "R$ 4.500 - R$ 20.000",
-    avgTime: "10-16 meses",
-    description: "Crie apps nativos e híbridos para iOS e Android.",
-  },
-  {
-    id: "ux-ui",
-    title: "UX/UI Designer",
-    icon: <Layers size={32} />,
-    gradient: "from-violet-600 to-purple-600",
-    salaryRange: "R$ 3.500 - R$ 16.000",
-    avgTime: "6-10 meses",
-    description: "Projete experiências digitais intuitivas e bonitas.",
-  },
-];
-
-const comparisonData = [
-  {
-    career: "Frontend Dev",
-    salarioInicial: "R$ 4.000",
-    vagas: "Alta",
-    dificuldade: "Média",
-    tempo: "8-12 meses",
-    vagaColor: "text-green-400",
-    difColor: "text-yellow-400",
-  },
-  {
-    career: "Data Scientist",
-    salarioInicial: "R$ 6.000",
-    vagas: "Média",
-    dificuldade: "Alta",
-    tempo: "12-18 meses",
-    vagaColor: "text-yellow-400",
-    difColor: "text-red-400",
-  },
-  {
-    career: "DevOps Eng.",
-    salarioInicial: "R$ 7.000",
-    vagas: "Alta",
-    dificuldade: "Alta",
-    tempo: "14-20 meses",
-    vagaColor: "text-green-400",
-    difColor: "text-red-400",
-  },
-];
-
-const comparisonRows = [
-  { label: "Salário Inicial", icon: <TrendingUp size={14} />, key: "salarioInicial" },
-  { label: "Vagas Disponíveis", icon: <Users size={14} />, key: "vagas" },
-  { label: "Dificuldade", icon: <Zap size={14} />, key: "dificuldade" },
-  { label: "Tempo Médio", icon: <Clock size={14} />, key: "tempo" },
-];
+function avgTime(min: number, max: number): string {
+  return `${min}-${max} meses`;
+}
 
 export default function Explore() {
   const navigate = useNavigate();
+  const [careers, setCareers] = useState<Career[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getCareers()
+      .then(setCareers)
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Erro ao carregar carreiras."))
+      .finally(() => setLoading(false));
+  }, []);
 
   function scrollToRoadmaps() {
     document.getElementById("careers")?.scrollIntoView({ behavior: "smooth" });
@@ -171,55 +113,61 @@ export default function Explore() {
         <div className="text-center mb-14">
           <h2 className="text-4xl font-black text-white mb-3">Escolha sua trilha</h2>
           <p className="text-zinc-400 text-lg">
-            6 carreiras com alta demanda no mercado brasileiro
+            {careers.length > 0 ? `${careers.length} carreiras` : "Carreiras"} com alta demanda no mercado brasileiro
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {careers.map((career) => (
-            <div
-              key={career.id}
-              className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-1 group"
-            >
-              {/* Icon area */}
+
+        {error && <p className="text-center text-sm text-red-400 mb-8">{error}</p>}
+        {loading ? (
+          <p className="text-center text-zinc-500">Carregando carreiras...</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {careers.map((career) => (
               <div
-                className={`h-32 bg-gradient-to-br ${career.gradient} flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}
+                key={career.id}
+                className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-1 group"
               >
-                <div className="text-white">{career.icon}</div>
-              </div>
-
-              {/* Content */}
-              <div className="p-6 flex flex-col gap-4">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-1">{career.title}</h3>
-                  <p className="text-zinc-400 text-sm leading-relaxed">{career.description}</p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-zinc-500 flex items-center gap-1">
-                      <TrendingUp size={13} /> Salário
-                    </span>
-                    <span className="text-green-400 font-semibold">{career.salaryRange}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-zinc-500 flex items-center gap-1">
-                      <Clock size={13} /> Até 1º emprego
-                    </span>
-                    <span className="text-purple-300 font-medium">{career.avgTime}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => navigate("/onboarding")}
-                  className="mt-1 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-semibold hover:border-purple-500 hover:text-white hover:bg-purple-500/10 transition-all duration-200"
+                {/* Icon area */}
+                <div
+                  className={`h-32 bg-gradient-to-br ${GRADIENTS[career.iconKey] ?? "from-purple-600 to-blue-600"} flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}
                 >
-                  Ver Roadmap
-                  <ArrowRight size={15} />
-                </button>
+                  <div className="text-white">{ICONS[career.iconKey] ?? <Monitor size={32} />}</div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 flex flex-col gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-1">{career.title}</h3>
+                    <p className="text-zinc-400 text-sm leading-relaxed">{career.description}</p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-zinc-500 flex items-center gap-1">
+                        <TrendingUp size={13} /> Salário
+                      </span>
+                      <span className="text-green-400 font-semibold">{salaryRange(career.salaryMin, career.salaryMax)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-zinc-500 flex items-center gap-1">
+                        <Clock size={13} /> Até 1º emprego
+                      </span>
+                      <span className="text-purple-300 font-medium">{avgTime(career.avgMonthsMin, career.avgMonthsMax)}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => navigate("/onboarding")}
+                    className="mt-1 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-semibold hover:border-purple-500 hover:text-white hover:bg-purple-500/10 transition-all duration-200"
+                  >
+                    Ver Roadmap
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Quiz CTA */}
@@ -249,63 +197,57 @@ export default function Explore() {
       </section>
 
       {/* Career Comparison Table */}
-      <section className="px-6 py-20 max-w-7xl mx-auto w-full">
-        <div className="text-center mb-14">
-          <h2 className="text-4xl font-black text-white mb-3">Compare carreiras</h2>
-          <p className="text-zinc-400 text-lg">
-            Veja as principais métricas lado a lado para tomar sua decisão
-          </p>
-        </div>
+      {careers.length > 0 && (
+        <section className="px-6 py-20 max-w-7xl mx-auto w-full">
+          <div className="text-center mb-14">
+            <h2 className="text-4xl font-black text-white mb-3">Compare carreiras</h2>
+            <p className="text-zinc-400 text-lg">
+              Veja as principais métricas lado a lado para tomar sua decisão
+            </p>
+          </div>
 
-        <div className="overflow-x-auto">
-          <div className="min-w-[560px]">
-            {/* Header row */}
-            <div className="grid grid-cols-4 gap-3 mb-3">
-              <div className="col-span-1" />
-              {comparisonData.map((col) => (
+          <div className="overflow-x-auto">
+            <div className="min-w-[720px]">
+              {/* Header row */}
+              <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: `160px repeat(${careers.length}, 1fr)` }}>
+                <div />
+                {careers.map((c) => (
+                  <div key={c.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
+                    <span className="font-bold text-white text-sm">{c.title}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Data rows */}
+              {[
+                { label: "Salário Inicial", icon: <TrendingUp size={14} />, render: (c: Career) => ({ text: `R$ ${c.salaryMin.toLocaleString("pt-BR")}`, color: "text-white" }) },
+                { label: "Demanda de Vagas", icon: <Users size={14} />, render: (c: Career) => ({ text: DEMAND_LABEL[c.jobsDemandLevel], color: DEMAND_COLOR[c.jobsDemandLevel] }) },
+                { label: "Dificuldade", icon: <Zap size={14} />, render: (c: Career) => ({ text: DEMAND_LABEL[c.difficultyLevel], color: DEMAND_COLOR[c.difficultyLevel] }) },
+                { label: "Tempo Médio", icon: <Clock size={14} />, render: (c: Career) => ({ text: avgTime(c.avgMonthsMin, c.avgMonthsMax), color: "text-white" }) },
+              ].map((row) => (
                 <div
-                  key={col.career}
-                  className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center"
+                  key={row.label}
+                  className="grid gap-3 mb-3"
+                  style={{ gridTemplateColumns: `160px repeat(${careers.length}, 1fr)` }}
                 >
-                  <span className="font-bold text-white text-sm">{col.career}</span>
+                  <div className="flex items-center gap-2 px-4 py-4 rounded-2xl bg-zinc-900 border border-zinc-800">
+                    <span className="text-zinc-400">{row.icon}</span>
+                    <span className="text-zinc-300 text-sm font-medium">{row.label}</span>
+                  </div>
+                  {careers.map((c) => {
+                    const { text, color } = row.render(c);
+                    return (
+                      <div key={c.id} className="flex items-center justify-center px-4 py-4 rounded-2xl bg-zinc-900 border border-zinc-800">
+                        <span className={`text-sm font-semibold ${color}`}>{text}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
-
-            {/* Data rows */}
-            {comparisonRows.map((row, ri) => (
-              <div
-                key={row.key}
-                className={`grid grid-cols-4 gap-3 mb-3 ${
-                  ri % 2 === 0 ? "" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2 px-4 py-4 rounded-2xl bg-zinc-900 border border-zinc-800">
-                  <span className="text-zinc-400">{row.icon}</span>
-                  <span className="text-zinc-300 text-sm font-medium">{row.label}</span>
-                </div>
-                {comparisonData.map((col) => {
-                  const value = col[row.key as keyof typeof col] as string;
-                  const colorClass =
-                    row.key === "vagas"
-                      ? col.vagaColor
-                      : row.key === "dificuldade"
-                      ? col.difColor
-                      : "text-white";
-                  return (
-                    <div
-                      key={col.career}
-                      className="flex items-center justify-center px-4 py-4 rounded-2xl bg-zinc-900 border border-zinc-800"
-                    >
-                      <span className={`text-sm font-semibold ${colorClass}`}>{value}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <Footer />
     </div>
