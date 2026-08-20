@@ -11,6 +11,9 @@ import { CreatePortfolioProjectDto } from './dto/create-portfolio-project.dto';
 /** Each challenge tag bumps that skill's mastery % by this much, capped at 100. */
 const SKILL_PCT_BUMP_PER_CHALLENGE = 10;
 
+/** Portfolio size feeds the employability score, so it needs a ceiling. */
+const MAX_PORTFOLIO_PROJECTS = 20;
+
 @Injectable()
 export class SkillsService {
   constructor(
@@ -82,7 +85,14 @@ export class SkillsService {
     });
   }
 
-  createPortfolioProject(userId: number, dto: CreatePortfolioProjectDto) {
+  async createPortfolioProject(userId: number, dto: CreatePortfolioProjectDto) {
+    const existing = await this.prisma.portfolioProject.count({
+      where: { userId },
+    });
+    if (existing >= MAX_PORTFOLIO_PROJECTS)
+      throw new ConflictException(
+        `Limite de ${MAX_PORTFOLIO_PROJECTS} projetos no portfólio atingido.`,
+      );
     return this.prisma.portfolioProject.create({ data: { userId, ...dto } });
   }
 

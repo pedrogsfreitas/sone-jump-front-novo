@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -11,6 +13,15 @@ import { UpdateGoalDto } from './dto/update-goal.dto';
 
 /** 1 XP per minute studied — deliberately server-computed, never trusts a client-supplied value. */
 const XP_PER_MINUTE = 1;
+
+/** 12 h of logged study in one day is already generous; past it, it's XP fabrication. */
+const MAX_DAILY_MINUTES = 720;
+
+/**
+ * How far back a session may be backdated. Without this, a streak can be fabricated
+ * by logging one session per day across an arbitrary stretch of the past.
+ */
+const MAX_BACKDATE_DAYS = 3;
 
 function dateKey(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -46,6 +57,28 @@ export class ProgressService {
   async logSession(userId: number, dto: LogStudySessionDto) {
     const occurredOn = dto.occurredOn ? new Date(dto.occurredOn) : new Date();
     const xpEarned = Math.round(dto.durationMinutes * XP_PER_MINUTE);
+
+    // Same UTC calendar-day criterion applyStreak uses — see dateKey/daysBetween.
+    const day = dateKey(occurredOn);
+    const daysAgo = daysBetween(day, dateKey(new Date()));
+
+    if (daysAgo < 0)
+      throw new BadRequestException('Data da sessão não pode estar no futuro.');
+    if (daysAgo > MAX_BACKDATE_DAYS)
+      throw new BadRequestException(
+        `Data da sessão não pode ser anterior a ${MAX_BACKDATE_DAYS} dias.`,
+      );
+
+    const { _sum } = await this.prisma.studySession.aggregate({
+      where: { userId, occurredOn: new Date(day) },
+      _sum: { durationMinutes: true },
+    });
+    const minutesAlreadyLogged = _sum.durationMinutes ?? 0;
+    if (minutesAlreadyLogged + dto.durationMinutes > MAX_DAILY_MINUTES)
+      throw new ConflictException(
+        `Limite de ${MAX_DAILY_MINUTES} minutos de estudo por dia atingido. ` +
+          `Já registrados ${minutesAlreadyLogged} min neste dia.`,
+      );
 
     const session = await this.prisma.studySession.create({
       data: {
