@@ -9,6 +9,8 @@ export type DemandLevel = "BAIXA" | "MEDIA" | "ALTA";
 export type Career = {
   id: string;
   title: string;
+  /** Chave estável da carreira: identifica o roadmap dela na URL e na importação. */
+  slug: string;
   iconKey: string;
   salaryMin: number;
   salaryMax: number;

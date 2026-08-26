@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
   const [weekActivity, setWeekActivity] = useState<boolean[]>([]);
   const [currentNode, setCurrentNode] = useState<RoadmapNode | null>(null);
+  const [hasCareer, setHasCareer] = useState(true);
   const [completedNodes, setCompletedNodes] = useState(0);
   const [nextLive, setNextLive] = useState<LiveSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,15 +31,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([getSummary(), getSessions(), getRoadmap(), getLives()])
-      .then(([sum, sessions, nodes, lives]) => {
+      .then(([sum, sessions, roadmap, lives]) => {
         setSummary(sum);
+        setHasCareer(roadmap.career !== null);
 
         setWeekActivity(
           Array.from({ length: 7 }, (_, i) => sessions.some((s) => new Date(s.occurredOn).getDay() === i)),
         );
 
-        setCurrentNode(nodes.find((n) => n.status === "IN_PROGRESS") ?? null);
-        setCompletedNodes(nodes.filter((n) => n.status === "COMPLETED").length);
+        setCurrentNode(roadmap.nodes.find((n) => n.status === "IN_PROGRESS") ?? null);
+        setCompletedNodes(roadmap.nodes.filter((n) => n.status === "COMPLETED").length);
 
         const upcoming = lives
           .filter((l) => l.status === "AGENDADA")
@@ -147,8 +149,32 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Sem carreira escolhida não existe roadmap para continuar */}
+          {!hasCareer && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+              <h2 className="text-sm font-semibold text-zinc-300 mb-4">Comece por aqui</h2>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-2xl shrink-0">
+                  🧭
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white">Escolha sua carreira</p>
+                  <p className="text-zinc-400 text-xs mt-0.5">
+                    O roadmap é o da carreira que você seguir
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate("/app/roadmap")}
+                  className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+                >
+                  Escolher
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Continue de onde parou */}
-          {currentNode && (
+          {hasCareer && currentNode && (
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
               <h2 className="text-sm font-semibold text-zinc-300 mb-4">Continue de onde parou</h2>
               <div className="flex items-center gap-4">

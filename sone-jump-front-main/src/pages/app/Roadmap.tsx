@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle,
   Circle,
@@ -8,8 +9,15 @@ import {
   MapPin,
   Clock,
   BookOpen,
+  Compass,
 } from "lucide-react";
-import { getRoadmap, updateNodeStatus, type RoadmapNode, type RoadmapNodeStatus } from "../../services/roadmap/roadmap";
+import {
+  getRoadmap,
+  updateNodeStatus,
+  type RoadmapCareer,
+  type RoadmapNode,
+  type RoadmapNodeStatus,
+} from "../../services/roadmap/roadmap";
 import { ApiError } from "../../services/api";
 
 const CATEGORY_ORDER = ["FUNDAMENTOS", "CORE", "FRAMEWORKS", "AVANCADO", "CARREIRA"];
@@ -49,7 +57,9 @@ function nodeClasses(status: RoadmapNodeStatus, selected: boolean) {
 }
 
 export default function Roadmap() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"mapa" | "lista">("mapa");
+  const [career, setCareer] = useState<RoadmapCareer | null>(null);
   const [nodes, setNodes] = useState<RoadmapNode[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [openCategories, setOpenCategories] = useState<string[]>(CATEGORY_ORDER);
@@ -60,9 +70,11 @@ export default function Roadmap() {
 
   useEffect(() => {
     getRoadmap()
-      .then((data) => {
-        setNodes(data);
-        const current = data.find((n) => n.status === "IN_PROGRESS") ?? data[0];
+      .then((roadmap) => {
+        setCareer(roadmap.career);
+        setNodes(roadmap.nodes);
+        const current =
+          roadmap.nodes.find((n) => n.status === "IN_PROGRESS") ?? roadmap.nodes[0];
         setSelectedNodeId(current?.id ?? null);
       })
       .catch((e) => setError(e instanceof ApiError ? e.message : "Erro ao carregar roadmap."))
@@ -82,7 +94,8 @@ export default function Roadmap() {
     setUpdating(true);
     try {
       const updated = await updateNodeStatus(node.id, nextStatus);
-      setNodes(updated);
+      setCareer(updated.career);
+      setNodes(updated.nodes);
     } catch (e) {
       setActionError(e instanceof ApiError ? e.message : "Erro ao atualizar etapa.");
     } finally {
@@ -97,14 +110,42 @@ export default function Roadmap() {
     return <div className="min-h-screen bg-[#050505] text-red-400 p-6">{error}</div>;
   }
 
+  // Cada carreira tem o seu próprio roadmap — sem carreira escolhida não há grafo
+  // nenhum para mostrar. Não é erro: é o passo que falta.
+  if (!career) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white p-6">
+        <h1 className="text-2xl font-bold mb-6">Roadmap</h1>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-xl flex flex-col items-center text-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center">
+            <Compass size={26} className="text-purple-300" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">Escolha uma carreira para começar</h2>
+            <p className="text-zinc-400 text-sm mt-1 leading-relaxed">
+              Cada carreira tem o seu próprio roadmap, com etapas e conteúdos próprios.
+              Depois de escolher, sua trilha aparece aqui.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/explore")}
+            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-colors"
+          >
+            Ver carreiras disponíveis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Roadmap Frontend</h1>
+          <h1 className="text-2xl font-bold">Roadmap {career.title}</h1>
           <p className="text-zinc-400 text-sm mt-0.5">
-            Trilha completa para se tornar um dev frontend
+            Trilha completa da carreira {career.title}
           </p>
         </div>
       </div>

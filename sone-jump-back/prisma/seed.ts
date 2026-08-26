@@ -35,7 +35,8 @@ const ROADMAP_NODES: Array<{
   hours: number;
   description: string;
   skill?: string;
-  prerequisite?: string;
+  /** Pré-requisitos são N:N: o nó só abre quando TODOS estiverem concluídos. */
+  prerequisites?: string[];
   resources: Array<{ label: string; url?: string }>;
 }> = [
   {
@@ -57,7 +58,7 @@ const ROADMAP_NODES: Array<{
     category: 'FUNDAMENTOS',
     hours: 20,
     description: 'Layouts que se adaptam a qualquer tamanho de tela.',
-    prerequisite: 'html-css',
+    prerequisites: ['html-css'],
     resources: [{ label: 'MDN Responsive Design' }],
   },
   {
@@ -67,7 +68,7 @@ const ROADMAP_NODES: Array<{
     hours: 60,
     description: 'A linguagem que dá vida à web.',
     skill: 'JavaScript',
-    prerequisite: 'responsividade',
+    prerequisites: ['responsividade'],
     resources: [{ label: 'JavaScript.info' }, { label: 'Curso Alura JS' }],
   },
   {
@@ -77,7 +78,7 @@ const ROADMAP_NODES: Array<{
     hours: 15,
     description: 'Controle de versão indispensável.',
     skill: 'Git/GitHub',
-    prerequisite: 'javascript',
+    prerequisites: ['javascript'],
     resources: [{ label: 'Pro Git Book' }, { label: 'GitHub Learning Lab' }],
   },
   {
@@ -87,7 +88,7 @@ const ROADMAP_NODES: Array<{
     hours: 60,
     description: 'Biblioteca para interfaces reativas.',
     skill: 'React',
-    prerequisite: 'git',
+    prerequisites: ['git'],
     resources: [{ label: 'React Docs' }, { label: 'Rocketseat Ignite' }],
   },
   {
@@ -97,7 +98,7 @@ const ROADMAP_NODES: Array<{
     hours: 30,
     description: 'JavaScript com tipagem estática.',
     skill: 'TypeScript',
-    prerequisite: 'react',
+    prerequisites: ['react'],
     resources: [{ label: 'TypeScript Handbook' }],
   },
   {
@@ -107,7 +108,7 @@ const ROADMAP_NODES: Array<{
     hours: 40,
     description: 'Framework React para produção.',
     skill: 'Next.js',
-    prerequisite: 'typescript',
+    prerequisites: ['typescript'],
     resources: [{ label: 'Next.js Docs' }],
   },
   {
@@ -117,7 +118,7 @@ const ROADMAP_NODES: Array<{
     hours: 40,
     description: 'JavaScript no servidor.',
     skill: 'Node.js',
-    prerequisite: 'typescript',
+    prerequisites: ['typescript'],
     resources: [{ label: 'Node.js Docs' }],
   },
   {
@@ -126,7 +127,7 @@ const ROADMAP_NODES: Array<{
     category: 'CARREIRA',
     hours: 20,
     description: 'Monte um portfólio que impressiona recrutadores.',
-    prerequisite: 'nextjs',
+    prerequisites: ['nextjs'],
     resources: [{ label: 'Como Construir um Portfólio' }],
   },
   {
@@ -135,7 +136,7 @@ const ROADMAP_NODES: Array<{
     category: 'CARREIRA',
     hours: 5,
     description: 'Otimize seu perfil para recrutadores.',
-    prerequisite: 'portfolio',
+    prerequisites: ['portfolio'],
     resources: [],
   },
   {
@@ -144,7 +145,7 @@ const ROADMAP_NODES: Array<{
     category: 'CARREIRA',
     hours: 15,
     description: 'Prepare-se para entrevistas técnicas e comportamentais.',
-    prerequisite: 'linkedin',
+    prerequisites: ['linkedin'],
     resources: [],
   },
 ];
@@ -389,6 +390,95 @@ const JOBS: Array<{
   },
 ];
 
+const CAREERS: Array<{
+  title: string;
+  slug: string;
+  iconKey: string;
+  salaryMin: number;
+  salaryMax: number;
+  avgMonthsMin: number;
+  avgMonthsMax: number;
+  description: string;
+  jobsDemandLevel: 'BAIXA' | 'MEDIA' | 'ALTA';
+  difficultyLevel: 'BAIXA' | 'MEDIA' | 'ALTA';
+}> = [
+  {
+    title: 'Frontend Developer',
+    slug: 'frontend-developer',
+    iconKey: 'monitor',
+    salaryMin: 4000,
+    salaryMax: 18000,
+    avgMonthsMin: 8,
+    avgMonthsMax: 12,
+    description: 'Crie interfaces modernas e interativas para web.',
+    jobsDemandLevel: 'ALTA',
+    difficultyLevel: 'MEDIA',
+  },
+  {
+    title: 'Backend Developer',
+    slug: 'backend-developer',
+    iconKey: 'server',
+    salaryMin: 5000,
+    salaryMax: 20000,
+    avgMonthsMin: 8,
+    avgMonthsMax: 14,
+    description: 'Construa APIs e sistemas que sustentam o produto.',
+    jobsDemandLevel: 'ALTA',
+    difficultyLevel: 'MEDIA',
+  },
+  {
+    title: 'Data Scientist',
+    slug: 'data-scientist',
+    iconKey: 'chart',
+    salaryMin: 6000,
+    salaryMax: 22000,
+    avgMonthsMin: 12,
+    avgMonthsMax: 18,
+    description: 'Extraia insights e construa modelos a partir de dados.',
+    jobsDemandLevel: 'MEDIA',
+    difficultyLevel: 'ALTA',
+  },
+  {
+    title: 'DevOps Engineer',
+    slug: 'devops-engineer',
+    iconKey: 'git-branch',
+    salaryMin: 7000,
+    salaryMax: 28000,
+    avgMonthsMin: 14,
+    avgMonthsMax: 20,
+    description: 'Automatize pipelines e gerencie infraestrutura.',
+    jobsDemandLevel: 'ALTA',
+    difficultyLevel: 'ALTA',
+  },
+  {
+    title: 'Mobile Developer',
+    slug: 'mobile-developer',
+    iconKey: 'smartphone',
+    salaryMin: 5000,
+    salaryMax: 19000,
+    avgMonthsMin: 8,
+    avgMonthsMax: 14,
+    description: 'Desenvolva aplicativos para iOS e Android.',
+    jobsDemandLevel: 'MEDIA',
+    difficultyLevel: 'MEDIA',
+  },
+  {
+    title: 'UX/UI Designer',
+    slug: 'ux-ui-designer',
+    iconKey: 'palette',
+    salaryMin: 3500,
+    salaryMax: 15000,
+    avgMonthsMin: 6,
+    avgMonthsMax: 10,
+    description: 'Projete experiências centradas no usuário.',
+    jobsDemandLevel: 'MEDIA',
+    difficultyLevel: 'BAIXA',
+  },
+];
+
+/** A carreira dos 11 nós seedados — o roadmap de exemplo é de frontend. */
+const SEED_ROADMAP_CAREER_SLUG = 'frontend-developer';
+
 async function main() {
   const skillByName = new Map<string, number>();
   for (const name of SKILLS) {
@@ -400,22 +490,49 @@ async function main() {
     skillByName.set(name, skill.id);
   }
 
+  // As carreiras vêm antes dos nós: todo RoadmapNode pertence obrigatoriamente a uma.
+  for (const career of CAREERS) {
+    await prisma.career.upsert({
+      where: { slug: career.slug },
+      update: {},
+      create: career,
+    });
+  }
+
+  const roadmapCareer = await prisma.career.findUniqueOrThrow({
+    where: { slug: SEED_ROADMAP_CAREER_SLUG },
+  });
+
   for (const node of ROADMAP_NODES) {
     await prisma.roadmapNode.upsert({
       where: { id: node.id },
       update: {},
       create: {
         id: node.id,
+        careerId: roadmapCareer.id,
+        externalKey: node.id,
         name: node.name,
         category: node.category,
         estimatedHours: node.hours,
         description: node.description,
         orderIndex: ROADMAP_NODES.indexOf(node),
         skillId: node.skill ? skillByName.get(node.skill) : undefined,
-        prerequisiteNodeId: node.prerequisite,
-        resources: { create: node.resources },
+        resources: {
+          create: node.resources.map((resource, i) => ({ ...resource, orderIndex: i })),
+        },
       },
     });
+  }
+
+  // Depois de todos os nós existirem, senão a FK da junção quebra em quem vem antes.
+  for (const node of ROADMAP_NODES) {
+    for (const prerequisiteNodeId of node.prerequisites ?? []) {
+      await prisma.roadmapNodePrerequisite.upsert({
+        where: { nodeId_prerequisiteNodeId: { nodeId: node.id, prerequisiteNodeId } },
+        update: {},
+        create: { nodeId: node.id, prerequisiteNodeId },
+      });
+    }
   }
 
   for (const item of CATALOG_ITEMS) {
@@ -549,89 +666,6 @@ async function main() {
   for (const recording of RECORDINGS) {
     const exists = await prisma.recording.findFirst({ where: { title: recording.title } });
     if (!exists) await prisma.recording.create({ data: recording });
-  }
-
-  const CAREERS: Array<{
-    title: string;
-    iconKey: string;
-    salaryMin: number;
-    salaryMax: number;
-    avgMonthsMin: number;
-    avgMonthsMax: number;
-    description: string;
-    jobsDemandLevel: 'BAIXA' | 'MEDIA' | 'ALTA';
-    difficultyLevel: 'BAIXA' | 'MEDIA' | 'ALTA';
-  }> = [
-    {
-      title: 'Frontend Developer',
-      iconKey: 'monitor',
-      salaryMin: 4000,
-      salaryMax: 18000,
-      avgMonthsMin: 8,
-      avgMonthsMax: 12,
-      description: 'Crie interfaces modernas e interativas para web.',
-      jobsDemandLevel: 'ALTA',
-      difficultyLevel: 'MEDIA',
-    },
-    {
-      title: 'Backend Developer',
-      iconKey: 'server',
-      salaryMin: 5000,
-      salaryMax: 20000,
-      avgMonthsMin: 8,
-      avgMonthsMax: 14,
-      description: 'Construa APIs e sistemas que sustentam o produto.',
-      jobsDemandLevel: 'ALTA',
-      difficultyLevel: 'MEDIA',
-    },
-    {
-      title: 'Data Scientist',
-      iconKey: 'chart',
-      salaryMin: 6000,
-      salaryMax: 22000,
-      avgMonthsMin: 12,
-      avgMonthsMax: 18,
-      description: 'Extraia insights e construa modelos a partir de dados.',
-      jobsDemandLevel: 'MEDIA',
-      difficultyLevel: 'ALTA',
-    },
-    {
-      title: 'DevOps Engineer',
-      iconKey: 'git-branch',
-      salaryMin: 7000,
-      salaryMax: 28000,
-      avgMonthsMin: 14,
-      avgMonthsMax: 20,
-      description: 'Automatize pipelines e gerencie infraestrutura.',
-      jobsDemandLevel: 'ALTA',
-      difficultyLevel: 'ALTA',
-    },
-    {
-      title: 'Mobile Developer',
-      iconKey: 'smartphone',
-      salaryMin: 5000,
-      salaryMax: 19000,
-      avgMonthsMin: 8,
-      avgMonthsMax: 14,
-      description: 'Desenvolva aplicativos para iOS e Android.',
-      jobsDemandLevel: 'MEDIA',
-      difficultyLevel: 'MEDIA',
-    },
-    {
-      title: 'UX/UI Designer',
-      iconKey: 'palette',
-      salaryMin: 3500,
-      salaryMax: 15000,
-      avgMonthsMin: 6,
-      avgMonthsMax: 10,
-      description: 'Projete experiências centradas no usuário.',
-      jobsDemandLevel: 'MEDIA',
-      difficultyLevel: 'BAIXA',
-    },
-  ];
-  for (const career of CAREERS) {
-    const exists = await prisma.career.findFirst({ where: { title: career.title } });
-    if (!exists) await prisma.career.create({ data: career });
   }
 
   console.log('Seed concluído.');
