@@ -114,25 +114,27 @@ export default function Roadmap() {
   // nenhum para mostrar. Não é erro: é o passo que falta.
   if (!career) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white p-6">
+      <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col">
         <h1 className="text-2xl font-bold mb-6">Roadmap</h1>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-xl flex flex-col items-center text-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center">
-            <Compass size={26} className="text-purple-300" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-20 max-w-3xl w-full flex flex-col items-center text-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center">
+              <Compass size={26} className="text-purple-300" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">Escolha uma carreira para começar</h2>
+              <p className="text-zinc-400 text-sm mt-1 leading-relaxed">
+                Cada carreira tem o seu próprio roadmap, com etapas e conteúdos próprios.
+                Depois de escolher, sua trilha aparece aqui.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/explore")}                                         
+              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-colors"
+            >
+              Ver carreiras disponíveis
+            </button>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold">Escolha uma carreira para começar</h2>
-            <p className="text-zinc-400 text-sm mt-1 leading-relaxed">
-              Cada carreira tem o seu próprio roadmap, com etapas e conteúdos próprios.
-              Depois de escolher, sua trilha aparece aqui.
-            </p>
-          </div>
-          <button
-            onClick={() => navigate("/explore")}
-            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-colors"
-          >
-            Ver carreiras disponíveis
-          </button>
         </div>
       </div>
     );

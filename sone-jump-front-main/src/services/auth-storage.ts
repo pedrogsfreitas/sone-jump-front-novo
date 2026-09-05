@@ -47,3 +47,8 @@ export function getRole(token: string | null): Role | null {
   if (!token) return null;
   return decodeToken(token)?.role ?? null;
 }
+
+export function getUserId(token: string | null): number | null {
+  if (!token) return null;
+  return decodeToken(token)?.sub ?? null;
+}

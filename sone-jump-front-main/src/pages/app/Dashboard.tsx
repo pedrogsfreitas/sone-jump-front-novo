@@ -1,18 +1,57 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Zap, Flame, CheckCircle, GraduationCap } from "lucide-react";
+import { getMe } from "../../services/users/users";
 import { getSummary, getSessions, type ProgressSummary } from "../../services/progress/progress";
 import { getRoadmap, type RoadmapNode } from "../../services/roadmap/roadmap";
 import { getLives, type LiveSession } from "../../services/lives/lives";
 import { ApiError } from "../../services/api";
 
-// No backend model for badges/achievements yet (no "unlocked at" data to show real
-// ones) — kept as static placeholder content until that's designed, per the Fase 7
-// scope decision to not invent new backend features while wiring pages.
-const ACHIEVEMENTS = [
-  { emoji: "🏆", title: "Primeiro Login", desc: "Bem-vindo ao Sone Jump!" },
-  { emoji: "⚡", title: "7 Dias Seguidos", desc: "Sequência incrível!" },
-  { emoji: "🎯", title: "Meta Semanal", desc: "Você bateu a meta!" },
+type AchievementContext = {
+  hasCareer: boolean;
+  completedNodes: number;
+  streakLongestDays: number;
+  level: number;
+};
+
+type Achievement = { emoji: string; title: string; desc: string };
+
+// Catálogo de conquistas possíveis — cada uma só aparece quando a condição
+// bate com dados reais do usuário. Ainda não existe todo um sistema de
+// conquistas no backend (com data de desbloqueio etc.), então isso é
+// deduzido a partir do que já temos (progresso, roadmap): nada de conquista
+// fixa que não reflete o que a pessoa realmente fez.
+const ACHIEVEMENT_CATALOG: (Achievement & { isUnlocked: (ctx: AchievementContext) => boolean })[] = [
+  {
+    emoji: "🏆",
+    title: "Primeiro Login",
+    desc: "Bem-vindo ao Sone Jump!",
+    isUnlocked: () => true,
+  },
+  {
+    emoji: "🧭",
+    title: "Carreira Escolhida",
+    desc: "Você definiu seu roadmap!",
+    isUnlocked: (ctx) => ctx.hasCareer,
+  },
+  {
+    emoji: "✅",
+    title: "Primeira Etapa",
+    desc: "Você concluiu a primeira etapa da trilha!",
+    isUnlocked: (ctx) => ctx.completedNodes >= 1,
+  },
+  {
+    emoji: "⚡",
+    title: "7 Dias Seguidos",
+    desc: "Sequência incrível!",
+    isUnlocked: (ctx) => ctx.streakLongestDays >= 7,
+  },
+  {
+    emoji: "🎯",
+    title: "Subiu de Nível",
+    desc: "Você passou do nível 1!",
+    isUnlocked: (ctx) => ctx.level >= 2,
+  },
 ];
 
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -20,6 +59,7 @@ const SKILL_COLORS = ["bg-orange-500", "bg-yellow-500", "bg-purple-500", "bg-blu
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [firstName, setFirstName] = useState("");
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
   const [weekActivity, setWeekActivity] = useState<boolean[]>([]);
   const [currentNode, setCurrentNode] = useState<RoadmapNode | null>(null);
@@ -30,8 +70,9 @@ export default function Dashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([getSummary(), getSessions(), getRoadmap(), getLives()])
-      .then(([sum, sessions, roadmap, lives]) => {
+    Promise.all([getMe(), getSummary(), getSessions(), getRoadmap(), getLives()])
+      .then(([me, sum, sessions, roadmap, lives]) => {
+        setFirstName(me.fullName.trim().split(/\s+/)[0] ?? "");
         setSummary(sum);
         setHasCareer(roadmap.career !== null);
 
@@ -65,12 +106,16 @@ export default function Dashboard() {
   if (error) return <div className="min-h-screen bg-[#050505] text-red-400 p-6">{error}</div>;
   if (!summary) return null;
 
+  const unlockedAchievements = ACHIEVEMENT_CATALOG.filter((a) =>
+    a.isUnlocked({ hasCareer, completedNodes, streakLongestDays: summary.streakLongestDays, level: summary.level }),
+  );
+
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Olá! 👋</h1>
+          <h1 className="text-2xl font-bold">Olá, {firstName}! 👋</h1>
           <p className="text-zinc-400 text-sm mt-0.5">{dateCapitalized}</p>
         </div>
         <button className="relative p-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-purple-500 transition-colors">
@@ -119,108 +164,92 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Sua Semana */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-            <h2 className="text-sm font-semibold text-zinc-300 mb-4">Sua Semana</h2>
-            <div className="flex items-center justify-between">
-              {WEEKDAY_LABELS.map((label, i) => {
-                const isToday = i === todayIdx;
-                const hadActivity = weekActivity[i];
-                return (
-                  <div key={label} className="flex flex-col items-center gap-2">
-                    <span className="text-zinc-500 text-xs">{label}</span>
-                    <div
-                      className={
-                        isToday
-                          ? "w-9 h-9 rounded-full border-2 border-purple-500 flex items-center justify-center animate-pulse bg-purple-500/20"
-                          : hadActivity
-                          ? "w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center"
-                          : "w-9 h-9 rounded-full border-2 border-zinc-700 flex items-center justify-center"
-                      }
-                    >
-                      {hadActivity && !isToday && <CheckCircle size={16} className="text-white" />}
-                      {isToday && <span className="w-2 h-2 bg-purple-400 rounded-full" />}
-                    </div>
+        {/* Sua Semana */}
+        <div className="order-1 lg:order-none lg:col-span-2 lg:row-start-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+          <h2 className="text-sm font-semibold text-zinc-300 mb-4">Sua Semana</h2>
+          <div className="flex items-center justify-between">
+            {WEEKDAY_LABELS.map((label, i) => {
+              const isToday = i === todayIdx;
+              const hadActivity = weekActivity[i];
+              return (
+                <div key={label} className="flex flex-col items-center gap-2">
+                  <span className="text-zinc-500 text-xs">{label}</span>
+                  <div
+                    className={
+                      isToday
+                        ? "w-9 h-9 rounded-full border-2 border-purple-500 flex items-center justify-center animate-pulse bg-purple-500/20"
+                        : hadActivity
+                        ? "w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center"
+                        : "w-9 h-9 rounded-full border-2 border-zinc-700 flex items-center justify-center"
+                    }
+                  >
+                    {hadActivity && !isToday && <CheckCircle size={16} className="text-white" />}
+                    {isToday && <span className="w-2 h-2 bg-purple-400 rounded-full" />}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Sem carreira escolhida não existe roadmap para continuar */}
-          {!hasCareer && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-              <h2 className="text-sm font-semibold text-zinc-300 mb-4">Comece por aqui</h2>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-2xl shrink-0">
-                  🧭
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white">Escolha sua carreira</p>
-                  <p className="text-zinc-400 text-xs mt-0.5">
-                    O roadmap é o da carreira que você seguir
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate("/app/roadmap")}
-                  className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-                >
-                  Escolher
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Continue de onde parou */}
-          {hasCareer && currentNode && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-              <h2 className="text-sm font-semibold text-zinc-300 mb-4">Continue de onde parou</h2>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-2xl shrink-0">
-                  ⚛️
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white">{currentNode.name}</p>
-                  <p className="text-zinc-400 text-xs mt-0.5">~{currentNode.hours}h estimadas</p>
-                </div>
-                <button
-                  onClick={() => navigate("/app/roadmap")}
-                  className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-                >
-                  Continuar
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Conquistas Recentes */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-            <h2 className="text-sm font-semibold text-zinc-300 mb-4">Conquistas Recentes</h2>
-            <div className="grid grid-cols-3 gap-3">
-              {ACHIEVEMENTS.map((a) => (
-                <div
-                  key={a.title}
-                  className="bg-zinc-800 border border-zinc-700 rounded-xl p-3 flex flex-col items-center text-center gap-2"
-                >
-                  <span className="text-3xl">{a.emoji}</span>
-                  <p className="text-xs font-semibold text-white">{a.title}</p>
-                  <p className="text-zinc-500 text-xs">{a.desc}</p>
-                </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Right column */}
-        <div className="space-y-6">
-          {/* Próxima Sessão ao Vivo */}
-          {nextLive && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-zinc-300">Próxima Sessão ao Vivo</h2>
+        {/* Sem carreira escolhida não existe roadmap para continuar */}
+        {!hasCareer && (
+          <div className="order-2 lg:order-none lg:col-span-2 lg:row-start-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-zinc-300 mb-4">Comece por aqui</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-2xl shrink-0">
+                🧭
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-white">Escolha sua carreira</p>
+                <p className="text-zinc-400 text-xs mt-0.5">
+                  O roadmap é o da carreira que você seguir
+                </p>
+              </div>
+              <button
+                onClick={() => navigate("/app/roadmap")}
+                className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+              >
+                Escolher
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Continue de onde parou */}
+        {hasCareer && currentNode && (
+          <div className="order-2 lg:order-none lg:col-span-2 lg:row-start-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-zinc-300 mb-4">Continue de onde parou</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-2xl shrink-0">
+                ⚛️
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-white">{currentNode.name}</p>
+                <p className="text-zinc-400 text-xs mt-0.5">~{currentNode.hours}h estimadas</p>
+              </div>
+              <button
+                onClick={() => navigate("/app/roadmap")}
+                className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Próxima Sessão ao Vivo — ocupa as linhas 1 e 2 da coluna da direita
+            e estica (align-items: stretch, padrão do grid) até o fim da linha
+            2, que é exatamente o fim do card "Comece por aqui"/"Continue de
+            onde parou" ao lado. O conteúdo do card continua no topo, então o
+            card só cresce para baixo. Sempre aparece — com um estado vazio
+            quando não há nenhuma live agendada, em vez de sumir da tela. */}
+        <div className="order-4 lg:order-none lg:col-start-3 lg:row-start-1 lg:row-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-zinc-300">Próxima Sessão ao Vivo</h2>
+          </div>
+          {nextLive ? (
+            <>
               <div className="w-full h-24 rounded-xl bg-gradient-to-br from-purple-900/60 to-zinc-900 border border-purple-500/20 flex items-center justify-center mb-3">
                 <span className="text-3xl">🎙️</span>
               </div>
@@ -234,32 +263,61 @@ export default function Dashboard() {
               >
                 Ver Detalhes
               </button>
-            </div>
-          )}
-
-          {/* Habilidades em Progresso */}
-          {summary.skills.length > 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-              <h2 className="text-sm font-semibold text-zinc-300 mb-4">Habilidades em Progresso</h2>
-              <div className="space-y-3">
-                {summary.skills.map((skill, i) => (
-                  <div key={skill.name}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-zinc-300">{skill.name}</span>
-                      <span className="text-zinc-500">{skill.pct}%</span>
-                    </div>
-                    <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${SKILL_COLORS[i % SKILL_COLORS.length]} rounded-full transition-all`}
-                        style={{ width: `${skill.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center text-center gap-2 py-4">
+              <span className="text-3xl">📭</span>
+              <p className="font-semibold text-white text-sm">Nenhuma live no radar ainda</p>
+              <p className="text-zinc-500 text-xs">
+                Assim que uma nova sessão ao vivo for agendada, ela aparece por aqui.
+              </p>
             </div>
           )}
         </div>
+
+        {/* Conquistas Recentes */}
+        <div className="order-3 lg:order-none lg:col-span-2 lg:row-start-3 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+          <h2 className="text-sm font-semibold text-zinc-300 mb-4">Conquistas Recentes</h2>
+          {unlockedAchievements.length > 0 ? (
+            <div className="grid grid-cols-3 gap-3">
+              {unlockedAchievements.map((a) => (
+                <div
+                  key={a.title}
+                  className="bg-zinc-800 border border-zinc-700 rounded-xl p-3 flex flex-col items-center text-center gap-2"
+                >
+                  <span className="text-3xl">{a.emoji}</span>
+                  <p className="text-xs font-semibold text-white">{a.title}</p>
+                  <p className="text-zinc-500 text-xs">{a.desc}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-zinc-500 text-xs">Você ainda não desbloqueou nenhuma conquista.</p>
+          )}
+        </div>
+
+        {/* Habilidades em Progresso */}
+        {summary.skills.length > 0 && (
+          <div className="order-5 lg:order-none lg:col-start-3 lg:row-start-3 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-zinc-300 mb-4">Habilidades em Progresso</h2>
+            <div className="space-y-3">
+              {summary.skills.map((skill, i) => (
+                <div key={skill.name}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-zinc-300">{skill.name}</span>
+                    <span className="text-zinc-500">{skill.pct}%</span>
+                  </div>
+                  <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${SKILL_COLORS[i % SKILL_COLORS.length]} rounded-full transition-all`}
+                      style={{ width: `${skill.pct}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

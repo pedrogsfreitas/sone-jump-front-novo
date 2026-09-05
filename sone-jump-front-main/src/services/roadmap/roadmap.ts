@@ -33,8 +33,12 @@ export type Roadmap = {
   nodes: RoadmapNode[];
 };
 
-export function getRoadmap() {
-  return apiRequest<Roadmap>(roadmap_endpoints.list);
+// MOCK: sem back-end no momento. Ainda não existe seleção de carreira
+// mockada, então todo usuário começa sem carreira escolhida — a tela já
+// trata esse estado (mostra o card "Comece por aqui" / "Escolha sua carreira").
+export async function getRoadmap(): Promise<Roadmap> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return { career: null, nodes: [] };
 }
 
 export function updateNodeStatus(nodeId: string, status: "IN_PROGRESS" | "COMPLETED") {

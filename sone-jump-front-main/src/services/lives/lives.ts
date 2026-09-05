@@ -1,4 +1,5 @@
 import { apiRequest } from "../api";
+import { getMockLives } from "../mock/mock-lives-db";
 
 const lives_endpoints = {
   list: "/api/lives",
@@ -41,8 +42,10 @@ export type LiveQuestion = {
   user: { username: string };
 };
 
-export function getLives() {
-  return apiRequest<LiveSession[]>(lives_endpoints.list);
+// MOCK: sem back-end no momento — dados em services/mock/mock-lives-db.ts.
+export async function getLives(): Promise<LiveSession[]> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return getMockLives();
 }
 
 export function getRecordings() {

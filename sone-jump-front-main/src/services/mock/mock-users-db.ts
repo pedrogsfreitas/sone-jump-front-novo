@@ -12,6 +12,8 @@
  */
 
 import type { Role } from "../auth-storage";
+import { getToken, getUserId } from "../auth-storage";
+import { ApiError } from "../api";
 
 const STORAGE_KEY = "mock_users_db";
 
@@ -25,12 +27,51 @@ export type MockUser = {
   password: string;
   role: Role;
   createdAt: string;
+  // Campos de perfil/gamificação — não fazem parte do cadastro em si, mas
+  // toda tela logada (Dashboard, Perfil etc.) espera que já existam desde
+  // a criação da conta. Um usuário novo sempre começa "zerado".
+  bio: string | null;
+  headline: string | null;
+  location: string | null;
+  avatarColor: string;
+  focusMode: boolean;
+  xpTotal: number;
+  level: number;
+  streakCurrentDays: number;
+  streakLongestDays: number;
+  lastAccessAt: string | null;
 };
+
+// Valores padrão dos campos de perfil/gamificação. Servem tanto pra criar um
+// usuário novo quanto pra "curar" registros salvos num formato mais antigo,
+// de antes desses campos existirem (ver normalize() abaixo) — sem isso, toda
+// vez que esse formato ganhar um campo novo, contas já criadas quebrariam a
+// tela ao ler `undefined` onde um número/texto era esperado.
+const DEFAULT_PROFILE_FIELDS = {
+  bio: null,
+  headline: null,
+  location: null,
+  avatarColor: "purple",
+  focusMode: false,
+  xpTotal: 0,
+  level: 1,
+  streakCurrentDays: 0,
+  streakLongestDays: 0,
+  lastAccessAt: null,
+} satisfies Pick<
+  MockUser,
+  "bio" | "headline" | "location" | "avatarColor" | "focusMode" | "xpTotal" | "level" | "streakCurrentDays" | "streakLongestDays" | "lastAccessAt"
+>;
+
+function normalize(user: MockUser): MockUser {
+  return { ...DEFAULT_PROFILE_FIELDS, ...user };
+}
 
 function readAll(): MockUser[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as MockUser[]) : [];
+    const users = raw ? (JSON.parse(raw) as MockUser[]) : [];
+    return users.map(normalize);
   } catch {
     return [];
   }
@@ -65,10 +106,22 @@ export function findConflict(username: string, email: string, cpf: string): Conf
   return "cpf";
 }
 
-export function createUser(data: Omit<MockUser, "id" | "createdAt">): MockUser {
+export type NewUserInput = {
+  fullname: string;
+  username: string;
+  cpf: string;
+  phone: string;
+  email: string;
+  password: string;
+  role: Role;
+};
+
+/** Cria o usuário já com o estado "zerado" de perfil/gamificação. */
+export function createUser(data: NewUserInput): MockUser {
   const users = readAll();
   const user: MockUser = {
     ...data,
+    ...DEFAULT_PROFILE_FIELDS,
     id: nextId(users),
     createdAt: new Date().toISOString(),
   };
@@ -79,6 +132,34 @@ export function createUser(data: Omit<MockUser, "id" | "createdAt">): MockUser {
 export function findByUsername(username: string): MockUser | undefined {
   const normalized = username.trim().toLowerCase();
   return readAll().find((u) => u.username.toLowerCase() === normalized);
+}
+
+function findById(id: number): MockUser | undefined {
+  return readAll().find((u) => u.id === id);
+}
+
+/**
+ * Resolve o usuário logado a partir do token salvo — o equivalente mockado
+ * de "quem é o dono deste Bearer token" que o back faria em cada request.
+ * Lança o mesmo tipo de erro (ApiError 401) que uma chamada real faria sem
+ * sessão válida.
+ */
+export function getCurrentUser(): MockUser {
+  const id = getUserId(getToken());
+  const user = id !== null ? findById(id) : undefined;
+  if (!user) {
+    throw new ApiError("Sessão expirada ou inválida.", 401);
+  }
+  return user;
+}
+
+/** Atualiza campos do usuário logado e persiste. */
+export function updateCurrentUser(patch: Partial<Omit<MockUser, "id" | "createdAt">>): MockUser {
+  const current = getCurrentUser();
+  const users = readAll();
+  const updated: MockUser = { ...current, ...patch };
+  writeAll(users.map((u) => (u.id === current.id ? updated : u)));
+  return updated;
 }
 
 const MOCK_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 dias — folga pra testar as próximas telas sem deslogar
