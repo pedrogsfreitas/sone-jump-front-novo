@@ -10,10 +10,13 @@ import {
   Clock,
   BookOpen,
   Compass,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   getRoadmap,
   updateNodeStatus,
+  confirmStudy,
+  submitNodeQuiz,
   type RoadmapCareer,
   type RoadmapNode,
   type RoadmapNodeStatus,
@@ -67,6 +70,19 @@ export default function Roadmap() {
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [confirmingStudy, setConfirmingStudy] = useState(false);
+  const [submittingQuiz, setSubmittingQuiz] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+  const [quizResult, setQuizResult] = useState<"correct" | "incorrect" | null>(null);
+
+  // Troca a etapa selecionada e já zera o estado do quiz junto, no mesmo
+  // clique — em vez de um useEffect reagindo à mudança depois (o React 19
+  // avisa contra isso: causa uma renderização extra desnecessária).
+  function selectNode(nodeId: string) {
+    setSelectedNodeId(nodeId);
+    setQuizAnswers({});
+    setQuizResult(null);
+  }
 
   useEffect(() => {
     getRoadmap()
@@ -103,6 +119,35 @@ export default function Roadmap() {
     }
   }
 
+  async function handleConfirmStudy(node: RoadmapNode) {
+    setActionError("");
+    setConfirmingStudy(true);
+    try {
+      const updated = await confirmStudy(node.id);
+      setCareer(updated.career);
+      setNodes(updated.nodes);
+    } catch (e) {
+      setActionError(e instanceof ApiError ? e.message : "Erro ao confirmar estudo.");
+    } finally {
+      setConfirmingStudy(false);
+    }
+  }
+
+  async function handleSubmitQuiz(node: RoadmapNode) {
+    setActionError("");
+    setSubmittingQuiz(true);
+    try {
+      const { passed, roadmap } = await submitNodeQuiz(node.id, quizAnswers);
+      setCareer(roadmap.career);
+      setNodes(roadmap.nodes);
+      setQuizResult(passed ? "correct" : "incorrect");
+    } catch (e) {
+      setActionError(e instanceof ApiError ? e.message : "Erro ao corrigir o quiz.");
+    } finally {
+      setSubmittingQuiz(false);
+    }
+  }
+
   if (loading) {
     return <div className="min-h-screen bg-[#050505] text-zinc-400 p-6">Carregando roadmap...</div>;
   }
@@ -117,7 +162,7 @@ export default function Roadmap() {
       <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col">
         <h1 className="text-2xl font-bold mb-6">Roadmap</h1>
         <div className="flex-1 flex items-center justify-center">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-20 max-w-3xl w-full flex flex-col items-center text-center gap-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 max-w-2xl w-full flex flex-col items-center text-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center">
               <Compass size={26} className="text-purple-300" />
             </div>
@@ -129,7 +174,7 @@ export default function Roadmap() {
               </p>
             </div>
             <button
-              onClick={() => navigate("/explore")}                                         
+              onClick={() => navigate("/app/careers")}
               className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-colors"
             >
               Ver carreiras disponíveis
@@ -150,6 +195,12 @@ export default function Roadmap() {
             Trilha completa da carreira {career.title}
           </p>
         </div>
+        <button
+          onClick={() => navigate("/app/careers")}
+          className="shrink-0 text-sm text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 px-4 py-2 rounded-xl transition-colors"
+        >
+          Trocar de carreira
+        </button>
       </div>
 
       {actionError && (
@@ -194,16 +245,16 @@ export default function Roadmap() {
 
                   <div className="flex gap-3 justify-center flex-wrap relative">
                     {nodesByCategory(cat).map((node) => (
-                      <div key={node.id} className="relative">
+                      <div key={node.id} className="flex flex-col items-center gap-1.5">
                         {node.status === "IN_PROGRESS" && (
-                          <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs text-purple-400 whitespace-nowrap">
+                          <div className="flex items-center gap-1 text-xs text-purple-400 whitespace-nowrap">
                             <MapPin size={11} />
                             <span>Você está aqui</span>
                           </div>
                         )}
                         <div
                           className={nodeClasses(node.status, selectedNodeId === node.id)}
-                          onClick={() => setSelectedNodeId(node.id)}
+                          onClick={() => selectNode(node.id)}
                         >
                           {statusIcon(node.status)}
                           {node.name}
@@ -277,13 +328,101 @@ export default function Roadmap() {
                 </div>
               )}
 
-              {(selectedNode.status === "AVAILABLE" || selectedNode.status === "IN_PROGRESS") && (
+              {selectedNode.status === "IN_PROGRESS" && (
+                <div className="mt-5 pt-5 border-t border-zinc-800">
+                  <div className="flex items-center gap-2 text-zinc-300 text-sm font-semibold mb-3">
+                    <ClipboardCheck size={14} />
+                    Validação da etapa
+                  </div>
+
+                  {/* Estudo (autodeclarado, por enquanto) */}
+                  <div
+                    className={`flex items-center justify-between gap-2 p-3 rounded-xl border mb-3 ${
+                      selectedNode.studyConfirmed
+                        ? "border-green-500/30 bg-green-500/5"
+                        : "border-zinc-700 bg-zinc-800/50"
+                    }`}
+                  >
+                    <span className={`text-xs ${selectedNode.studyConfirmed ? "text-green-400" : "text-zinc-400"}`}>
+                      {selectedNode.studyConfirmed ? "✓ Conteúdo estudado" : "Estudei o conteúdo desta etapa"}
+                    </span>
+                    {!selectedNode.studyConfirmed && (
+                      <button
+                        onClick={() => handleConfirmStudy(selectedNode)}
+                        disabled={confirmingStudy}
+                        className="shrink-0 text-xs bg-zinc-700 hover:bg-zinc-600 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        Marcar
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Quiz de validação */}
+                  <div className="p-3 rounded-xl border border-zinc-700 bg-zinc-800/50">
+                    {selectedNode.quizPassed ? (
+                      <p className="text-xs text-green-400">✓ Quiz concluído</p>
+                    ) : (
+                      <>
+                        {selectedNode.quiz.map((q) => (
+                          <div key={q.id} className="mb-3 last:mb-0">
+                            <p className="text-xs text-zinc-300 font-medium mb-2">{q.prompt}</p>
+                            <div className="flex flex-col gap-1.5">
+                              {q.options.map((opt) => (
+                                <button
+                                  key={opt.id}
+                                  onClick={() => setQuizAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
+                                  className={`text-left text-xs px-3 py-2 rounded-lg border transition-colors ${
+                                    quizAnswers[q.id] === opt.id
+                                      ? "border-purple-500 bg-purple-500/10 text-white"
+                                      : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+                                  }`}
+                                >
+                                  {opt.text}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+
+                        {quizResult === "incorrect" && (
+                          <p className="text-xs text-red-400 mb-2">
+                            Não foi dessa vez. Revise o conteúdo e tente de novo.
+                          </p>
+                        )}
+                        <button
+                          onClick={() => handleSubmitQuiz(selectedNode)}
+                          disabled={submittingQuiz || selectedNode.quiz.some((q) => !quizAnswers[q.id])}
+                          className="w-full text-xs bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg transition-colors mt-1"
+                        >
+                          {submittingQuiz ? "Corrigindo..." : "Responder quiz"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {selectedNode.status === "AVAILABLE" && (
                 <button
                   disabled={updating}
                   onClick={() => handleAdvance(selectedNode)}
                   className="mt-6 w-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium py-2 rounded-xl transition-colors disabled:opacity-50"
                 >
-                  {selectedNode.status === "AVAILABLE" ? "Começar" : "Marcar como concluído"}
+                  Começar
+                </button>
+              )}
+              {selectedNode.status === "IN_PROGRESS" && (
+                <button
+                  disabled={updating || !selectedNode.studyConfirmed || !selectedNode.quizPassed}
+                  onClick={() => handleAdvance(selectedNode)}
+                  title={
+                    !selectedNode.studyConfirmed || !selectedNode.quizPassed
+                      ? "Complete a validação da etapa acima para concluir"
+                      : undefined
+                  }
+                  className="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium py-2 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Marcar como concluído
                 </button>
               )}
               {selectedNode.status === "COMPLETED" && (
@@ -341,7 +480,7 @@ export default function Roadmap() {
                           i < catNodes.length - 1 ? "border-b border-zinc-800/50" : ""
                         }`}
                         onClick={() => {
-                          setSelectedNodeId(node.id);
+                          selectNode(node.id);
                           setActiveTab("mapa");
                         }}
                       >

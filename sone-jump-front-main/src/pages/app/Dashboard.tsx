@@ -63,6 +63,8 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
   const [weekActivity, setWeekActivity] = useState<boolean[]>([]);
   const [currentNode, setCurrentNode] = useState<RoadmapNode | null>(null);
+  const [nextAvailableNode, setNextAvailableNode] = useState<RoadmapNode | null>(null);
+  const [roadmapAllCompleted, setRoadmapAllCompleted] = useState(false);
   const [hasCareer, setHasCareer] = useState(true);
   const [completedNodes, setCompletedNodes] = useState(0);
   const [nextLive, setNextLive] = useState<LiveSession | null>(null);
@@ -81,6 +83,10 @@ export default function Dashboard() {
         );
 
         setCurrentNode(roadmap.nodes.find((n) => n.status === "IN_PROGRESS") ?? null);
+        setNextAvailableNode(roadmap.nodes.find((n) => n.status === "AVAILABLE") ?? null);
+        setRoadmapAllCompleted(
+          roadmap.nodes.length > 0 && roadmap.nodes.every((n) => n.status === "COMPLETED"),
+        );
         setCompletedNodes(roadmap.nodes.filter((n) => n.status === "COMPLETED").length);
 
         const upcoming = lives
@@ -233,6 +239,52 @@ export default function Dashboard() {
                 className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
               >
                 Continuar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Terminou a etapa anterior, mas ainda não começou a próxima (que já
+            está liberada) — sem isso o espaço fica vazio e desalinha o card
+            de lives ao lado. */}
+        {hasCareer && !currentNode && nextAvailableNode && (
+          <div className="order-2 lg:order-none lg:col-span-2 lg:row-start-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-zinc-300 mb-4">Próxima etapa liberada</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-2xl shrink-0">
+                🔓
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-white">{nextAvailableNode.name}</p>
+                <p className="text-zinc-400 text-xs mt-0.5">~{nextAvailableNode.hours}h estimadas</p>
+              </div>
+              <button
+                onClick={() => navigate("/app/roadmap")}
+                className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+              >
+                Começar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Todas as etapas concluídas — roadmap inteiro finalizado. */}
+        {hasCareer && !currentNode && !nextAvailableNode && roadmapAllCompleted && (
+          <div className="order-2 lg:order-none lg:col-span-2 lg:row-start-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-zinc-300 mb-4">Roadmap concluído</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-green-600/20 border border-green-500/30 flex items-center justify-center text-2xl shrink-0">
+                🎉
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-white">Você concluiu todas as etapas!</p>
+                <p className="text-zinc-400 text-xs mt-0.5">Que tal explorar uma nova carreira?</p>
+              </div>
+              <button
+                onClick={() => navigate("/app/careers")}
+                className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+              >
+                Ver carreiras
               </button>
             </div>
           </div>

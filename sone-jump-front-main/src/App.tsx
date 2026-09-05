@@ -18,6 +18,9 @@ import Mentoria from './pages/app/Mentoria'
 import Lives from './pages/app/Lives'
 import Profile from './pages/app/Profile'
 import Planos from './pages/app/Planos'
+import ChooseCareer from './pages/app/ChooseCareer'
+import CareerQuizIntro from './pages/app/CareerQuizIntro'
+import CareerQuiz from './pages/app/CareerQuiz'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminTrilhas from './pages/admin/AdminTrilhas'
@@ -49,6 +52,9 @@ export default function App() {
           <Route path="lives" element={<Lives />} />
           <Route path="profile" element={<Profile />} />
           <Route path="planos" element={<Planos />} />
+          <Route path="careers" element={<ChooseCareer />} />
+          <Route path="careers/quiz-intro" element={<CareerQuizIntro />} />
+          <Route path="careers/quiz" element={<CareerQuiz />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>

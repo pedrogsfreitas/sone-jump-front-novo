@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-export default function QuizIntro() {
+export default function CareerQuizIntro() {
   const navigate = useNavigate();
 
   return (
@@ -29,13 +29,13 @@ export default function QuizIntro() {
 
           <div className="pt-8">
             <button
-              onClick={() => navigate("/quiz")}
+              onClick={() => navigate("/app/careers/quiz")}
               className="bg-purple-600 hover:bg-purple-500 text-white font-black px-12 py-5 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-sm shadow-lg shadow-purple-900/40"
             >
               Começar Questionário
             </button>
             <p className="text-zinc-600 text-xs mt-6 uppercase tracking-widest font-bold">
-              5 perguntas rápidas • Resultados imediatos
+              4 perguntas rápidas • Resultado imediato
             </p>
           </div>
         </div>
