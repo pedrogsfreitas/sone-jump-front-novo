@@ -1,12 +1,12 @@
-import { apiRequest } from "../api";
+import { ApiError } from "../api";
 import { getCurrentUser } from "../mock/mock-users-db";
+import { createMockGoal, deleteMockGoal, getMockGoals, updateMockGoal } from "../mock/mock-goals-db";
 
-const progress_endpoints = {
-  summary: "/api/progress/summary",
-  sessions: "/api/progress/sessions",
-  goals: "/api/progress/goals",
-  goal: (id: number) => `/api/progress/goals/${id}`,
-};
+// Endpoints reais (voltam a ser usados quando o back for plugado de novo):
+// GET    /api/progress/goals
+// POST   /api/progress/goals
+// PATCH  /api/progress/goals/:id
+// DELETE /api/progress/goals/:id
 
 export type ProgressSummary = {
   xpTotal: number;
@@ -63,24 +63,29 @@ export async function getSessions(): Promise<StudySession[]> {
   return [];
 }
 
-export function getGoals() {
-  return apiRequest<Goal[]>(progress_endpoints.goals);
+// MOCK: sem back-end no momento — dados em services/mock/mock-goals-db.ts.
+export async function getGoals(): Promise<Goal[]> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const user = getCurrentUser();
+  return getMockGoals(user.id);
 }
 
-export function createGoal(params: { title: string; targetPct?: number; dueDate?: string }) {
-  return apiRequest<Goal, typeof params>(progress_endpoints.goals, {
-    method: "POST",
-    body: params,
-  });
+export async function createGoal(params: { title: string; targetPct?: number; dueDate?: string }): Promise<Goal> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const user = getCurrentUser();
+  return createMockGoal(user.id, params);
 }
 
-export function updateGoal(goalId: number, currentPct: number) {
-  return apiRequest<Goal, { currentPct: number }>(progress_endpoints.goal(goalId), {
-    method: "PATCH",
-    body: { currentPct },
-  });
+export async function updateGoal(goalId: number, currentPct: number): Promise<Goal> {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  const user = getCurrentUser();
+  const updated = updateMockGoal(user.id, goalId, currentPct);
+  if (!updated) throw new ApiError("Meta não encontrada.", 404);
+  return updated;
 }
 
-export function deleteGoal(goalId: number) {
-  return apiRequest<void>(progress_endpoints.goal(goalId), { method: "DELETE" });
+export async function deleteGoal(goalId: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  const user = getCurrentUser();
+  deleteMockGoal(user.id, goalId);
 }
