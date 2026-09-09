@@ -1,10 +1,11 @@
-import { apiRequest } from "../api";
+import { getCurrentUser } from "../mock/mock-users-db";
+import { getMockBookmarkedContent, getMockCatalog, setMockBookmark } from "../mock/mock-catalog-db";
 
-const catalog_endpoints = {
-  list: "/api/catalog",
-  bookmarks: "/api/catalog/bookmarks",
-  bookmark: (id: number) => `/api/catalog/${id}/bookmark`,
-};
+// Endpoints reais (voltam a ser usados quando o back for plugado de novo):
+// GET    /api/catalog
+// GET    /api/catalog/bookmarks
+// PUT    /api/catalog/:id/bookmark
+// DELETE /api/catalog/:id/bookmark
 
 export type ContentType = "CURSO" | "VIDEO" | "ARTIGO" | "PROJETO";
 export type ContentPlatform =
@@ -34,31 +35,33 @@ export type ContentItem = {
   bookmarked: boolean;
 };
 
-// Prisma's Decimal fields (rating) serialize to JSON as strings, not numbers —
-// normalize once here so every caller can treat `rating` as a real number.
-type RawContentItem = Omit<ContentItem, "rating"> & { rating: number | string };
-function normalize(item: RawContentItem): ContentItem {
-  return { ...item, rating: Number(item.rating) };
+// MOCK: sem back-end no momento — dados em services/mock/mock-catalog-db.ts.
+// Catalog.tsx já faz a filtragem no cliente, mas aplicamos os filtros aqui
+// também para manter a função fiel ao contrato original (que aceitava filtro
+// via querystring no back real).
+export async function getCatalog(filters?: { type?: ContentType; platform?: ContentPlatform }): Promise<ContentItem[]> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const user = getCurrentUser();
+  let items = getMockCatalog(user.id);
+  if (filters?.type) items = items.filter((i) => i.type === filters.type);
+  if (filters?.platform) items = items.filter((i) => i.platform === filters.platform);
+  return items;
 }
 
-export async function getCatalog(filters?: { type?: ContentType; platform?: ContentPlatform }) {
-  const params = new URLSearchParams();
-  if (filters?.type) params.set("type", filters.type);
-  if (filters?.platform) params.set("platform", filters.platform);
-  const query = params.toString();
-  const items = await apiRequest<RawContentItem[]>(`${catalog_endpoints.list}${query ? `?${query}` : ""}`);
-  return items.map(normalize);
+export async function getBookmarkedContent(): Promise<ContentItem[]> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const user = getCurrentUser();
+  return getMockBookmarkedContent(user.id);
 }
 
-export async function getBookmarkedContent() {
-  const items = await apiRequest<RawContentItem[]>(catalog_endpoints.bookmarks);
-  return items.map(normalize);
+export async function addBookmark(contentId: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  const user = getCurrentUser();
+  setMockBookmark(user.id, contentId, true);
 }
 
-export function addBookmark(contentId: number) {
-  return apiRequest<void>(catalog_endpoints.bookmark(contentId), { method: "PUT" });
-}
-
-export function removeBookmark(contentId: number) {
-  return apiRequest<void>(catalog_endpoints.bookmark(contentId), { method: "DELETE" });
+export async function removeBookmark(contentId: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  const user = getCurrentUser();
+  setMockBookmark(user.id, contentId, false);
 }
