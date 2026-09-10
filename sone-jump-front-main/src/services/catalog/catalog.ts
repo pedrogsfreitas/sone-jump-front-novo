@@ -23,9 +23,9 @@ export type ContentItem = {
   title: string;
   platform: ContentPlatform;
   type: ContentType;
-  durationMinutes: number;
+  durationMinutes: number | null;
   level: ContentLevel;
-  rating: number;
+  rating: number | null;
   description: string;
   url: string | null;
   thumbnailEmoji: string | null;
@@ -36,9 +36,11 @@ export type ContentItem = {
 
 // Prisma's Decimal fields (rating) serialize to JSON as strings, not numbers —
 // normalize once here so every caller can treat `rating` as a real number.
-type RawContentItem = Omit<ContentItem, "rating"> & { rating: number | string };
+// Conteúdo gratuito não tem nota de onde tirar, então `null` é um valor legítimo:
+// a tela esconde as estrelas em vez de mostrar 0,0.
+type RawContentItem = Omit<ContentItem, "rating"> & { rating: number | string | null };
 function normalize(item: RawContentItem): ContentItem {
-  return { ...item, rating: Number(item.rating) };
+  return { ...item, rating: item.rating === null ? null : Number(item.rating) };
 }
 
 export async function getCatalog(filters?: { type?: ContentType; platform?: ContentPlatform }) {

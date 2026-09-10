@@ -1,0 +1,113 @@
+{
+  "career": "frontend",
+  "content": [
+    {
+      "key": "cev-html5-css3-m1",
+      "title": "Curso em Vídeo — HTML5 e CSS3 (Módulo 1)",
+      "platform": "YOUTUBE",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Curso gratuito e em português que parte do zero: como uma página é estruturada, o que o navegador faz com ela e como aplicar estilo. É a porta de entrada mais usada no Brasil para quem nunca escreveu HTML.",
+      "url": "https://www.cursoemvideo.com/curso/html5-css3-modulo1/",
+      "durationMinutes": 2400,
+      "thumbnailEmoji": "🧱",
+      "syllabus": [
+        "Como a web funciona",
+        "Estrutura de um documento HTML",
+        "Texto, links e imagens",
+        "Primeiros estilos com CSS"
+      ]
+    },
+    {
+      "key": "mdn-estruturar-conteudo",
+      "title": "MDN — Estruturando conteúdo com HTML",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "A referência canônica de HTML, em português. Serve para consultar enquanto se pratica: qual elemento usar em cada caso e por que a semântica importa para acessibilidade.",
+      "url": "https://developer.mozilla.org/pt-BR/docs/Learn_web_development/Core/Structuring_content",
+      "thumbnailEmoji": "📘",
+      "prerequisites": []
+    },
+    {
+      "key": "mdn-css",
+      "title": "MDN — Referência de CSS",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "Referência completa de propriedades CSS, em português. É o lugar para tirar dúvida pontual de sintaxe e comportamento, não para ler de ponta a ponta.",
+      "url": "https://developer.mozilla.org/pt-BR/docs/Web/CSS",
+      "thumbnailEmoji": "🎨"
+    },
+    {
+      "key": "webdev-learn-css",
+      "title": "web.dev — Learn CSS",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Curso do time do Chrome que explica o modelo de layout do CSS a fundo — box model, cascata, especificidade. Cobre a parte que costuma ficar mal resolvida em quem aprendeu só copiando exemplos.",
+      "url": "https://web.dev/learn/css",
+      "thumbnailEmoji": "📐",
+      "prerequisites": ["HTML básico"]
+    },
+    {
+      "key": "fcc-responsive-web-design",
+      "title": "freeCodeCamp — Responsive Web Design",
+      "platform": "FREECODECAMP",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Certificação gratuita construída em cima de projetos: cada etapa é resolvida escrevendo código no próprio navegador, com correção automática. Ao final há projetos avaliados que servem de portfólio.",
+      "url": "https://www.freecodecamp.org/learn/responsive-web-design/",
+      "durationMinutes": 18000,
+      "thumbnailEmoji": "📱",
+      "syllabus": [
+        "HTML semântico",
+        "Formulários e acessibilidade",
+        "Flexbox",
+        "CSS Grid",
+        "Projetos de certificação"
+      ]
+    },
+    {
+      "key": "mdn-responsive-design",
+      "title": "MDN — Design responsivo",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Explica media queries, unidades relativas e imagens responsivas. Em português, e direto ao ponto de como fazer um layout servir a telas de tamanhos diferentes.",
+      "url": "https://developer.mozilla.org/pt-BR/docs/Learn_web_development/Core/CSS_layout/Responsive_Design",
+      "thumbnailEmoji": "📏",
+      "prerequisites": ["CSS básico"]
+    },
+    {
+      "key": "webdev-learn-design",
+      "title": "web.dev — Learn Responsive Design",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Curso focado só em responsividade, com as técnicas modernas de layout que dispensam boa parte das media queries. Complementa o material da MDN mostrando o porquê das escolhas.",
+      "url": "https://web.dev/learn/design",
+      "thumbnailEmoji": "🖥️",
+      "prerequisites": ["CSS básico"]
+    }
+  ],
+  "nodes": [
+    {
+      "node": "html-css",
+      "resources": [
+        "cev-html5-css3-m1",
+        "mdn-estruturar-conteudo",
+        "mdn-css",
+        "webdev-learn-css"
+      ]
+    },
+    {
+      "node": "responsividade",
+      "resources": [
+        "fcc-responsive-web-design",
+        "mdn-responsive-design",
+        "webdev-learn-design"
+      ]
+    }
+  ]
+}

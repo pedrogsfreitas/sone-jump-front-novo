@@ -70,34 +70,34 @@ model User {
   updatedAt    DateTime  @updatedAt
   lastAccessAt DateTime?
 
-  refreshTokens        RefreshToken[]
-  passwordResetTokens  PasswordResetToken[]
+  refreshTokens           RefreshToken[]
+  passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
-  onboardingProfile    OnboardingProfile?
-  roadmapProgress      UserRoadmapProgress[]
-  skillProgress        UserSkillProgress[]
-  bookmarks            UserBookmark[]
-  studySessions        StudySession[]
-  goals                Goal[]
-  challengeCompletions UserChallengeCompletion[]
-  certifications       UserCertification[]
-  portfolioProjects    PortfolioProject[]
-  posts                Post[]
-  postLikes            PostLike[]
-  postComments         PostComment[]
-  groupMemberships     GroupMember[]
-  jobApplications      JobApplication[]
-  mentorProfile        Mentor?
-  mentorshipsAsMentee  MentorshipSession[]       @relation("MenteeSessions")
-  liveQuestions        LiveQuestion[]
-  liveQuestionVotes    LiveQuestionVote[]
-  hostedLives          LiveSession[]             @relation("LiveHost")
-  subscriptions        Subscription[]
-  referralCode         ReferralCode?
-  referralsMade        Referral[]                @relation("Referrer")
-  referralReceived     Referral?                 @relation("Referred")
-  auditLogs            AuditLog[]
-  notifications        Notification[]
+  onboardingProfile       OnboardingProfile?
+  roadmapProgress         UserRoadmapProgress[]
+  skillProgress           UserSkillProgress[]
+  bookmarks               UserBookmark[]
+  studySessions           StudySession[]
+  goals                   Goal[]
+  challengeCompletions    UserChallengeCompletion[]
+  certifications          UserCertification[]
+  portfolioProjects       PortfolioProject[]
+  posts                   Post[]
+  postLikes               PostLike[]
+  postComments            PostComment[]
+  groupMemberships        GroupMember[]
+  jobApplications         JobApplication[]
+  mentorProfile           Mentor?
+  mentorshipsAsMentee     MentorshipSession[]       @relation("MenteeSessions")
+  liveQuestions           LiveQuestion[]
+  liveQuestionVotes       LiveQuestionVote[]
+  hostedLives             LiveSession[]             @relation("LiveHost")
+  subscriptions           Subscription[]
+  referralCode            ReferralCode?
+  referralsMade           Referral[]                @relation("Referrer")
+  referralReceived        Referral?                 @relation("Referred")
+  auditLogs               AuditLog[]
+  notifications           Notification[]
 
   @@index([role])
   @@index([careerId])
@@ -274,6 +274,12 @@ model RoadmapNodeResource {
   id              Int              @id @default(autoincrement())
   nodeId          String
   node            RoadmapNode      @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  // Aponta para a biblioteca do catalogo quando o recurso e um conteudo curado.
+  // Nulo continua valendo: link avulso que nao merece entrada propria no catalogo.
+  // O mesmo video de logica serve a FUNDAMENTOS de varias carreiras; sem esta
+  // referencia o link seria duplicado em cada uma e consertado em cada uma.
+  contentItemId   Int?
+  contentItem     ContentItem?     @relation(fields: [contentItemId], references: [id], onDelete: SetNull)
   label           String
   url             String?
   orderIndex      Int              @default(0)
@@ -283,6 +289,7 @@ model RoadmapNodeResource {
   free            Boolean          @default(true)
 
   @@index([nodeId, orderIndex])
+  @@index([contentItemId])
 }
 
 enum RoadmapNodeStatus {
@@ -347,6 +354,11 @@ enum ContentType {
 }
 
 enum ContentPlatform {
+  // DOCUMENTACAO e FREECODECAMP entram porque a curadoria e de conteudo gratuito.
+  // ALURA/UDEMY/ROCKETSEAT ficam no enum para quando houver parceria, mas nao devem
+  // ser usadas: hoje nao temos acordo com nenhuma delas.
+  DOCUMENTACAO
+  FREECODECAMP
   ALURA
   UDEMY
   YOUTUBE
@@ -371,12 +383,18 @@ enum ContentStatus {
 
 model ContentItem {
   id              Int             @id @default(autoincrement())
+  // Chave estavel do arquivo de curadoria (prisma/content/*.json). E o que torna a
+  // importacao idempotente: reimportar atualiza a linha em vez de duplicar.
+  externalKey     String?         @unique
   title           String
   platform        ContentPlatform
   type            ContentType
-  durationMinutes Int
+  // Opcionais de proposito: conteudo gratuito nem sempre tem duracao que signifique
+  // algo (uma pagina de documentacao) e nao tem nota de onde tirar. Obrigatorios,
+  // eles forcariam inventar o valor na hora de cadastrar.
+  durationMinutes Int?
   level           ContentLevel
-  rating          Decimal         @default(0) @db.Decimal(2, 1)
+  rating          Decimal?        @db.Decimal(2, 1)
   description     String
   url             String?
   thumbnailEmoji  String?
@@ -384,9 +402,10 @@ model ContentItem {
   status          ContentStatus   @default(PUBLICADO)
   createdAt       DateTime        @default(now())
 
-  prerequisites ContentPrerequisite[]
-  syllabus      ContentSyllabusItem[]
-  bookmarks     UserBookmark[]
+  prerequisites    ContentPrerequisite[]
+  syllabus         ContentSyllabusItem[]
+  bookmarks        UserBookmark[]
+  roadmapResources RoadmapNodeResource[]
 }
 
 model ContentPrerequisite {
@@ -487,11 +506,11 @@ model UserChallengeCompletion {
 /// Amarrar a [careerId, category] é o que a torna derivável do roadmap — não há
 /// critério paralelo para manter em sincronia com o conteúdo.
 model Certification {
-  id          Int             @id @default(autoincrement())
-  name        String          @unique
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
   description String?
   careerId    String?
-  career      Career?         @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  career      Career?          @relation(fields: [careerId], references: [id], onDelete: Cascade)
   category    RoadmapCategory?
 
   earnedBy UserCertification[]

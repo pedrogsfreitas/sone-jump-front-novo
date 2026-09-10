@@ -36,10 +36,13 @@ export class CreateContentDto {
   @IsEnum(ContentType)
   type: ContentType;
 
+  // Opcional: duração não significa nada para uma página de documentação, e
+  // exigi-la obrigaria quem cadastra a inventar um número.
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(6000)
-  durationMinutes: number;
+  durationMinutes?: number;
 
   @IsEnum(ContentLevel)
   level: ContentLevel;

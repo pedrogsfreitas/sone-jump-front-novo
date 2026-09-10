@@ -58,7 +58,10 @@ const LEVEL_COLORS: Record<ContentItem["level"], string> = {
   AVANCADO: "bg-red-500/20 text-red-300 border-red-500/30",
 };
 
-function Stars({ rating }: { rating: number }) {
+// Sem nota, não renderiza nada. Conteúdo gratuito não tem avaliação de onde vir,
+// e mostrar "0,0" seria pior do que não mostrar: parece conteúdo ruim.
+function Stars({ rating }: { rating: number | null }) {
+  if (rating === null) return null
   return (
     <div className="flex items-center gap-1">
       <Star size={12} className="fill-yellow-400 text-yellow-400" />
@@ -196,10 +199,12 @@ export default function Catalog() {
                   {item.title}
                 </h3>
                 <div className="flex items-center gap-3 text-zinc-400 text-xs">
-                  <span className="flex items-center gap-1">
-                    <Clock size={11} />
-                    {formatDuration(item.durationMinutes)}
-                  </span>
+                  {item.durationMinutes !== null && (
+                    <span className="flex items-center gap-1">
+                      <Clock size={11} />
+                      {formatDuration(item.durationMinutes)}
+                    </span>
+                  )}
                   <span className={`px-2 py-0.5 rounded-full border text-xs ${LEVEL_COLORS[item.level]}`}>
                     {LEVEL_LABELS[item.level]}
                   </span>
@@ -251,10 +256,12 @@ export default function Catalog() {
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${LEVEL_COLORS[item.level]}`}>
                   {LEVEL_LABELS[item.level]}
                 </span>
-                <span className="flex items-center gap-1 text-zinc-500 text-xs">
-                  <Clock size={10} />
-                  {formatDuration(item.durationMinutes)}
-                </span>
+                {item.durationMinutes !== null && (
+                  <span className="flex items-center gap-1 text-zinc-500 text-xs">
+                    <Clock size={10} />
+                    {formatDuration(item.durationMinutes)}
+                  </span>
+                )}
                 <span className="flex items-center gap-1">
                   <BarChart2 size={10} className="text-zinc-500" />
                   <Stars rating={item.rating} />
@@ -328,14 +335,18 @@ export default function Catalog() {
               <h2 className="text-lg font-bold text-white mb-3">{modal.title}</h2>
 
               <div className="flex items-center gap-4 text-sm text-zinc-400 mb-4">
-                <span className="flex items-center gap-1">
-                  <Clock size={13} />
-                  {formatDuration(modal.durationMinutes)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Star size={13} className="fill-yellow-400 text-yellow-400" />
-                  {modal.rating.toFixed(1)}
-                </span>
+                {modal.durationMinutes !== null && (
+                  <span className="flex items-center gap-1">
+                    <Clock size={13} />
+                    {formatDuration(modal.durationMinutes)}
+                  </span>
+                )}
+                {modal.rating !== null && (
+                  <span className="flex items-center gap-1">
+                    <Star size={13} className="fill-yellow-400 text-yellow-400" />
+                    {modal.rating.toFixed(1)}
+                  </span>
+                )}
               </div>
 
               <p className="text-zinc-400 text-sm leading-relaxed mb-4">{modal.description}</p>
