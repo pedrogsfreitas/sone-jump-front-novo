@@ -32,6 +32,10 @@ jobs:
   regenerar:
     name: regenerar e validar
     runs-on: ubuntu-latest
+    # So o repositorio canonico regenera e commita. Sem esta guarda, o fork roda
+    # o mesmo workflow em paralelo e gera um commit proprio: mesmo conteudo, SHA
+    # diferente, e os dois historicos divergem a cada mudanca de dependencia.
+    if: github.event.repository.fork != true
 
     steps:
       - uses: actions/checkout@v5
