@@ -1,52 +1,47 @@
 # sone-jump-back
 
-Back-end da plataforma JUMP. NestJS + PostgreSQL + Prisma. Ver o plano de
-arquitetura completo (todas as fases) em `C:\Users\pedro\.claude\plans\lucky-moseying-planet.md`.
+Back-end da plataforma JUMP. NestJS + PostgreSQL (Neon) + Prisma.
 
-## Rodando localmente
+## Setup
 
-1. Banco de dados local (gerenciado pelo próprio Prisma, sem precisar de Docker):
-   ```
-   npx prisma dev -d --name sone-jump-dev
-   ```
-   Isso sobe um Postgres local persistente. Rode `npx prisma dev ls` para ver a
-   connection string se precisar recriar o `.env`.
+O banco é **compartilhado** (Neon). Não suba banco local.
 
-   Se preferir Postgres via Docker (mais próximo de produção), suba um container
-   `postgres:16` manualmente e aponte `DATABASE_URL` para ele — o schema é o mesmo.
+1. Peça o `.env` a quem já está no projeto e coloque na raiz de `sone-jump-back/`.
+   **Não rode `gen-env.cjs`** — os segredos de CPF precisam ser idênticos entre
+   todos, senão os dados já gravados ficam ilegíveis.
 
-2. Variáveis de ambiente:
-   ```
-   node scripts/gen-env.cjs
-   ```
-   Gera um `.env` com segredos aleatórios (JWT, HMAC/AES da criptografia de CPF).
-   Nunca commitar o `.env` (já está no `.gitignore`). `.env.example` documenta o
-   formato esperado de cada variável.
-
-3. Migração + client:
-   ```
-   npx prisma migrate dev
+2. ```
+   npm install
    npx prisma generate
-   ```
-   Se `migrate dev` falhar com `type "X" already exists` na *shadow database*, é uma
-   incompatibilidade conhecida entre `prisma migrate dev` (que precisa criar um banco
-   temporário para calcular o diff) e o Postgres gerenciado do `npx prisma dev`. Nesse
-   caso, use `npx prisma db push` para desenvolvimento local (aplica o schema direto,
-   sem gerar arquivo de migração) — reserve `migrate dev` de verdade para quando o
-   projeto estiver rodando num Postgres real (Docker ou hospedado).
-
-4. Subir a API:
-   ```
    npm run start:dev
    ```
-   API em `http://localhost:8080/api`, health check em `/api/health`, Swagger em
-   `/api/docs` (desabilitado em produção).
+
+API em `http://localhost:8080/api`, health em `/api/health`, Swagger em `/api/docs`.
+
+### Banco novo (só na primeira vez que alguém cria um)
+
+```
+node scripts/gen-env.cjs "<DATABASE_URL direta do Neon, host sem -pooler>"
+npx prisma migrate deploy
+npm run db:seed
+```
+
+Seed cria um admin: `admin` / `AdminSeed123`.
+
+### Mudou o schema?
+
+```
+npx prisma migrate dev --name descricao_da_mudanca
+```
+
+Nunca use `prisma db push`: ele aplica o schema sem gerar arquivo de migration,
+e o banco de quem clonar o repositório fica incompleto.
 
 ## Testes
 
 - `npm test` — unitários (ex.: `src/auth/auth.service.spec.ts`).
-- `npm run test:e2e` — fluxo completo via HTTP contra o banco local (registro →
-  login → refresh com rotação → perfil). Precisa do banco local rodando.
+- `npm run test:e2e` — fluxo completo via HTTP (registro → login → refresh com
+  rotação → perfil). Roda contra o banco configurado no `.env`.
 
 ## O que já existe (Fase 1)
 
@@ -159,7 +154,11 @@ recebe 403, sem token recebe 401.
 - **Conteúdo**: CRUD completo sobre o catálogo, agora com `status`
   (Publicado/Rascunho/Arquivado) — testei que rascunho fica invisível no
   `/api/catalog` público e só aparece depois de publicado.
-- **Trilhas**: CRUD de `Trail`+`TrailModule`. **Limitação documentada**:
+- **Trilhas**: ~~CRUD de `Trail`+`TrailModule`~~ — **removido em 09/09/2026**
+  (migration `drop_trails`). Era um agrupamento administrativo sem vínculo com o
+  progresso de ninguém, e desde que as seis carreiras ganharam roadmap completo o
+  conceito ficou redundante. O texto abaixo fica como registro do que existia:
+  CRUD de `Trail`+`TrailModule`. **Limitação documentada**:
   `enrolled`/`completion` retornam 0 — não existe rastreamento de matrícula
   por trilha ainda (o progresso real do usuário é no `RoadmapNode`, que é uma
   entidade separada). Conectar os dois é trabalho futuro, não escondido.

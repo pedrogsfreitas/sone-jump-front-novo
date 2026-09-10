@@ -1,0 +1,36 @@
+# Sobe front e back em contêineres. O banco NÃO está aqui: é o Neon (gerenciado,
+# compartilhado pelo time), e a connection string vem do sone-jump-back/.env.
+#
+#   docker compose up --build
+#
+# Front em http://localhost:5173, API em http://localhost:8080/api.
+
+services:
+  back:
+    build:
+      context: ./sone-jump-back
+    # Traz DATABASE_URL e os segredos (JWT, cookie, CPF). O arquivo não está no git —
+    # peça a quem já está no projeto.
+    env_file:
+      - ./sone-jump-back/.env
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      # Precisa bater com a porta publicada do front abaixo.
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  front:
+    build:
+      context: ./sone-jump-front-main
+      args:
+        # Compilado no bundle: é o navegador do usuário que chama a API, então o
+        # endereço tem que ser alcançável de fora do compose — não `http://back:8080`.
+        VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:80"
+    depends_on:
+      - back
+    restart: unless-stopped

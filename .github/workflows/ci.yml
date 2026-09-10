@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Um push novo no mesmo branch cancela a execução anterior, que já está obsoleta.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  back:
+    name: back-end
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sone-jump-back
+
+    env:
+      # Os testes unitários mockam o Prisma e não abrem conexão — esta URL só existe
+      # porque o `prisma.config.ts` lê a variável ao carregar. O banco real (Neon)
+      # nunca é tocado pela CI: seria o banco compartilhado do time.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: sone-jump-back/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar client do Prisma
+        # Precisa vir antes do lint e do build: metade dos imports do projeto aponta
+        # para `generated/prisma`, que não está no git.
+        run: npx prisma generate
+
+      - name: Lint
+        # Script separado: o `lint` local usa --fix, que na CI mascararia problemas.
+        run: npm run lint:ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Testes
+        run: npm test
+
+      - name: Auditoria de segurança
+        # Falha se aparecer vulnerabilidade alta ou crítica. Hoje o projeto está em 0.
+        run: npm audit --audit-level=high
+
+  front:
+    name: front-end
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sone-jump-front-main
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: sone-jump-front-main/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        # `tsc -b && vite build` — o build já é a checagem de tipos.
+        run: npm run build
+
+      - name: Auditoria de segurança
+        run: npm audit --audit-level=high
+
+  # Garante que o schema, as migrations e o banco não voltem a divergir: reaplica
+  # todas as migrations num Postgres limpo e verifica que o resultado bate com o
+  # schema.prisma. Foi exatamente esse desvio (seis alterações aplicadas com
+  # `db push`, sem migration) que quebrou o seed ao criar o banco no Neon.
+  migrations:
+    name: migrations x schema
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sone-jump-back
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: sone-jump-back/package-lock.json
+
+      - run: npm ci
+
+      - name: Aplicar migrations num banco limpo
+        run: npx prisma migrate deploy
+
+      - name: Schema e migrations precisam estar sincronizados
+        # `--exit-code` devolve 2 quando há diferença; qualquer coisa aqui significa
+        # alteração de schema sem a migration correspondente.
+        run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+
+      - name: Seed
+        # O seed é o que popula carreiras, planos e o admin. Se ele quebrar, ninguém
+        # consegue montar um ambiente novo.
+        run: npm run db:seed
