@@ -1,0 +1,76 @@
+# Regenera os package-lock.json em Linux.
+#
+# Por que isso existe: o npm grava no lockfile a árvore de dependências resolvida
+# para o sistema onde ele rodou. Alguns pacotes só entram nessa árvore no Linux —
+# `@tailwindcss/oxide-wasm32-wasi` (front) e `@unrs/resolver-binding-wasm32-wasi`
+# (back) exigem `@emnapi/core` e `@emnapi/runtime` como peer dependencies. No
+# Windows o npm nem tenta resolvê-las, porque o pacote pai é opcional e não é
+# instalado ali. O lock sai incompleto, e todo `npm ci` em Linux é recusado com
+# "Missing: @emnapi/core from lock file".
+#
+# Isso não é só um problema de CI: o build da Azure também roda em Linux. Um lock
+# gerado no Windows quebra o deploy pelo mesmo motivo.
+#
+# Quem mexer em dependência deve rodar este workflow em vez de commitar o lock
+# gerado na própria máquina. Ele dispara sozinho quando um package.json muda.
+
+name: Lockfiles (Linux)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'sone-jump-back/package.json'
+      - 'sone-jump-front-main/package.json'
+      - '.github/workflows/lockfiles.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  regenerar:
+    name: regenerar e validar
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Versão do npm
+        run: npm -v
+
+      - name: Regenerar lockfile do back
+        working-directory: sone-jump-back
+        run: npm install --package-lock-only
+
+      - name: Regenerar lockfile do front
+        working-directory: sone-jump-front-main
+        run: npm install --package-lock-only
+
+      # Prova, no mesmo runner Linux, que os lockfiles novos realmente instalam.
+      # Sem este passo estaríamos commitando um lock que ninguém verificou.
+      - name: Validar com npm ci (back)
+        working-directory: sone-jump-back
+        run: npm ci
+
+      - name: Validar com npm ci (front)
+        working-directory: sone-jump-front-main
+        run: npm ci
+
+      - name: Commitar se algo mudou
+        run: |
+          if git diff --quiet -- sone-jump-back/package-lock.json sone-jump-front-main/package-lock.json; then
+            echo "Lockfiles já estavam corretos para Linux. Nada a fazer."
+            exit 0
+          fi
+          echo "--- Alterações nos lockfiles ---"
+          git diff --stat -- sone-jump-back/package-lock.json sone-jump-front-main/package-lock.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sone-jump-back/package-lock.json sone-jump-front-main/package-lock.json
+          git commit             -m "Regenera os lockfiles em Linux"             -m "Gerado pelo workflow Lockfiles (Linux). Um lock gerado no Windows omite as peer dependencies de pacotes opcionais que so o Linux instala, e o npm ci recusa instalar com ele."
+          git push
