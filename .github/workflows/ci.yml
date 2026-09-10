@@ -125,6 +125,12 @@ jobs:
 
       - run: npm ci
 
+      - name: Gerar client do Prisma
+        # O seed importa `../generated/prisma/client`, que e gerado e nao esta no
+        # git. Sem este passo o seed morre com MODULE_NOT_FOUND antes de tocar no
+        # banco. O job `back-end` ja gerava; aqui faltava.
+        run: npx prisma generate
+
       - name: Aplicar migrations num banco limpo
         run: npx prisma migrate deploy
 
