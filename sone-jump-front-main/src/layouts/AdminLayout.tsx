@@ -1,11 +1,11 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
-  LayoutDashboard, Users, BookOpen, FileText, Handshake, BarChart2,
+  LayoutDashboard, Users, FileText, Handshake, BarChart2, Briefcase,
   LogOut, Shield
 } from 'lucide-react'
-import { apiRequest } from '../services/api'
-import { clearToken, getRole, getToken, isTokenValid } from '../services/auth-storage'
+import { apiRequest, ensureSession } from '../services/api'
+import { clearToken, getRole, getToken } from '../services/auth-storage'
 import { getMe, type UserProfile } from '../services/users/users'
 
 function initials(name: string): string {
@@ -16,9 +16,9 @@ function initials(name: string): string {
 const adminNav = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/users', icon: Users, label: 'Usuários' },
-  { to: '/admin/trilhas', icon: BookOpen, label: 'Trilhas' },
   { to: '/admin/conteudos', icon: FileText, label: 'Conteúdos' },
   { to: '/admin/parceiros', icon: Handshake, label: 'Parceiros' },
+  { to: '/admin/vagas', icon: Briefcase, label: 'Vagas' },
   { to: '/admin/relatorios', icon: BarChart2, label: 'Relatórios' },
 ]
 
@@ -27,18 +27,30 @@ export default function AdminLayout() {
   const [admin, setAdmin] = useState<UserProfile | null>(null)
 
   useEffect(() => {
-    const token = getToken()
-    if (!isTokenValid(token)) {
-      navigate('/login')
-      return
+    let cancelled = false
+    // `ensureSession` pode emitir um token novo, então o cargo só pode ser lido depois
+    // dela — ler antes usaria o token velho (ou expirado) para decidir o acesso.
+    void ensureSession().then((hasSession) => {
+      if (cancelled) return
+      if (!hasSession) {
+        navigate('/login')
+        return
+      }
+      // Authenticated but not an admin: send them back into the app rather than
+      // /login (they do have a valid session — they just can't be here).
+      if (getRole(getToken()) !== 'ADMIN') {
+        navigate('/app/dashboard')
+        return
+      }
+      getMe()
+        .then((profile) => {
+          if (!cancelled) setAdmin(profile)
+        })
+        .catch(() => {})
+    })
+    return () => {
+      cancelled = true
     }
-    // Authenticated but not an admin: send them back into the app rather than
-    // /login (they do have a valid session — they just can't be here).
-    if (getRole(token) !== 'ADMIN') {
-      navigate('/app/dashboard')
-      return
-    }
-    getMe().then(setAdmin).catch(() => {})
   }, [navigate])
 
   const handleLogout = () => {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Calendar,
   Zap,
@@ -7,7 +8,8 @@ import {
   Edit3,
   Target,
 } from 'lucide-react'
-import { getMe, updateMe, type UserProfile } from '../../services/users/users'
+import { changePassword, getMe, updateMe, type UserProfile } from '../../services/users/users'
+import { clearToken } from '../../services/auth-storage'
 import { getSkillProgress } from '../../services/skills/skills'
 import { ApiError } from '../../services/api'
 import { formatDate } from '../../utils/format'
@@ -36,6 +38,11 @@ export default function Profile() {
   const [selectedColor, setSelectedColor] = useState('purple')
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
+  const navigate = useNavigate()
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -55,6 +62,28 @@ export default function Profile() {
   }, []);
 
   const avatarColor = colorOptions.find((c) => c.id === selectedColor)?.class ?? colorOptions[0].class
+
+  async function handleChangePassword() {
+    setPasswordError('')
+    if (newPassword.length < 8) {
+      setPasswordError('A nova senha deve ter ao menos 8 caracteres.')
+      return
+    }
+
+    setChangingPassword(true)
+    try {
+      await changePassword({ currentPassword, newPassword })
+      // O servidor revogou todas as sessões, inclusive a atual — qualquer requisição
+      // seguinte falharia. Sair daqui é a única continuação honesta.
+      clearToken()
+      navigate('/login?next=%2Fapp%2Fprofile', { replace: true })
+    } catch (e) {
+      setPasswordError(
+        e instanceof ApiError ? e.message : 'Não foi possível alterar a senha.',
+      )
+      setChangingPassword(false)
+    }
+  }
 
   async function handleSave() {
     setSaveError('');
@@ -216,6 +245,54 @@ export default function Profile() {
               className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
               {saving ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar Alterações'}
+            </button>
+          </div>
+        </section>
+
+        {/* Segurança — troca de senha por quem lembra a senha atual. Quem não lembra
+            usa a recuperação por e-mail, em /forgot-password. */}
+        <section className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-1">Segurança</h2>
+          <p className="text-sm text-gray-500 mb-5">
+            Ao trocar a senha, todas as sessões abertas são encerradas — inclusive esta.
+          </p>
+
+          <div className="space-y-5 max-w-md">
+            <div>
+              <label htmlFor="current-password" className="block text-sm text-gray-400 mb-2">
+                Senha atual
+              </label>
+              <input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="new-password" className="block text-sm text-gray-400 mb-2">
+                Nova senha
+              </label>
+              <input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+              />
+              <p className="text-xs text-gray-600 mt-1">Mínimo de 8 caracteres.</p>
+            </div>
+
+            {passwordError && <p className="text-sm text-red-400">{passwordError}</p>}
+
+            <button
+              onClick={handleChangePassword}
+              disabled={changingPassword || !currentPassword || !newPassword}
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {changingPassword ? 'Alterando...' : 'Alterar Senha'}
             </button>
           </div>
         </section>

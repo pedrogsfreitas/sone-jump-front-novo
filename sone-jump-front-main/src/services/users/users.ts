@@ -1,8 +1,8 @@
 import { apiRequest } from "../api";
-import { updateCurrentUser } from "../mock/mock-users-db";
 
 const users_endpoints = {
   me: "/api/users/me",
+  password: "/api/users/me/password",
 };
 
 export type Role = "STUDENT" | "MENTOR" | "ADMIN";
@@ -24,6 +24,8 @@ export type UserProfile = {
   streakCurrentDays: number;
   streakLongestDays: number;
   createdAt: string;
+  /** Falso enquanto o e-mail do cadastro não foi confirmado. */
+  emailVerified: boolean;
   lastAccessAt: string | null;
   cpf: string;
 };
@@ -35,37 +37,24 @@ export type UpdateProfileParams = Partial<{
   focusMode: boolean;
 }>;
 
-// MOCK: sem back-end no momento — monta o perfil a partir do usuário logado
-// na base local (ver mock-users-db.ts) e atualiza o "último acesso".
-export async function getMe(): Promise<UserProfile> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  const user = updateCurrentUser({ lastAccessAt: new Date().toISOString() });
-
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    fullName: user.fullname,
-    phone: user.phone,
-    role: user.role,
-    bio: user.bio,
-    headline: user.headline,
-    location: user.location,
-    avatarColor: user.avatarColor,
-    focusMode: user.focusMode,
-    xpTotal: user.xpTotal,
-    level: user.level,
-    streakCurrentDays: user.streakCurrentDays,
-    streakLongestDays: user.streakLongestDays,
-    createdAt: user.createdAt,
-    lastAccessAt: user.lastAccessAt,
-    cpf: user.cpf,
-  };
+export function getMe() {
+  return apiRequest<UserProfile>(users_endpoints.me);
 }
 
 export function updateMe(params: UpdateProfileParams) {
   return apiRequest<UserProfile, UpdateProfileParams>(users_endpoints.me, {
+    method: "PATCH",
+    body: params,
+  });
+}
+
+/**
+ * Troca a senha de quem está logado. O servidor revoga TODAS as sessões, inclusive a
+ * atual — por isso a resposta é vazia e a tela precisa mandar a pessoa fazer login
+ * de novo.
+ */
+export function changePassword(params: { currentPassword: string; newPassword: string }) {
+  return apiRequest<void, typeof params>(users_endpoints.password, {
     method: "PATCH",
     body: params,
   });

@@ -15,7 +15,7 @@ export type ActivityEvent = {
 
 export type AdminDashboard = {
   totalUsers: number;
-  activeTrails: number;
+  activeCareers: number;
   monthlyRevenueCents: number;
   conversionRate: number;
   monthlyGrowth: { month: string; users: number }[];

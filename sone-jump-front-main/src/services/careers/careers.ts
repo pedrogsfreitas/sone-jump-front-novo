@@ -1,7 +1,8 @@
-import { getMockCareers } from "../mock/mock-careers-db";
+import { apiRequest } from "../api";
 
-// Endpoint real (volta a ser usado quando o back for plugado de novo):
-// GET /api/careers
+const careers_endpoints = {
+  list: "/api/careers",
+};
 
 export type DemandLevel = "BAIXA" | "MEDIA" | "ALTA";
 
@@ -20,10 +21,10 @@ export type Career = {
   difficultyLevel: DemandLevel;
 };
 
-// MOCK: sem back-end no momento — dados em services/mock/mock-careers-db.ts.
-// Continua "pública" (Explore.tsx e a tela de escolha de carreira dentro do
-// app usam a mesma função).
-export async function getCareers(): Promise<Career[]> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return getMockCareers();
+/**
+ * Endpoint público (sem `JwtAuthGuard`): a landing `/explore` mostra as carreiras
+ * antes do cadastro, e a tela de escolha dentro do app usa a mesma função.
+ */
+export function getCareers() {
+  return apiRequest<Career[]>(careers_endpoints.list);
 }

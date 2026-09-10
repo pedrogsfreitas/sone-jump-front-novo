@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Map, BookOpen, TrendingUp, Award,
   Users, Briefcase, UserCheck, Video, User, CreditCard,
-  Settings, LogOut, Zap
+  Settings, LogOut, Zap, Mail
 } from 'lucide-react'
-import { apiRequest } from '../services/api'
-import { clearToken, getToken, isTokenValid } from '../services/auth-storage'
+import { apiRequest, ensureSession } from '../services/api'
+import { clearToken } from '../services/auth-storage'
 import { getMe, type UserProfile } from '../services/users/users'
+import { resendVerification } from '../services/email-verification/email-verification'
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -31,16 +32,36 @@ const navItems = [
 export default function AppLayout() {
   const navigate = useNavigate()
   const [user, setUser] = useState<UserProfile | null>(null)
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle')
 
   useEffect(() => {
-    if (!isTokenValid(getToken())) {
-      navigate('/login')
-      return
+    let cancelled = false
+    // `ensureSession` renova pelo refresh token quando o access token já expirou —
+    // sem isso, recarregar a página 15 minutos depois do login expulsava a pessoa.
+    void ensureSession().then((hasSession) => {
+      if (cancelled) return
+      if (!hasSession) {
+        navigate('/login')
+        return
+      }
+      getMe()
+        .then((profile) => {
+          if (!cancelled) setUser(profile)
+        })
+        .catch(() => {})
+    })
+    return () => {
+      cancelled = true
     }
-    getMe()
-      .then(setUser)
-      .catch(() => {})
   }, [navigate])
+
+  const handleResendVerification = async () => {
+    setResendState('sending')
+    // O servidor responde 204 mesmo se já estiver confirmado; não há erro útil para
+    // mostrar aqui, e a confirmação some sozinha no próximo carregamento.
+    await resendVerification().catch(() => {})
+    setResendState('sent')
+  }
 
   const handleLogout = () => {
     // Best-effort: also revoke the refresh-token cookie server-side. Not awaited —
@@ -101,9 +122,8 @@ export default function AppLayout() {
 
         {/* Bottom */}
         <div className="p-3 border-t border-zinc-800 space-y-0.5">
-          {/* No dedicated settings screen/endpoint yet (email/password change isn't
-              built) — points at Profile, which already covers the account fields
-              that do exist, instead of a dead route. */}
+          {/* Não há tela de Configurações separada: o Perfil já concentra os campos
+              da conta, inclusive a troca de senha. Apontar para lá evita uma rota morta. */}
           <NavLink
             to="/app/profile"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all"
@@ -123,6 +143,28 @@ export default function AppLayout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto bg-[#050505]">
+        {/* Aviso, não bloqueio: a conta funciona sem o e-mail confirmado. Ele existe
+            para que a recuperação de senha tenha para onde ir — travar o acesso
+            transformaria um problema de entrega em impossibilidade de usar o produto. */}
+        {user && !user.emailVerified && (
+          <div className="flex flex-wrap items-center gap-3 px-6 py-3 bg-amber-500/10 border-b border-amber-500/30 text-sm">
+            <Mail className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            <span className="text-amber-200">
+              Confirme seu e-mail para conseguir recuperar a senha depois.
+            </span>
+            <button
+              onClick={handleResendVerification}
+              disabled={resendState !== 'idle'}
+              className="text-amber-300 underline underline-offset-2 hover:text-amber-100 disabled:no-underline disabled:text-amber-500/60 transition-colors"
+            >
+              {resendState === 'sent'
+                ? 'E-mail reenviado'
+                : resendState === 'sending'
+                  ? 'Enviando...'
+                  : 'Reenviar e-mail'}
+            </button>
+          </div>
+        )}
         <Outlet />
       </main>
     </div>

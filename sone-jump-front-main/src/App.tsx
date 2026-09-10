@@ -3,6 +3,8 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import VerifyEmail from './pages/VerifyEmail'
 import Onboarding from './pages/Onboarding'
 import Explore from './pages/Explore'
 import AppLayout from './layouts/AppLayout'
@@ -19,13 +21,11 @@ import Lives from './pages/app/Lives'
 import Profile from './pages/app/Profile'
 import Planos from './pages/app/Planos'
 import ChooseCareer from './pages/app/ChooseCareer'
-import CareerQuizIntro from './pages/app/CareerQuizIntro'
-import CareerQuiz from './pages/app/CareerQuiz'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
-import AdminTrilhas from './pages/admin/AdminTrilhas'
 import AdminConteudos from './pages/admin/AdminConteudos'
 import AdminParceiros from './pages/admin/AdminParceiros'
+import AdminVagas from './pages/admin/AdminVagas'
 import AdminRelatorios from './pages/admin/AdminRelatorios'
 
 export default function App() {
@@ -36,6 +36,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/explore" element={<Explore />} />
 
@@ -53,16 +55,14 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="planos" element={<Planos />} />
           <Route path="careers" element={<ChooseCareer />} />
-          <Route path="careers/quiz-intro" element={<CareerQuizIntro />} />
-          <Route path="careers/quiz" element={<CareerQuiz />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<AdminUsers />} />
-          <Route path="trilhas" element={<AdminTrilhas />} />
           <Route path="conteudos" element={<AdminConteudos />} />
           <Route path="parceiros" element={<AdminParceiros />} />
+          <Route path="vagas" element={<AdminVagas />} />
           <Route path="relatorios" element={<AdminRelatorios />} />
         </Route>
       </Routes>

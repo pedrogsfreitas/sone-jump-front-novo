@@ -57,14 +57,50 @@ export default function AdminUsers() {
   const [statusFilter, setStatusFilter] = useState<'Todos' | 'Ativo' | 'Inativo'>('Todos')
   const [planFilter, setPlanFilter] = useState<'Todos' | PlanKey>('Todos')
   const [currentPage, setCurrentPage] = useState(1)
+  const [total, setTotal] = useState(0)
   const perPage = 8
 
+  // Estatísticas do topo: contam a base inteira, não a página — por isso vêm de um
+  // endpoint próprio, carregado uma única vez.
   useEffect(() => {
-    Promise.all([getAdminUsers(), getAdminUserStats()])
-      .then(([u, s]) => { setUsers(u); setStats(s) })
-      .catch((e) => setError(e instanceof ApiError ? e.message : 'Erro ao carregar usuários.'))
-      .finally(() => setLoading(false))
+    getAdminUserStats()
+      .then(setStats)
+      .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    // Digitação dispara uma requisição por tecla sem isto. O atraso curto agrupa a
+    // digitação numa busca só; trocar de filtro ou de página também passa por aqui,
+    // e 250ms ali são imperceptíveis.
+    const timer = setTimeout(() => {
+      setLoading(true)
+      getAdminUsers({
+        search: search.trim() || undefined,
+        status: statusFilter === 'Todos' ? undefined : statusFilter === 'Ativo' ? 'ATIVO' : 'INATIVO',
+        plan: planFilter === 'Todos' ? undefined : planFilter,
+        limit: perPage,
+        offset: (currentPage - 1) * perPage,
+      })
+        .then((page) => {
+          if (cancelled) return
+          setUsers(page.items)
+          setTotal(page.total)
+          setError('')
+        })
+        .catch((e) => {
+          if (!cancelled) setError(e instanceof ApiError ? e.message : 'Erro ao carregar usuários.')
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+    }, 250)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [search, statusFilter, planFilter, currentPage])
 
   async function toggleActive(user: AdminUser) {
     try {
@@ -84,20 +120,12 @@ export default function AdminUsers() {
     }
   }
 
-  if (loading) return <div className="min-h-screen bg-gray-950 text-gray-400 p-6">Carregando usuários...</div>
-
-  const filtered = users.filter((u) => {
-    const matchSearch =
-      u.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
-    const status = u.active ? 'Ativo' : 'Inativo'
-    const matchStatus = statusFilter === 'Todos' || status === statusFilter
-    const matchPlan = planFilter === 'Todos' || u.plan === planFilter
-    return matchSearch && matchStatus && matchPlan
-  })
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
-  const paginated = filtered.slice((currentPage - 1) * perPage, currentPage * perPage)
+  // A lista já chega filtrada e paginada do servidor: `users` é exatamente a página
+  // atual, e `total` é quanto existe no filtro inteiro.
+  const paginated = users
+  const totalPages = Math.max(1, Math.ceil(total / perPage))
+  const firstOnPage = total === 0 ? 0 : (currentPage - 1) * perPage + 1
+  const lastOnPage = Math.min(currentPage * perPage, total)
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 pb-16">
@@ -189,7 +217,12 @@ export default function AdminUsers() {
               <tbody>
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-gray-500 text-sm">Nenhum usuário encontrado</td>
+                    {/* O aviso de carregamento fica dentro da tabela, e não substituindo a
+                        tela inteira: cada tecla digitada na busca refaz a consulta, e trocar
+                        a página toda faria o campo perder o foco a cada letra. */}
+                    <td colSpan={8} className="py-12 text-center text-gray-500 text-sm">
+                      {loading ? 'Carregando usuários...' : 'Nenhum usuário encontrado'}
+                    </td>
                   </tr>
                 ) : (
                   paginated.map((user, i) => (
@@ -250,7 +283,7 @@ export default function AdminUsers() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-5 py-4 border-t border-gray-800">
             <p className="text-sm text-gray-500">
-              Mostrando {filtered.length === 0 ? 0 : Math.min((currentPage - 1) * perPage + 1, filtered.length)}–{Math.min(currentPage * perPage, filtered.length)} de {filtered.length} usuários
+              Mostrando {firstOnPage}–{lastOnPage} de {total} usuários
             </p>
             <div className="flex items-center gap-1">
               <button

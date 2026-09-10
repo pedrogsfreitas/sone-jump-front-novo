@@ -18,8 +18,26 @@ import {
   ChevronRight,
   Check,
 } from "lucide-react";
+import { ApiError, ensureSession } from "../services/api";
+import {
+  AREA_TO_API,
+  GOAL_TO_API,
+  LEVEL_TO_API,
+  WEEKLY_TIME_TO_API,
+  saveOnboarding,
+} from "../services/onboarding/onboarding";
+import { chooseCareer, type CareerLevel } from "../services/roadmap/roadmap";
 
 const TOTAL_STEPS = 6;
+
+/** Fora do componente de propósito: sendo constante, não precisa entrar nas
+ *  dependências do efeito nem ser recriada a cada render. */
+const LOADING_MESSAGES = [
+  "Analisando seu perfil...",
+  "Mapeando habilidades...",
+  "Criando trilha personalizada...",
+  "Configurando metas...",
+];
 
 function StepDots({ currentStep }: { currentStep: number }) {
   return (
@@ -86,6 +104,20 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [loadingChecks, setLoadingChecks] = useState<boolean[]>([false, false, false, false]);
+  const [saveError, setSaveError] = useState("");
+
+  // O questionário passou a exigir conta: as respostas pertencem a um usuário, e sem
+  // um não há onde gravá-las. Quem chega aqui sem sessão vai criar a conta primeiro e
+  // volta para cá logo depois do login (`?next=`).
+  useEffect(() => {
+    let cancelled = false
+    void ensureSession().then((hasSession) => {
+      if (!cancelled && !hasSession) navigate("/register", { replace: true });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   const goalOptions: OptionCard[] = [
     { id: "primeiro-emprego", label: "Primeiro Emprego", sublabel: "Entrar no mercado de tech", icon: <Rocket size={24} /> },
@@ -117,18 +149,11 @@ export default function Onboarding() {
     { id: "15h+", label: "15h+", sublabel: "por semana", icon: <Clock size={24} /> },
   ];
 
-  const loadingMessages = [
-    "Analisando seu perfil...",
-    "Mapeando habilidades...",
-    "Criando trilha personalizada...",
-    "Configurando metas...",
-  ];
-
   useEffect(() => {
     if (currentStep !== 5) return;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    loadingMessages.forEach((_, i) => {
+    LOADING_MESSAGES.forEach((_, i) => {
       timers.push(
         setTimeout(() => {
           setLoadingChecks((prev) => {
@@ -142,16 +167,31 @@ export default function Onboarding() {
 
     timers.push(
       setTimeout(() => {
-        // No account exists yet at this point — onboarding answers aren't sent
-        // anywhere yet (no backend endpoint for them). Send the user to create a
-        // real account rather than faking a session into a route that now
-        // actually validates the token.
-        navigate("/register");
+        // As respostas viram duas coisas: o perfil de onboarding (registro do que foi
+        // respondido) e a carreira efetiva com o nível declarado, que é o que monta o
+        // roadmap. A área escolhida já é o slug da carreira — foi para isso que os
+        // slugs foram unificados.
+        const careerSlug = answers[2];
+        void saveOnboarding({
+          goal: GOAL_TO_API[answers[1]],
+          area: AREA_TO_API[careerSlug],
+          level: LEVEL_TO_API[answers[3]],
+          weeklyTime: WEEKLY_TIME_TO_API[answers[4]],
+          careerSlug,
+        })
+          .then(() => chooseCareer(careerSlug, answers[3] as CareerLevel))
+          .then(() => navigate("/app/roadmap", { replace: true }))
+          .catch((e) => {
+            setSaveError(
+              e instanceof ApiError ? e.message : "Não foi possível salvar suas respostas.",
+            );
+            setCurrentStep(4);
+          });
       }, 2800)
     );
 
     return () => timers.forEach(clearTimeout);
-  }, [currentStep]);
+  }, [currentStep, answers, navigate]);
 
   function selectOption(step: number, id: string) {
     setAnswers((prev) => ({ ...prev, [step]: id }));
@@ -272,6 +312,14 @@ export default function Onboarding() {
               </>
             )}
 
+            {/* Falha ao salvar: a tela volta para a última pergunta em vez de
+                ficar presa no carregamento, e o botão "Continuar" tenta de novo. */}
+            {saveError && (
+              <p className="mt-4 text-sm text-red-400 text-center" role="alert">
+                {saveError}
+              </p>
+            )}
+
             {/* Navigation */}
             <div className="flex items-center justify-between mt-4 gap-4">
               <button
@@ -315,7 +363,7 @@ export default function Onboarding() {
             </div>
 
             <div className="w-full max-w-sm flex flex-col gap-3">
-              {loadingMessages.map((msg, i) => (
+              {LOADING_MESSAGES.map((msg, i) => (
                 <div
                   key={i}
                   className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-500 ${

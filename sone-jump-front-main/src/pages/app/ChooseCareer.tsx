@@ -75,7 +75,9 @@ export default function ChooseCareer() {
     setError("");
     setChoosingSlug(career.slug);
     try {
-      await chooseCareer(career.slug, "iniciante");
+      // Sem nível: a escolha direta não pergunta isso, e mandar "iniciante" por padrão
+      // apagaria o nível que a pessoa tenha informado antes no quiz de carreira.
+      await chooseCareer(career.slug);
       navigate("/app/roadmap");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erro ao gerar o roadmap.");
@@ -114,15 +116,15 @@ export default function ChooseCareer() {
           <div>
             <p className="font-semibold text-white">Não sabe qual escolher?</p>
             <p className="text-zinc-400 text-sm mt-0.5">
-              Responda um quiz rápido de 2 minutos e a gente recomenda uma carreira pra você.
+              Responda o questionário de 2 minutos e a gente monta o roadmap já ajustado ao seu nível.
             </p>
           </div>
         </div>
         <button
-          onClick={() => navigate("/app/careers/quiz-intro")}
+          onClick={() => navigate("/onboarding")}
           className="shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
         >
-          Fazer o quiz
+          Refazer o questionário
         </button>
       </div>
 

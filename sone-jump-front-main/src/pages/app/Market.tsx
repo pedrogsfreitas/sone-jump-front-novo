@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { MapPin, CheckCircle2, XCircle, Briefcase } from "lucide-react";
-import { getJobs, applyToJob, getMyApplications, type Job } from "../../services/jobs/jobs";
+import {
+  getJobs,
+  applyToJob,
+  getMyApplications,
+  type Job,
+  type JobApplicationStatus,
+} from "../../services/jobs/jobs";
 import { getSkillProgress } from "../../services/skills/skills";
 import { ApiError } from "../../services/api";
 
@@ -26,10 +32,20 @@ function formatSalary(min: number | null, max: number | null): string {
 const RING_RADIUS = 54;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
+/** Rótulo e cor de cada estado do funil de candidatura. */
+const APPLICATION_STATUS: Record<JobApplicationStatus, { label: string; className: string }> = {
+  APLICADO: { label: "Candidatura Enviada", className: "bg-zinc-800 text-zinc-400" },
+  VISUALIZADO: { label: "Currículo Visualizado", className: "bg-blue-500/15 text-blue-300" },
+  ACEITO: { label: "Candidatura Aceita", className: "bg-green-500/15 text-green-300" },
+  REJEITADO: { label: "Não Selecionado", className: "bg-red-500/15 text-red-300" },
+};
+
 export default function Market() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [skills, setSkills] = useState<{ name: string; pct: number }[]>([]);
-  const [appliedJobIds, setAppliedJobIds] = useState<Set<number>>(new Set());
+  // Guarda o status, não só "se candidatou": o funil (Visualizado → Aceito/Rejeitado)
+  // agora é movido pelo admin, e a tela precisa refletir onde a candidatura está.
+  const [statusByJobId, setStatusByJobId] = useState<Map<number, JobApplicationStatus>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [applying, setApplying] = useState<number | null>(null);
@@ -39,7 +55,7 @@ export default function Market() {
       .then(([j, sk, apps]) => {
         setJobs(j);
         setSkills(sk);
-        setAppliedJobIds(new Set(apps.map((a) => a.jobId)));
+        setStatusByJobId(new Map(apps.map((a) => [a.jobId, a.status])));
       })
       .catch((e) => setError(e instanceof ApiError ? e.message : "Erro ao carregar mercado."))
       .finally(() => setLoading(false));
@@ -49,7 +65,7 @@ export default function Market() {
     setApplying(jobId);
     try {
       await applyToJob(jobId);
-      setAppliedJobIds((prev) => new Set(prev).add(jobId));
+      setStatusByJobId((prev) => new Map(prev).set(jobId, "APLICADO"));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erro ao se candidatar.");
     } finally {
@@ -142,7 +158,8 @@ export default function Market() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {jobs.map((job) => {
-              const applied = appliedJobIds.has(job.id);
+              const applicationStatus = statusByJobId.get(job.id);
+              const applied = applicationStatus !== undefined;
               return (
                 <div
                   key={job.id}
@@ -185,9 +202,17 @@ export default function Market() {
                   <button
                     onClick={() => handleApply(job.id)}
                     disabled={applied || applying === job.id}
-                    className="mt-1 w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-sm font-semibold transition-colors"
+                    className={`mt-1 w-full py-2 rounded-xl text-sm font-semibold transition-colors ${
+                      applicationStatus
+                        ? APPLICATION_STATUS[applicationStatus].className
+                        : "bg-purple-600 hover:bg-purple-500 text-white"
+                    } disabled:cursor-default`}
                   >
-                    {applied ? "Candidatura Enviada" : applying === job.id ? "Enviando..." : "Candidatar-se"}
+                    {applicationStatus
+                      ? APPLICATION_STATUS[applicationStatus].label
+                      : applying === job.id
+                        ? "Enviando..."
+                        : "Candidatar-se"}
                   </button>
                 </div>
               );

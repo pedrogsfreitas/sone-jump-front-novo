@@ -1,5 +1,4 @@
 import { apiRequest } from "../api";
-import { getCurrentUser } from "../mock/mock-users-db";
 
 const progress_endpoints = {
   summary: "/api/progress/summary",
@@ -39,28 +38,12 @@ export type Goal = {
   createdAt: string;
 };
 
-// MOCK: sem back-end no momento — resumo derivado direto do usuário logado.
-// Não existe ainda um sistema de "skills em progresso" mockado, então entra
-// vazio (a tela já trata esse caso: some o bloco "Habilidades em Progresso").
-export async function getSummary(): Promise<ProgressSummary> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const user = getCurrentUser();
-
-  return {
-    xpTotal: user.xpTotal,
-    level: user.level,
-    streakCurrentDays: user.streakCurrentDays,
-    streakLongestDays: user.streakLongestDays,
-    sessionsThisWeek: 0,
-    skills: [],
-  };
+export function getSummary() {
+  return apiRequest<ProgressSummary>(progress_endpoints.summary);
 }
 
-// MOCK: sem back-end no momento — ainda não existe registro de sessões de
-// estudo mockado, então começa vazio (usuário recém-criado não estudou nada).
-export async function getSessions(): Promise<StudySession[]> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return [];
+export function getSessions() {
+  return apiRequest<StudySession[]>(progress_endpoints.sessions);
 }
 
 export function getGoals() {

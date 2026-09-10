@@ -1,9 +1,12 @@
-import { getCurrentUser } from "../mock/mock-users-db";
-import { advanceNode, confirmNodeStudy, generateRoadmap, getUserRoadmap, gradeNodeQuiz } from "../mock/mock-roadmap-db";
+import { apiRequest } from "../api";
 
-// Endpoints reais (voltam a ser usados quando o back for plugado de novo):
-// GET   /api/roadmap
-// PATCH /api/roadmap/nodes/:id
+const roadmap_endpoints = {
+  list: "/api/roadmap",
+  node: (id: string) => `/api/roadmap/nodes/${id}`,
+  confirmStudy: (id: string) => `/api/roadmap/nodes/${id}/confirm-study`,
+  quiz: (id: string) => `/api/roadmap/nodes/${id}/quiz`,
+  career: "/api/users/me/career",
+};
 
 export type RoadmapNodeStatus = "LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED";
 
@@ -12,11 +15,16 @@ export type RoadmapNodeQuizOption = {
   text: string;
 };
 
+/**
+ * Note que não existe `correctOptionId`: a correção acontece no servidor
+ * (`POST /api/roadmap/nodes/:id/quiz`), que devolve só `passed`. Enquanto o quiz era
+ * mockado, a resposta certa vinha junto no bundle e dava para lê-la no DevTools — e é
+ * ela que decide se a etapa pode ser concluída.
+ */
 export type RoadmapNodeQuizQuestion = {
   id: string;
   prompt: string;
   options: RoadmapNodeQuizOption[];
-  correctOptionId: string;
 };
 
 export type RoadmapNode = {
@@ -51,48 +59,58 @@ export type Roadmap = {
   nodes: RoadmapNode[];
 };
 
-/** Nível informado no quiz de carreira — usado para gerar o roadmap já com
- * um pedaço concluído para quem diz ter mais experiência. */
+/** Nível informado no quiz de carreira, na grafia usada pelas telas. */
 export type CareerLevel = "iniciante" | "basico" | "experiente" | "senior";
 
-// MOCK: sem back-end no momento — lê o roadmap do usuário logado na base
-// local (ver mock-roadmap-db.ts). Sem carreira escolhida ainda, devolve
-// career: null / nodes: [] — a tela já trata esse estado normalmente.
-export async function getRoadmap(): Promise<Roadmap> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const user = getCurrentUser();
-  return getUserRoadmap(user.id);
+/** O back usa o enum `OnboardingLevel`, em maiúsculas. */
+const LEVEL_TO_API: Record<CareerLevel, string> = {
+  iniciante: "INICIANTE",
+  basico: "BASICO",
+  experiente: "EXPERIENTE",
+  senior: "SENIOR",
+};
+
+export function getRoadmap() {
+  return apiRequest<Roadmap>(roadmap_endpoints.list);
 }
 
-// MOCK: gera o roadmap da carreira escolhida para o usuário logado. Usado
-// tanto pela escolha direta (ChooseCareer.tsx) quanto pelo quiz (CareerQuiz.tsx).
-export async function chooseCareer(careerSlug: string, level: CareerLevel): Promise<Roadmap> {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  const user = getCurrentUser();
-  return generateRoadmap(user.id, careerSlug, level);
+/**
+ * Escolhe (ou troca) a carreira e devolve o roadmap resultante.
+ *
+ * São duas chamadas porque são duas responsabilidades: a carreira é um campo do
+ * perfil, o roadmap é um recurso próprio. `level` é opcional — a escolha direta não
+ * pergunta o nível, e mandar um valor padrão ali apagaria o que a pessoa informou
+ * antes no quiz.
+ */
+export async function chooseCareer(
+  careerSlug: string,
+  level?: CareerLevel,
+): Promise<Roadmap> {
+  await apiRequest(roadmap_endpoints.career, {
+    method: "PUT",
+    body: { careerSlug, ...(level && { level: LEVEL_TO_API[level] }) },
+  });
+  return getRoadmap();
 }
 
-// MOCK: avança o status de uma etapa do roadmap do usuário logado.
-export async function updateNodeStatus(nodeId: string, status: "IN_PROGRESS" | "COMPLETED"): Promise<Roadmap> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const user = getCurrentUser();
-  return advanceNode(user.id, nodeId, status);
+export function updateNodeStatus(nodeId: string, status: "IN_PROGRESS" | "COMPLETED") {
+  return apiRequest<Roadmap, { status: string }>(roadmap_endpoints.node(nodeId), {
+    method: "PATCH",
+    body: { status },
+  });
 }
 
-// MOCK: marca que o usuário estudou o conteúdo da etapa (autodeclarado —
-// ainda não está ligado a uma marcação real do Catálogo).
-export async function confirmStudy(nodeId: string): Promise<Roadmap> {
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  const user = getCurrentUser();
-  return confirmNodeStudy(user.id, nodeId);
+/** Metade do que o servidor exige para aceitar a conclusão; a outra é o quiz. */
+export function confirmStudy(nodeId: string) {
+  return apiRequest<Roadmap>(roadmap_endpoints.confirmStudy(nodeId), {
+    method: "POST",
+  });
 }
 
-// MOCK: corrige o quiz da etapa. `passed` só vem true se acertou tudo.
-export async function submitNodeQuiz(
-  nodeId: string,
-  answers: Record<string, string>,
-): Promise<{ passed: boolean; roadmap: Roadmap }> {
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  const user = getCurrentUser();
-  return gradeNodeQuiz(user.id, nodeId, answers);
+/** Manda `perguntaId -> opcaoId` e recebe apenas se passou. */
+export function submitNodeQuiz(nodeId: string, answers: Record<string, string>) {
+  return apiRequest<{ passed: boolean; roadmap: Roadmap }, { answers: Record<string, string> }>(
+    roadmap_endpoints.quiz(nodeId),
+    { method: "POST", body: { answers } },
+  );
 }

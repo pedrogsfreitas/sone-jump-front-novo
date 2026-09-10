@@ -25,11 +25,17 @@ export type Job = {
   match: number | null;
 };
 
+export type JobApplicationStatus =
+  | "APLICADO"
+  | "VISUALIZADO"
+  | "REJEITADO"
+  | "ACEITO";
+
 export type JobApplication = {
   id: number;
   jobId: number;
   userId: number;
-  status: string;
+  status: JobApplicationStatus;
   appliedAt: string;
   job: { id: number; title: string; companyName: string };
 };

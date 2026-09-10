@@ -30,9 +30,36 @@ export type AdminUserStats = {
   newLast30Days: number;
 };
 
-export function getAdminUsers(search?: string) {
-  const query = search ? `?search=${encodeURIComponent(search)}` : "";
-  return apiRequest<AdminUser[]>(`${admin_users_endpoints.list}${query}`);
+export type AdminUserStatus = "ATIVO" | "INATIVO";
+
+export type ListAdminUsersParams = {
+  search?: string;
+  status?: AdminUserStatus;
+  plan?: PlanKey;
+  limit?: number;
+  offset?: number;
+};
+
+/** `total` conta tudo que casa com o filtro, não só o que veio nesta página. */
+export type Paginated<T> = {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+/**
+ * Busca, filtros e paginação são todos do servidor. Filtrar no cliente uma página de
+ * 20 linhas esconderia usuários que casam com o filtro só por estarem fora da página
+ * carregada — e o "de N usuários" no rodapé mentiria.
+ */
+export function getAdminUsers(params: ListAdminUsersParams = {}) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") query.set(key, String(value));
+  }
+  const suffix = query.toString() ? `?${query}` : "";
+  return apiRequest<Paginated<AdminUser>>(`${admin_users_endpoints.list}${suffix}`);
 }
 
 export function getAdminUserStats() {

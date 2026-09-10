@@ -8,7 +8,6 @@ import {
   UserPlus,
   CheckCircle,
   MessageSquare,
-  LayoutDashboard,
   FilePlus,
   BarChart2,
   RefreshCw,
@@ -99,7 +98,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {[
             { icon: Users, label: 'Usuários Totais', value: data.totalUsers.toLocaleString('pt-BR'), color: 'text-blue-400', bg: 'bg-blue-500/10' },
-            { icon: BookOpen, label: 'Trilhas Ativas', value: String(data.activeTrails), color: 'text-green-400', bg: 'bg-green-500/10' },
+            { icon: BookOpen, label: 'Carreiras Ativas', value: String(data.activeCareers), color: 'text-green-400', bg: 'bg-green-500/10' },
             { icon: DollarSign, label: 'Receita do Mês', value: `R$ ${(data.monthlyRevenueCents / 100).toLocaleString('pt-BR')}`, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
             { icon: TrendingUp, label: 'Conversão', value: `${data.conversionRate}%`, color: 'text-purple-400', bg: 'bg-purple-500/10' },
           ].map((stat) => (
@@ -162,9 +161,8 @@ export default function AdminDashboard() {
             <div className="space-y-3">
               {[
                 { icon: Users, label: 'Gerenciar Usuários', desc: `${data.totalUsers.toLocaleString('pt-BR')} cadastrados`, color: 'text-blue-400', bg: 'bg-blue-500/10', to: '/admin/users' },
-                { icon: FilePlus, label: 'Criar Conteúdo', desc: 'Novo módulo ou trilha', color: 'text-green-400', bg: 'bg-green-500/10', to: '/admin/conteudos' },
+                { icon: FilePlus, label: 'Criar Conteúdo', desc: 'Curso, vídeo, artigo ou projeto', color: 'text-green-400', bg: 'bg-green-500/10', to: '/admin/conteudos' },
                 { icon: BarChart2, label: 'Ver Relatórios', desc: 'Dados de engajamento', color: 'text-yellow-400', bg: 'bg-yellow-500/10', to: '/admin/relatorios' },
-                { icon: LayoutDashboard, label: 'Gerenciar Trilhas', desc: `${data.activeTrails} trilhas ativas`, color: 'text-purple-400', bg: 'bg-purple-500/10', to: '/admin/trilhas' },
               ].map((action) => (
                 <button
                   key={action.label}

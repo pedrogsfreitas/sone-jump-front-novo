@@ -65,7 +65,10 @@ export default function Register() {
       const ref = searchParams.get("ref");
       if (ref) localStorage.setItem(PENDING_REFERRAL_KEY, ref);
 
-      navigate("/login");
+      // O questionário agora vem DEPOIS da conta existir — é ele que grava o perfil
+      // de onboarding e define a carreira. O `next` leva a pessoa direto para lá
+      // assim que ela entrar.
+      navigate("/login?next=%2Fonboarding");
     } catch (error) {
       console.error(error);
       setErrorMessage(error instanceof Error ? error.message : "Erro ao cadastrar usuário.");

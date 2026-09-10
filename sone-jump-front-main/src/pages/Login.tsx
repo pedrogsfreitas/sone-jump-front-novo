@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { login } from "../services/login/login";
@@ -8,8 +8,15 @@ import { setToken } from "../services/auth-storage";
 
 const PENDING_REFERRAL_KEY = "pendingReferralCode";
 
+/** Só caminhos internos: `next` vem da URL, e aceitar um destino absoluto abriria
+ *  redirecionamento para fora do site logo depois do login. */
+function safeNext(raw: string | null): string {
+  return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/app/dashboard";
+}
+
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +44,9 @@ export default function Login() {
         await claimReferral(pendingRef).catch(() => {});
       }
 
-      navigate("/app/dashboard");
+      // Volta para onde a pessoa queria ir: `?next=` é posto pelo cadastro (que manda
+      // para o questionário) e pelo `api.ts` quando a sessão expira no meio do uso.
+      navigate(safeNext(searchParams.get("next")), { replace: true });
     } catch (error) {
       setErrorMessage(error instanceof ApiError ? error.message : "Erro ao entrar.");
     } finally {
