@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { JobApplicationStatus } from '../../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogService } from '../audit-log.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
+import { FullListQueryDto } from '../../common/pagination/pagination.dto';
 
 @Injectable()
 export class AdminJobsService {
@@ -11,13 +13,75 @@ export class AdminJobsService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  list() {
+  /**
+   * Candidatos de uma vaga. Sem isto, o status da candidatura era um campo que
+   * ninguém conseguia enxergar nem alterar: toda candidatura nascia `APLICADO` e
+   * ficava assim para sempre, apesar de o enum prever o funil inteiro.
+   */
+  async listApplications(jobId: number, query: FullListQueryDto) {
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('Vaga não encontrada.');
+
+    return this.prisma.jobApplication.findMany({
+      where: { jobId },
+      // Nunca incluir o usuário inteiro: a resposta vai direto para a API, e a linha
+      // do `User` carrega `passwordHash` e o CPF cifrado.
+      select: {
+        id: true,
+        status: true,
+        appliedAt: true,
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            username: true,
+            email: true,
+            avatarColor: true,
+          },
+        },
+      },
+      orderBy: { appliedAt: 'desc' },
+      take: query.limit,
+      skip: query.offset,
+    });
+  }
+
+  async updateApplicationStatus(
+    adminUserId: number,
+    applicationId: number,
+    status: JobApplicationStatus,
+  ) {
+    const application = await this.prisma.jobApplication.findUnique({
+      where: { id: applicationId },
+    });
+    if (!application)
+      throw new NotFoundException('Candidatura não encontrada.');
+
+    const updated = await this.prisma.jobApplication.update({
+      where: { id: applicationId },
+      data: { status },
+      select: { id: true, status: true, appliedAt: true },
+    });
+
+    await this.auditLog.record(
+      adminUserId,
+      'update_job_application',
+      'JobApplication',
+      applicationId,
+      { status },
+    );
+    return updated;
+  }
+
+  list(query: FullListQueryDto) {
     return this.prisma.job.findMany({
       include: {
         skills: { include: { skill: true } },
         partner: { select: { id: true, name: true } },
       },
       orderBy: { id: 'asc' },
+      take: query.limit,
+      skip: query.offset,
     });
   }
 

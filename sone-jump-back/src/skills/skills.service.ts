@@ -7,6 +7,7 @@ import {
 import { XpService } from '../common/xp/xp.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePortfolioProjectDto } from './dto/create-portfolio-project.dto';
+import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 /** Each challenge tag bumps that skill's mastery % by this much, capped at 100. */
 const SKILL_PCT_BUMP_PER_CHALLENGE = 10;
@@ -21,11 +22,13 @@ export class SkillsService {
     private readonly xp: XpService,
   ) {}
 
-  async listChallenges(userId: number) {
+  async listChallenges(userId: number, query: FullListQueryDto) {
     const [challenges, completions] = await Promise.all([
       this.prisma.challenge.findMany({
         include: { tags: { include: { skill: true } } },
         orderBy: { id: 'asc' },
+        take: query.limit,
+        skip: query.offset,
       }),
       this.prisma.userChallengeCompletion.findMany({ where: { userId } }),
     ]);

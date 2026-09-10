@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CreatePortfolioProjectDto } from './dto/create-portfolio-project.dto';
 import { SkillsService } from './skills.service';
+import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 @Controller('skills')
 @UseGuards(JwtAuthGuard)
@@ -30,8 +32,11 @@ export class SkillsController {
   }
 
   @Get('challenges')
-  listChallenges(@CurrentUser() user: AuthenticatedUser) {
-    return this.skillsService.listChallenges(user.id);
+  listChallenges(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: FullListQueryDto,
+  ) {
+    return this.skillsService.listChallenges(user.id, query);
   }
 
   @Post('challenges/:id/complete')

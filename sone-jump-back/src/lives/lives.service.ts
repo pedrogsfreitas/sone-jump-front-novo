@@ -7,20 +7,27 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLiveDto } from './dto/create-live.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
+import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 @Injectable()
 export class LivesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  list() {
+  list(query: FullListQueryDto) {
     return this.prisma.liveSession.findMany({
       include: { host: { select: { fullName: true, avatarColor: true } } },
       orderBy: { scheduledAt: 'asc' },
+      take: query.limit,
+      skip: query.offset,
     });
   }
 
-  listRecordings() {
-    return this.prisma.recording.findMany({ orderBy: { createdAt: 'desc' } });
+  listRecordings(query: FullListQueryDto) {
+    return this.prisma.recording.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: query.limit,
+      skip: query.offset,
+    });
   }
 
   create(hostId: number, dto: CreateLiveDto) {
@@ -52,12 +59,14 @@ export class LivesService {
     });
   }
 
-  async listQuestions(liveId: number) {
+  async listQuestions(liveId: number, query: FullListQueryDto) {
     await this.assertExists(liveId);
     return this.prisma.liveQuestion.findMany({
       where: { liveSessionId: liveId },
       include: { user: { select: { username: true } } },
       orderBy: { votes: 'desc' },
+      take: query.limit,
+      skip: query.offset,
     });
   }
 

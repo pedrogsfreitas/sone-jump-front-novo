@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
+import { MailModule } from './common/mail/mail.module';
 import { CareersModule } from './careers/careers.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { CommunityModule } from './community/community.module';
@@ -12,6 +13,7 @@ import { validateEnv } from './config/env.validation';
 import { JobsModule } from './jobs/jobs.module';
 import { LivesModule } from './lives/lives.module';
 import { MentorsModule } from './mentors/mentors.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 import { MentorshipSessionsModule } from './mentorship-sessions/mentorship-sessions.module';
 import { PartnersModule } from './partners/partners.module';
 import { PlansModule } from './plans/plans.module';
@@ -30,6 +32,7 @@ import { UsersModule } from './users/users.module';
       throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }],
     }),
     PrismaModule,
+    MailModule,
     AuthModule,
     UsersModule,
     RoadmapModule,
@@ -47,6 +50,7 @@ import { UsersModule } from './users/users.module';
     MentorshipSessionsModule,
     LivesModule,
     CareersModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

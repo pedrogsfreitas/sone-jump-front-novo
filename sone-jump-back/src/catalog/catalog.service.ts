@@ -30,6 +30,8 @@ export class CatalogService {
           syllabus: { orderBy: { orderIndex: 'asc' } },
         },
         orderBy: { id: 'asc' },
+        take: filters.limit,
+        skip: filters.offset,
       }),
       this.prisma.userBookmark.findMany({
         where: { userId },

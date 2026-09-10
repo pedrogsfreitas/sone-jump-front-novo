@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import type { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 import { AdminUsersService } from './admin-users.service';
+import { ListAdminUsersDto } from './dto/list-admin-users.dto';
 import { UpdateUserActiveDto } from './dto/update-user-active.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 
@@ -25,8 +26,8 @@ export class AdminUsersController {
   constructor(private readonly adminUsersService: AdminUsersService) {}
 
   @Get()
-  list(@Query('search') search?: string) {
-    return this.adminUsersService.list(search);
+  list(@Query() query: ListAdminUsersDto) {
+    return this.adminUsersService.list(query);
   }
 
   @Get('stats')

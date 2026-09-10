@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogService } from '../audit-log.service';
 import { CreatePartnerDto } from './dto/create-partner.dto';
 import { UpdatePartnerDto } from './dto/update-partner.dto';
+import { FullListQueryDto } from '../../common/pagination/pagination.dto';
 
 @Injectable()
 export class AdminPartnersService {
@@ -12,8 +13,12 @@ export class AdminPartnersService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  list() {
-    return this.prisma.partner.findMany({ orderBy: { id: 'asc' } });
+  list(query: FullListQueryDto) {
+    return this.prisma.partner.findMany({
+      orderBy: { id: 'asc' },
+      take: query.limit,
+      skip: query.offset,
+    });
   }
 
   async create(adminUserId: number, dto: CreatePartnerDto) {

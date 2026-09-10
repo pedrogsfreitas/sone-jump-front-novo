@@ -10,8 +10,6 @@ import { AdminPartnersController } from './partners/admin-partners.controller';
 import { AdminPartnersService } from './partners/admin-partners.service';
 import { AdminReportsController } from './reports/admin-reports.controller';
 import { AdminReportsService } from './reports/admin-reports.service';
-import { AdminTrailsController } from './trails/admin-trails.controller';
-import { AdminTrailsService } from './trails/admin-trails.service';
 import { AdminUsersController } from './users/admin-users.controller';
 import { AdminUsersService } from './users/admin-users.service';
 
@@ -21,7 +19,6 @@ import { AdminUsersService } from './users/admin-users.service';
     AuditLogController,
     AdminUsersController,
     AdminContentController,
-    AdminTrailsController,
     AdminPartnersController,
     AdminReportsController,
     AdminJobsController,
@@ -30,7 +27,6 @@ import { AdminUsersService } from './users/admin-users.service';
     AuditLogService,
     AdminUsersService,
     AdminContentService,
-    AdminTrailsService,
     AdminPartnersService,
     AdminReportsService,
     AdminJobsService,

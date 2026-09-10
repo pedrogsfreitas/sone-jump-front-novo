@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Role } from '../../generated/prisma/enums';
@@ -19,6 +20,7 @@ import { CreateLiveDto } from './dto/create-live.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateLiveStatusDto } from './dto/update-live-status.dto';
 import { LivesService } from './lives.service';
+import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 @Controller('lives')
 @UseGuards(JwtAuthGuard)
@@ -26,13 +28,13 @@ export class LivesController {
   constructor(private readonly livesService: LivesService) {}
 
   @Get()
-  list() {
-    return this.livesService.list();
+  list(@Query() query: FullListQueryDto) {
+    return this.livesService.list(query);
   }
 
   @Get('recordings')
-  listRecordings() {
-    return this.livesService.listRecordings();
+  listRecordings(@Query() query: FullListQueryDto) {
+    return this.livesService.listRecordings(query);
   }
 
   @Post()
@@ -57,8 +59,11 @@ export class LivesController {
   }
 
   @Get(':id/questions')
-  listQuestions(@Param('id', ParseIntPipe) id: number) {
-    return this.livesService.listQuestions(id);
+  listQuestions(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: FullListQueryDto,
+  ) {
+    return this.livesService.listQuestions(id, query);
   }
 
   @Post(':id/questions')

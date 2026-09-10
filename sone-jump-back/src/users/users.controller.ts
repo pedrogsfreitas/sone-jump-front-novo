@@ -1,7 +1,17 @@
-import { Body, Controller, Get, Patch, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { SetCareerDto } from './dto/set-career.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from './users.service';
@@ -28,6 +38,19 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     return this.usersService.updateMe(user.id, dto);
+  }
+
+  /**
+   * 204 e sem corpo: a resposta não devolve o perfil porque, depois da troca, as
+   * sessões foram revogadas — inclusive a que fez a chamada.
+   */
+  @Patch('me/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.usersService.changePassword(user.id, dto);
   }
 
   /** Escolher ou trocar a carreira — é ela que define qual roadmap o usuário percorre. */

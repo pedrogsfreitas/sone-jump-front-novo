@@ -14,6 +14,8 @@ export class JobsService {
     const [jobs, userSkills] = await Promise.all([
       this.prisma.job.findMany({
         where: { remoteType: filters.remoteType },
+        take: filters.limit,
+        skip: filters.offset,
         include: {
           skills: { include: { skill: true } },
           partner: { select: { id: true, name: true, logoUrl: true } },

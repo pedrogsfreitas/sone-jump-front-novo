@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Role } from '../../../generated/prisma/enums';
@@ -18,6 +19,7 @@ import type { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 import { AdminPartnersService } from './admin-partners.service';
 import { CreatePartnerDto } from './dto/create-partner.dto';
 import { UpdatePartnerDto } from './dto/update-partner.dto';
+import { FullListQueryDto } from '../../common/pagination/pagination.dto';
 
 @Controller('admin/partners')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -26,8 +28,8 @@ export class AdminPartnersController {
   constructor(private readonly adminPartnersService: AdminPartnersService) {}
 
   @Get()
-  list() {
-    return this.adminPartnersService.list();
+  list(@Query() query: FullListQueryDto) {
+    return this.adminPartnersService.list(query);
   }
 
   @Post()

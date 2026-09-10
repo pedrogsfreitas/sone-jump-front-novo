@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -15,6 +16,7 @@ import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CommunityService } from './community.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
+import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 @Controller('community')
 @UseGuards(JwtAuthGuard)
@@ -22,8 +24,11 @@ export class CommunityController {
   constructor(private readonly communityService: CommunityService) {}
 
   @Get('posts')
-  listPosts(@CurrentUser() user: AuthenticatedUser) {
-    return this.communityService.listPosts(user.id);
+  listPosts(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: FullListQueryDto,
+  ) {
+    return this.communityService.listPosts(user.id, query);
   }
 
   @Post('posts')
@@ -59,8 +64,11 @@ export class CommunityController {
   }
 
   @Get('posts/:id/comments')
-  listComments(@Param('id', ParseIntPipe) id: number) {
-    return this.communityService.listComments(id);
+  listComments(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: FullListQueryDto,
+  ) {
+    return this.communityService.listComments(id, query);
   }
 
   @Post('posts/:id/comments')

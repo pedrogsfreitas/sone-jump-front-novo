@@ -14,8 +14,15 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(cookieParser(config.get<string>('COOKIE_SECRET')));
+  // Origens separadas por vírgula. O Vite troca de porta sozinho quando a 5173 está
+  // ocupada (5174, 5175...), e o back precisa aceitar essas variações sem exigir
+  // reconfiguração. Continua sendo allowlist explícita: nunca '*' — com
+  // `credentials: true` o próprio protocolo CORS proíbe curinga.
   app.enableCors({
-    origin: config.get<string>('CORS_ORIGIN'),
+    origin: (config.get<string>('CORS_ORIGIN') ?? '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean),
     credentials: true,
   });
   app.setGlobalPrefix('api');

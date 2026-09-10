@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogService } from '../audit-log.service';
 import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
+import { FullListQueryDto } from '../../common/pagination/pagination.dto';
 
 @Injectable()
 export class AdminContentService {
@@ -11,13 +12,15 @@ export class AdminContentService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  list() {
+  list(query: FullListQueryDto) {
     return this.prisma.contentItem.findMany({
       include: {
         prerequisites: true,
         syllabus: { orderBy: { orderIndex: 'asc' } },
       },
       orderBy: { id: 'asc' },
+      take: query.limit,
+      skip: query.offset,
     });
   }
 

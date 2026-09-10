@@ -7,6 +7,7 @@ import { PostType } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
+import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 const AUTHOR_SELECT = {
   id: true,
@@ -19,7 +20,7 @@ const AUTHOR_SELECT = {
 export class CommunityService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listPosts(userId: number) {
+  async listPosts(userId: number, query: FullListQueryDto) {
     const posts = await this.prisma.post.findMany({
       include: {
         author: { select: AUTHOR_SELECT },
@@ -27,7 +28,8 @@ export class CommunityService {
         likes: { where: { userId }, select: { userId: true } },
       },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      take: query.limit,
+      skip: query.offset,
     });
 
     return posts.map((post) => ({
@@ -72,12 +74,14 @@ export class CommunityService {
     await this.prisma.postLike.deleteMany({ where: { userId, postId } });
   }
 
-  async listComments(postId: number) {
+  async listComments(postId: number, query: FullListQueryDto) {
     await this.assertPostExists(postId);
     return this.prisma.postComment.findMany({
       where: { postId },
       include: { author: { select: AUTHOR_SELECT } },
       orderBy: { createdAt: 'asc' },
+      take: query.limit,
+      skip: query.offset,
     });
   }
 

@@ -32,6 +32,10 @@ model User {
   cpfEncrypted String
   phone        String
 
+  /// Nulo enquanto o e-mail não foi confirmado. Não bloqueia o login — ver
+  /// AuthService.verifyEmail para o porquê dessa escolha.
+  emailVerifiedAt DateTime?
+
   role   Role    @default(STUDENT)
   // Admin-controlled account suspension (soft ban) — distinct from deleting the row.
   active Boolean @default(true)
@@ -48,6 +52,12 @@ model User {
   career         Career?   @relation(fields: [careerId], references: [id], onDelete: SetNull)
   careerChosenAt DateTime?
 
+  // Experiência declarada ao escolher a carreira. Define até onde os pré-requisitos
+  // são dispensados no roadmap — quem já trabalha na área não precisa passar por
+  // "HTML básico". É autodeclaração, e por isso NÃO marca etapa como concluída nem
+  // concede XP: só desbloqueia. Ver RoadmapService.deriveStatus.
+  experienceLevel OnboardingLevel?
+
   xpTotal           Int       @default(0)
   level             Int       @default(1)
   streakCurrentDays Int       @default(0)
@@ -61,6 +71,8 @@ model User {
   lastAccessAt DateTime?
 
   refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
   onboardingProfile    OnboardingProfile?
   roadmapProgress      UserRoadmapProgress[]
   skillProgress        UserSkillProgress[]
@@ -100,6 +112,36 @@ model RefreshToken {
   revokedAt           DateTime?
   replacedByTokenHash String?
   createdAt           DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Confirmação do e-mail informado no cadastro. Mesmo desenho do PasswordResetToken:
+/// valor cru só no e-mail, SHA-256 no banco, uso único.
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Token de recuperação de senha. Mesmo desenho do RefreshToken, que já funciona:
+/// o valor cru só existe no e-mail enviado, o banco guarda apenas o SHA-256. Quem
+/// tiver acesso de leitura ao banco não consegue redefinir a senha de ninguém.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  /// Uso único: preenchido na redefinição, e um token já usado é recusado depois.
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 
   @@index([userId])
 }
@@ -175,28 +217,6 @@ model UserSkillProgress {
   @@id([userId, skillId])
 }
 
-model Trail {
-  id        Int      @id @default(autoincrement())
-  name      String
-  category  String
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-
-  modules TrailModule[]
-}
-
-model TrailModule {
-  id              Int    @id @default(autoincrement())
-  trailId         Int
-  trail           Trail  @relation(fields: [trailId], references: [id], onDelete: Cascade)
-  title           String
-  durationMinutes Int
-  lessons         Int
-  orderIndex      Int
-
-  @@index([trailId])
-}
-
 enum RoadmapCategory {
   FUNDAMENTOS
   CORE
@@ -226,8 +246,9 @@ model RoadmapNode {
   prerequisites RoadmapNodePrerequisite[] @relation("NodePrerequisites")
   unlocks       RoadmapNodePrerequisite[] @relation("NodeUnlocks")
 
-  resources RoadmapNodeResource[]
-  progress  UserRoadmapProgress[]
+  resources     RoadmapNodeResource[]
+  progress      UserRoadmapProgress[]
+  quizQuestions RoadmapNodeQuizQuestion[]
 
   @@unique([careerId, externalKey])
   @@index([careerId, orderIndex])
@@ -279,7 +300,43 @@ model UserRoadmapProgress {
   status      RoadmapNodeStatus @default(LOCKED)
   completedAt DateTime?
 
+  // Concluir uma etapa exige dois passos, nesta ordem: confirmar que estudou o
+  // conteúdo (autodeclarado) e acertar o quiz de validação. Guardados como data, e não
+  // como booleano, porque "quando" é informação que não custa nada a mais e permite
+  // reconstruir a linha do tempo do aluno depois.
+  studyConfirmedAt DateTime?
+  quizPassedAt     DateTime?
+
   @@id([userId, nodeId])
+}
+
+/// Quiz de validação da etapa. Existe por nó e é o que separa "eu li" de "eu aprendi"
+/// antes de deixar concluir.
+model RoadmapNodeQuizQuestion {
+  id         String      @id @default(cuid())
+  nodeId     String
+  node       RoadmapNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  prompt     String
+  orderIndex Int         @default(0)
+
+  options RoadmapNodeQuizOption[]
+
+  @@index([nodeId, orderIndex])
+}
+
+/// A alternativa correta é marcada aqui e **nunca sai do servidor**: o endpoint de
+/// roadmap devolve só id e texto das opções, e a correção acontece em
+/// `RoadmapService.gradeQuiz`. Mandar `correct` para o cliente deixaria a resposta
+/// visível no DevTools, e o quiz decide se a etapa pode ser concluída.
+model RoadmapNodeQuizOption {
+  id         String                  @id @default(cuid())
+  questionId String
+  question   RoadmapNodeQuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  correct    Boolean                 @default(false)
+  orderIndex Int                     @default(0)
+
+  @@index([questionId, orderIndex])
 }
 
 enum ContentType {
@@ -423,12 +480,23 @@ model UserChallengeCompletion {
   @@id([userId, challengeId])
 }
 
+/// Certificação conquistada ao concluir TODAS as etapas de uma categoria dentro de
+/// uma carreira. Antes o model existia solto, sem nenhum código que a concedesse: a
+/// tela listava quatro certificações que ninguém podia conquistar.
+///
+/// Amarrar a [careerId, category] é o que a torna derivável do roadmap — não há
+/// critério paralelo para manter em sincronia com o conteúdo.
 model Certification {
-  id          Int     @id @default(autoincrement())
-  name        String  @unique
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
   description String?
+  careerId    String?
+  career      Career?         @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  category    RoadmapCategory?
 
   earnedBy UserCertification[]
+
+  @@unique([careerId, category])
 }
 
 model UserCertification {
@@ -483,6 +551,7 @@ model Career {
   roadmapNodes       RoadmapNode[]
   users              User[]
   onboardingProfiles OnboardingProfile[]
+  certifications     Certification[]
 }
 
 // ============================================================

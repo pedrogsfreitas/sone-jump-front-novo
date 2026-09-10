@@ -3,9 +3,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Role, SubscriptionStatus } from '../../../generated/prisma/enums';
+import { Prisma } from '../../../generated/prisma/client';
+import {
+  PlanKey,
+  Role,
+  SubscriptionStatus,
+} from '../../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogService } from '../audit-log.service';
+import {
+  AdminUserStatusFilter,
+  ListAdminUsersDto,
+} from './dto/list-admin-users.dto';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -28,48 +37,75 @@ export class AdminUsersService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  async list(search?: string) {
-    const users = await this.prisma.user.findMany({
-      where: search
-        ? {
-            OR: [
-              { username: { contains: search, mode: 'insensitive' } },
-              { email: { contains: search, mode: 'insensitive' } },
-              { fullName: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : undefined,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        fullName: true,
-        role: true,
-        active: true,
-        avatarColor: true,
-        createdAt: true,
-        lastAccessAt: true,
-        subscriptions: {
-          where: { status: SubscriptionStatus.ATIVA },
-          select: { plan: { select: { key: true, name: true } } },
-          take: 1,
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async list(query: ListAdminUsersDto) {
+    const { search, status, plan, limit = 20, offset = 0 } = query;
 
-    return users.map((user) => ({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role,
-      active: user.active,
-      avatarColor: user.avatarColor,
-      plan: user.subscriptions[0]?.plan.key ?? 'FREE',
-      registeredAt: user.createdAt,
-      lastAccessAt: user.lastAccessAt,
-    }));
+    const where: Prisma.UserWhereInput = {
+      ...(search && {
+        OR: [
+          { username: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { fullName: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+      ...(status && { active: status === AdminUserStatusFilter.ATIVO }),
+      // "Grátis" não é uma assinatura: é a ausência de uma ativa. Por isso o filtro
+      // FREE pergunta por `none` em vez de comparar a chave do plano.
+      ...(plan &&
+        (plan === PlanKey.FREE
+          ? { subscriptions: { none: { status: SubscriptionStatus.ATIVA } } }
+          : {
+              subscriptions: {
+                some: { status: SubscriptionStatus.ATIVA, plan: { key: plan } },
+              },
+            })),
+    };
+
+    // A contagem usa o mesmo `where` da busca e roda em paralelo com ela: é o total
+    // que casa com o filtro, não o total de linhas desta página.
+    const [total, users] = await Promise.all([
+      this.prisma.user.count({ where }),
+      this.prisma.user.findMany({
+        where,
+        take: limit,
+        skip: offset,
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          fullName: true,
+          role: true,
+          active: true,
+          avatarColor: true,
+          createdAt: true,
+          lastAccessAt: true,
+          subscriptions: {
+            where: { status: SubscriptionStatus.ATIVA },
+            select: { plan: { select: { key: true, name: true } } },
+            take: 1,
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return {
+      items: users.map((user) => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        active: user.active,
+        avatarColor: user.avatarColor,
+        plan: user.subscriptions[0]?.plan.key ?? PlanKey.FREE,
+        registeredAt: user.createdAt,
+        lastAccessAt: user.lastAccessAt,
+      })),
+      total,
+      limit,
+      offset,
+    };
   }
 
   async stats() {

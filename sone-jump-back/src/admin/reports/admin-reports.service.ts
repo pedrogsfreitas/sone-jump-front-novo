@@ -28,14 +28,17 @@ export class AdminReportsService {
     const now = new Date();
     const [
       totalUsers,
-      activeTrails,
+      activeCareers,
       monthlyRevenueCents,
       activeSubs,
       monthlyGrowth,
       recentActivity,
     ] = await Promise.all([
       this.prisma.user.count(),
-      this.prisma.trail.count({ where: { active: true } }),
+      // Substituiu a contagem de Trail: a "trilha" que o aluno realmente percorre é o
+      // roadmap da carreira, e Trail era um agrupamento administrativo sem vínculo
+      // com o progresso de ninguém.
+      this.prisma.career.count({ where: { active: true } }),
       this.revenueBetween(
         monthStart(now.getUTCFullYear(), now.getUTCMonth()),
         now,
@@ -49,7 +52,7 @@ export class AdminReportsService {
 
     return {
       totalUsers,
-      activeTrails,
+      activeCareers,
       monthlyRevenueCents,
       conversionRate: percentOf(activeSubs, totalUsers),
       monthlyGrowth,

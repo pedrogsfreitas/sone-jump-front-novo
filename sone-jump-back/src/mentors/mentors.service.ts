@@ -2,6 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { Role } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { BecomeMentorDto } from './dto/become-mentor.dto';
+import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 const SAFE_USER_SELECT = {
   id: true,
@@ -17,13 +18,15 @@ const SAFE_USER_SELECT = {
 export class MentorsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list() {
+  async list(query: FullListQueryDto) {
     const mentors = await this.prisma.mentor.findMany({
       include: {
         user: { select: { fullName: true, avatarColor: true, headline: true } },
         specialties: { include: { skill: true } },
       },
       orderBy: { ratingAvg: 'desc' },
+      take: query.limit,
+      skip: query.offset,
     });
 
     return mentors.map((mentor) => ({

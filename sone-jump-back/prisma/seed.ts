@@ -3,6 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import * as argon2 from 'argon2';
 import { PrismaClient } from '../generated/prisma/client';
 import { encryptCpf, hashCpf } from '../src/common/crypto/cpf.util';
+import { ROADMAPS } from './roadmap-seed';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -26,128 +27,6 @@ const SKILLS = [
   'TypeScript',
   'Next.js',
   'Node.js',
-];
-
-const ROADMAP_NODES: Array<{
-  id: string;
-  name: string;
-  category: 'FUNDAMENTOS' | 'CORE' | 'FRAMEWORKS' | 'AVANCADO' | 'CARREIRA';
-  hours: number;
-  description: string;
-  skill?: string;
-  /** Pré-requisitos são N:N: o nó só abre quando TODOS estiverem concluídos. */
-  prerequisites?: string[];
-  resources: Array<{ label: string; url?: string }>;
-}> = [
-  {
-    id: 'html-css',
-    name: 'HTML/CSS',
-    category: 'FUNDAMENTOS',
-    hours: 40,
-    description: 'Fundação da web: estrutura semântica e estilização.',
-    skill: 'HTML/CSS',
-    resources: [
-      { label: 'MDN Web Docs', url: 'https://developer.mozilla.org' },
-      { label: 'CSS Tricks', url: 'https://css-tricks.com' },
-      { label: 'Curso Alura HTML/CSS' },
-    ],
-  },
-  {
-    id: 'responsividade',
-    name: 'Responsividade',
-    category: 'FUNDAMENTOS',
-    hours: 20,
-    description: 'Layouts que se adaptam a qualquer tamanho de tela.',
-    prerequisites: ['html-css'],
-    resources: [{ label: 'MDN Responsive Design' }],
-  },
-  {
-    id: 'javascript',
-    name: 'JavaScript',
-    category: 'CORE',
-    hours: 60,
-    description: 'A linguagem que dá vida à web.',
-    skill: 'JavaScript',
-    prerequisites: ['responsividade'],
-    resources: [{ label: 'JavaScript.info' }, { label: 'Curso Alura JS' }],
-  },
-  {
-    id: 'git',
-    name: 'Git/GitHub',
-    category: 'CORE',
-    hours: 15,
-    description: 'Controle de versão indispensável.',
-    skill: 'Git/GitHub',
-    prerequisites: ['javascript'],
-    resources: [{ label: 'Pro Git Book' }, { label: 'GitHub Learning Lab' }],
-  },
-  {
-    id: 'react',
-    name: 'React',
-    category: 'FRAMEWORKS',
-    hours: 60,
-    description: 'Biblioteca para interfaces reativas.',
-    skill: 'React',
-    prerequisites: ['git'],
-    resources: [{ label: 'React Docs' }, { label: 'Rocketseat Ignite' }],
-  },
-  {
-    id: 'typescript',
-    name: 'TypeScript',
-    category: 'FRAMEWORKS',
-    hours: 30,
-    description: 'JavaScript com tipagem estática.',
-    skill: 'TypeScript',
-    prerequisites: ['react'],
-    resources: [{ label: 'TypeScript Handbook' }],
-  },
-  {
-    id: 'nextjs',
-    name: 'Next.js',
-    category: 'AVANCADO',
-    hours: 40,
-    description: 'Framework React para produção.',
-    skill: 'Next.js',
-    prerequisites: ['typescript'],
-    resources: [{ label: 'Next.js Docs' }],
-  },
-  {
-    id: 'nodejs',
-    name: 'Node.js',
-    category: 'AVANCADO',
-    hours: 40,
-    description: 'JavaScript no servidor.',
-    skill: 'Node.js',
-    prerequisites: ['typescript'],
-    resources: [{ label: 'Node.js Docs' }],
-  },
-  {
-    id: 'portfolio',
-    name: 'Portfólio',
-    category: 'CARREIRA',
-    hours: 20,
-    description: 'Monte um portfólio que impressiona recrutadores.',
-    prerequisites: ['nextjs'],
-    resources: [{ label: 'Como Construir um Portfólio' }],
-  },
-  {
-    id: 'linkedin',
-    name: 'LinkedIn',
-    category: 'CARREIRA',
-    hours: 5,
-    description: 'Otimize seu perfil para recrutadores.',
-    prerequisites: ['portfolio'],
-    resources: [],
-  },
-  {
-    id: 'entrevistas',
-    name: 'Entrevistas',
-    category: 'CARREIRA',
-    hours: 15,
-    description: 'Prepare-se para entrevistas técnicas e comportamentais.',
-    prerequisites: ['linkedin'],
-    resources: [],
-  },
 ];
 
 const CATALOG_ITEMS = [
@@ -233,13 +112,6 @@ const CHALLENGES = [
   },
 ];
 
-const CERTIFICATIONS = [
-  'HTML & CSS Fundamentals',
-  'React Básico ao Avançado',
-  'TypeScript Essencial',
-  'Git e GitHub na Prática',
-];
-
 const PLANS: Array<{
   key: 'FREE' | 'PRO' | 'PREMIUM';
   name: string;
@@ -289,6 +161,16 @@ const PLANS: Array<{
     ],
   },
 ];
+
+/** Rótulo da certificação de cada categoria — o `name` é único no banco, então
+ *  entra combinado com o título da carreira. */
+const CATEGORY_LABEL: Record<string, string> = {
+  FUNDAMENTOS: 'Fundamentos',
+  CORE: 'Core',
+  FRAMEWORKS: 'Frameworks',
+  AVANCADO: 'Avançado',
+  CARREIRA: 'Carreira',
+};
 
 const GROUPS = [
   { name: 'Frontend', icon: '⚛️' },
@@ -404,7 +286,7 @@ const CAREERS: Array<{
 }> = [
   {
     title: 'Frontend Developer',
-    slug: 'frontend-developer',
+    slug: 'frontend',
     iconKey: 'monitor',
     salaryMin: 4000,
     salaryMax: 18000,
@@ -416,7 +298,7 @@ const CAREERS: Array<{
   },
   {
     title: 'Backend Developer',
-    slug: 'backend-developer',
+    slug: 'backend',
     iconKey: 'server',
     salaryMin: 5000,
     salaryMax: 20000,
@@ -428,7 +310,7 @@ const CAREERS: Array<{
   },
   {
     title: 'Data Scientist',
-    slug: 'data-scientist',
+    slug: 'data-science',
     iconKey: 'chart',
     salaryMin: 6000,
     salaryMax: 22000,
@@ -440,7 +322,7 @@ const CAREERS: Array<{
   },
   {
     title: 'DevOps Engineer',
-    slug: 'devops-engineer',
+    slug: 'devops',
     iconKey: 'git-branch',
     salaryMin: 7000,
     salaryMax: 28000,
@@ -452,7 +334,7 @@ const CAREERS: Array<{
   },
   {
     title: 'Mobile Developer',
-    slug: 'mobile-developer',
+    slug: 'mobile',
     iconKey: 'smartphone',
     salaryMin: 5000,
     salaryMax: 19000,
@@ -464,7 +346,7 @@ const CAREERS: Array<{
   },
   {
     title: 'UX/UI Designer',
-    slug: 'ux-ui-designer',
+    slug: 'ux-ui',
     iconKey: 'palette',
     salaryMin: 3500,
     salaryMax: 15000,
@@ -475,9 +357,6 @@ const CAREERS: Array<{
     difficultyLevel: 'BAIXA',
   },
 ];
-
-/** A carreira dos 11 nós seedados — o roadmap de exemplo é de frontend. */
-const SEED_ROADMAP_CAREER_SLUG = 'frontend-developer';
 
 async function main() {
   const skillByName = new Map<string, number>();
@@ -499,39 +378,76 @@ async function main() {
     });
   }
 
-  const roadmapCareer = await prisma.career.findUniqueOrThrow({
-    where: { slug: SEED_ROADMAP_CAREER_SLUG },
-  });
+  // Todas as seis carreiras têm roadmap. Antes só Frontend tinha: quem escolhesse
+  // qualquer outra recebia uma lista vazia, sem erro e sem explicação.
+  //
+  // O id do nó é `<slug>-<key>`, o que mantém as cópias por carreira independentes:
+  // "React" em Frontend e "React Native" em Mobile são linhas distintas, com
+  // progresso próprio.
+  const nodeId = (careerSlug: string, key: string) => `${careerSlug}-${key}`;
 
-  for (const node of ROADMAP_NODES) {
-    await prisma.roadmapNode.upsert({
-      where: { id: node.id },
-      update: {},
-      create: {
-        id: node.id,
-        careerId: roadmapCareer.id,
-        externalKey: node.id,
-        name: node.name,
-        category: node.category,
-        estimatedHours: node.hours,
-        description: node.description,
-        orderIndex: ROADMAP_NODES.indexOf(node),
-        skillId: node.skill ? skillByName.get(node.skill) : undefined,
-        resources: {
-          create: node.resources.map((resource, i) => ({ ...resource, orderIndex: i })),
-        },
-      },
-    });
-  }
+  for (const [careerSlug, nodes] of Object.entries(ROADMAPS)) {
+    const career = await prisma.career.findUnique({ where: { slug: careerSlug } });
+    if (!career) {
+      throw new Error(
+        `Roadmap definido para a carreira "${careerSlug}", que não existe em CAREERS.`,
+      );
+    }
 
-  // Depois de todos os nós existirem, senão a FK da junção quebra em quem vem antes.
-  for (const node of ROADMAP_NODES) {
-    for (const prerequisiteNodeId of node.prerequisites ?? []) {
-      await prisma.roadmapNodePrerequisite.upsert({
-        where: { nodeId_prerequisiteNodeId: { nodeId: node.id, prerequisiteNodeId } },
+    for (const [index, node] of nodes.entries()) {
+      const id = nodeId(careerSlug, node.key);
+      await prisma.roadmapNode.upsert({
+        where: { id },
         update: {},
-        create: { nodeId: node.id, prerequisiteNodeId },
+        create: {
+          id,
+          careerId: career.id,
+          externalKey: node.key,
+          name: node.name,
+          category: node.category,
+          estimatedHours: node.hours,
+          description: node.description,
+          orderIndex: index,
+          skillId: node.skill ? skillByName.get(node.skill) : undefined,
+          resources: {
+            create: node.resources.map((resource, i) => ({
+              ...resource,
+              orderIndex: i,
+            })),
+          },
+          quizQuestions: {
+            create: node.quiz.map((question, qi) => ({
+              prompt: question.prompt,
+              orderIndex: qi,
+              options: {
+                create: question.options.map((text, oi) => ({
+                  text,
+                  orderIndex: oi,
+                  // A resposta certa fica só aqui e no banco; o endpoint de roadmap
+                  // não seleciona esta coluna.
+                  correct: oi === question.correctIndex,
+                })),
+              },
+            })),
+          },
+        },
       });
+    }
+
+    // Depois de todos os nós da carreira existirem, senão a FK da junção quebra em
+    // quem vem antes.
+    for (const node of nodes) {
+      for (const prerequisiteKey of node.prerequisites ?? []) {
+        const pair = {
+          nodeId: nodeId(careerSlug, node.key),
+          prerequisiteNodeId: nodeId(careerSlug, prerequisiteKey),
+        };
+        await prisma.roadmapNodePrerequisite.upsert({
+          where: { nodeId_prerequisiteNodeId: pair },
+          update: {},
+          create: pair,
+        });
+      }
     }
   }
 
@@ -576,8 +492,25 @@ async function main() {
     });
   }
 
-  for (const name of CERTIFICATIONS) {
-    await prisma.certification.upsert({ where: { name }, update: {}, create: { name } });
+  // Uma certificação por (carreira, categoria), derivada do próprio roadmap: não há
+  // lista paralela para manter em sincronia quando o conteúdo mudar.
+  for (const [careerSlug, nodes] of Object.entries(ROADMAPS)) {
+    const career = await prisma.career.findUniqueOrThrow({ where: { slug: careerSlug } });
+    const categorias = [...new Set(nodes.map((n) => n.category))];
+    for (const categoria of categorias) {
+      const name = `${career.title} — ${CATEGORY_LABEL[categoria]}`;
+      const etapas = nodes.filter((n) => n.category === categoria).length;
+      await prisma.certification.upsert({
+        where: { careerId_category: { careerId: career.id, category: categoria } },
+        update: { name },
+        create: {
+          name,
+          description: `Concluiu as ${etapas} etapa(s) de ${CATEGORY_LABEL[categoria]} do roadmap de ${career.title}.`,
+          careerId: career.id,
+          category: categoria,
+        },
+      });
+    }
   }
 
   for (const plan of PLANS) {
@@ -643,6 +576,9 @@ async function main() {
           cpfEncrypted: encryptCpf(ADMIN_SEED.cpf, cpfEncKey),
           phone: ADMIN_SEED.phone,
           role: 'ADMIN',
+          // admin@jump.local não é uma caixa de entrada real: sem isto, o admin de
+          // teste ficaria para sempre com o aviso de e-mail não confirmado.
+          emailVerifiedAt: new Date(),
         },
       });
       console.log(`Admin de teste criado: ${ADMIN_SEED.username} / ${ADMIN_SEED.password}`);
