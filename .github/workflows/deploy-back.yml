@@ -1,0 +1,79 @@
+# Publica a API no Azure App Service (Linux, Node).
+#
+# Antes da primeira execução, criar no repositório:
+#   Secrets → AZURE_WEBAPP_PUBLISH_PROFILE  (App Service → Baixar perfil de publicação)
+#             DATABASE_URL                   (string de conexão do Neon)
+#   Variables → AZURE_WEBAPP_NAME            (nome do App Service)
+#
+# O DATABASE_URL vive aqui porque as migrations rodam nesta pipeline, e não no boot
+# da aplicação: duas instâncias subindo ao mesmo tempo aplicariam a mesma migration
+# em paralelo. Os demais segredos (JWT, cookie, CPF, Resend) são configurados no
+# próprio App Service e nunca passam pelo GitHub.
+
+name: Deploy back (Azure)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'sone-jump-back/**'
+      - '.github/workflows/deploy-back.yml'
+
+# Dois deploys simultâneos aplicariam migrations concorrentes no mesmo banco.
+concurrency:
+  group: deploy-back
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build, migrations e deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sone-jump-back
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          # O App Service oferece as versões LTS. O projeto não usa nada exclusivo
+          # do Node 24, mas a versão daqui precisa bater com a configurada lá —
+          # divergir muda qual binário nativo o argon2 resolve.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sone-jump-back/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar client do Prisma
+        # Metade dos imports aponta para `generated/prisma`, que não está no git.
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Build
+        run: npm run build
+
+      - name: Aplicar migrations
+        # Antes do deploy de propósito: migration aditiva (coluna nova, tabela nova)
+        # é compatível com o código antigo ainda no ar, então a janela entre os dois
+        # passos é segura. Uma migration que REMOVE algo exigiria o caminho inverso —
+        # subir o código que não usa mais a coluna, e só então removê-la.
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Remover dependências de desenvolvimento
+        # O pacote enviado carrega o node_modules pronto; sem isto sobem o Nest CLI,
+        # o Jest e o CLI do Prisma, que não são usados em produção.
+        run: npm prune --omit=dev
+
+      - name: Publicar no App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: sone-jump-back

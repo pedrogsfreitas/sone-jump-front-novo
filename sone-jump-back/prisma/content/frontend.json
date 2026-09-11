@@ -48,7 +48,9 @@
       "description": "Curso do time do Chrome que explica o modelo de layout do CSS a fundo — box model, cascata, especificidade. Cobre a parte que costuma ficar mal resolvida em quem aprendeu só copiando exemplos.",
       "url": "https://web.dev/learn/css",
       "thumbnailEmoji": "📐",
-      "prerequisites": ["HTML básico"]
+      "prerequisites": [
+        "HTML básico"
+      ]
     },
     {
       "key": "fcc-responsive-web-design",
@@ -77,7 +79,9 @@
       "description": "Explica media queries, unidades relativas e imagens responsivas. Em português, e direto ao ponto de como fazer um layout servir a telas de tamanhos diferentes.",
       "url": "https://developer.mozilla.org/pt-BR/docs/Learn_web_development/Core/CSS_layout/Responsive_Design",
       "thumbnailEmoji": "📏",
-      "prerequisites": ["CSS básico"]
+      "prerequisites": [
+        "CSS básico"
+      ]
     },
     {
       "key": "webdev-learn-design",
@@ -88,7 +92,344 @@
       "description": "Curso focado só em responsividade, com as técnicas modernas de layout que dispensam boa parte das media queries. Complementa o material da MDN mostrando o porquê das escolhas.",
       "url": "https://web.dev/learn/design",
       "thumbnailEmoji": "🖥️",
-      "prerequisites": ["CSS básico"]
+      "prerequisites": [
+        "CSS básico"
+      ]
+    },
+    {
+      "key": "cev-javascript",
+      "title": "Curso em Vídeo — JavaScript",
+      "platform": "YOUTUBE",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Aulas em português que assumem que você nunca programou. Começa em variáveis e condições, não em framework — que é a ordem certa para não decorar React sem entender a linguagem por baixo.",
+      "url": "https://www.cursoemvideo.com/curso/javascript/",
+      "durationMinutes": 2400,
+      "thumbnailEmoji": "🟨",
+      "syllabus": [
+        "Variáveis e tipos",
+        "Condições e repetições",
+        "Funções",
+        "Manipulação do DOM"
+      ]
+    },
+    {
+      "key": "mdn-guia-javascript",
+      "title": "MDN — Guia de JavaScript",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Guia oficial em português, organizado por tema. Use depois de já escrever algum código: é onde se entende de verdade escopo, closures e o que acontece com `this`.",
+      "url": "https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Guide",
+      "thumbnailEmoji": "📗",
+      "prerequisites": [
+        "Lógica de programação"
+      ]
+    },
+    {
+      "key": "javascript-info",
+      "title": "The Modern JavaScript Tutorial",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Tutorial em inglês, mas o mais completo que existe de graça sobre a linguagem moderna: assincronismo, promises, módulos e prototypes explicados com profundidade rara.",
+      "url": "https://javascript.info/",
+      "thumbnailEmoji": "📙",
+      "prerequisites": [
+        "JavaScript básico"
+      ]
+    },
+    {
+      "key": "fcc-javascript-algoritmos",
+      "title": "freeCodeCamp — JavaScript Algorithms and Data Structures",
+      "platform": "FREECODECAMP",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Onde praticar até a lógica virar automática. São centenas de exercícios curtos com correção imediata — o tipo de repetição que leitura sozinha não substitui.",
+      "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/",
+      "durationMinutes": 18000,
+      "thumbnailEmoji": "🧮",
+      "prerequisites": [
+        "JavaScript básico"
+      ]
+    },
+    {
+      "key": "cev-git-github",
+      "title": "Curso em Vídeo — Git e GitHub",
+      "platform": "YOUTUBE",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Em português e do zero, incluindo a parte que trava iniciante: o que é commit, o que é branch e por que o histórico importa. Vale antes de tentar entender merge e conflito.",
+      "url": "https://www.cursoemvideo.com/curso/curso-de-git-e-github/",
+      "durationMinutes": 720,
+      "thumbnailEmoji": "🔀",
+      "syllabus": [
+        "Repositórios locais",
+        "Commits e histórico",
+        "Branches",
+        "Trabalhando com o GitHub"
+      ]
+    },
+    {
+      "key": "progit-ptbr",
+      "title": "Pro Git (livro completo, em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "O livro oficial do Git, gratuito e traduzido. Consulte quando algo der errado — rebase, conflito, histórico que precisa ser reescrito. É a fonte que resolve, não a que introduz.",
+      "url": "https://git-scm.com/book/pt-br/v2",
+      "thumbnailEmoji": "📕",
+      "prerequisites": [
+        "Git básico"
+      ]
+    },
+    {
+      "key": "github-docs-inicio",
+      "title": "GitHub Docs — Comece sua jornada",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "Documentação oficial em português sobre a plataforma, e não sobre o Git em si: pull requests, issues e como colaborar em repositório de outra pessoa — que é o que o mercado usa no dia a dia.",
+      "url": "https://docs.github.com/pt/get-started/start-your-journey",
+      "thumbnailEmoji": "🐙"
+    },
+    {
+      "key": "react-dev-aprender",
+      "title": "React — Aprender React (documentação oficial em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "A documentação oficial foi reescrita como curso e é hoje o melhor material de React que existe, gratuito ou pago. Em português. Comece por aqui, não por vídeo de terceiros.",
+      "url": "https://pt-br.react.dev/learn",
+      "thumbnailEmoji": "⚛️",
+      "prerequisites": [
+        "JavaScript moderno"
+      ],
+      "syllabus": [
+        "Descrevendo a UI com componentes",
+        "Adicionando interatividade",
+        "Gerenciando estado",
+        "Escape hatches e refs"
+      ]
+    },
+    {
+      "key": "react-dev-referencia",
+      "title": "React — Referência da API",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Referência hook a hook, em português. É onde se descobre por que `useEffect` dispara duas vezes e quando `useMemo` de fato ajuda — dúvidas que aparecem só depois de escrever bastante código.",
+      "url": "https://pt-br.react.dev/reference/react",
+      "thumbnailEmoji": "🪝",
+      "prerequisites": [
+        "React básico"
+      ]
+    },
+    {
+      "key": "vite-guide",
+      "title": "Vite — Guia oficial",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Ferramenta que monta e serve o projeto React moderno. Ler o guia evita o erro comum de tratar a build como caixa-preta e travar no primeiro problema de configuração.",
+      "url": "https://vitejs.dev/guide/",
+      "thumbnailEmoji": "⚡",
+      "prerequisites": [
+        "JavaScript moderno"
+      ]
+    },
+    {
+      "key": "ts-handbook",
+      "title": "TypeScript Handbook",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Manual oficial da linguagem. Cobre a parte que realmente muda o dia a dia: tipos de união, generics e inferência. Denso, mas é a fonte da verdade.",
+      "url": "https://www.typescriptlang.org/docs/handbook/intro.html",
+      "thumbnailEmoji": "🔷",
+      "prerequisites": [
+        "JavaScript moderno"
+      ]
+    },
+    {
+      "key": "total-typescript-essentials",
+      "title": "Total TypeScript Essentials",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "AVANCADO",
+      "description": "Livro gratuito focado em exercícios, do autor mais reconhecido de TypeScript hoje. Use depois do handbook: ele ataca justamente os casos em que o tipo não colabora.",
+      "url": "https://www.totaltypescript.com/books/total-typescript-essentials",
+      "thumbnailEmoji": "🧩",
+      "prerequisites": [
+        "TypeScript básico"
+      ]
+    },
+    {
+      "key": "mdn-scripting",
+      "title": "MDN — Scripting dinâmico com JavaScript",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Ponte entre JavaScript puro e o uso em aplicação real, em português. Útil para firmar o que o TypeScript vai tipar por cima.",
+      "url": "https://developer.mozilla.org/pt-BR/docs/Learn_web_development/Core/Scripting",
+      "thumbnailEmoji": "🧠"
+    },
+    {
+      "key": "nextjs-learn",
+      "title": "Next.js — Learn (curso oficial)",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "AVANCADO",
+      "description": "Curso oficial em que se constrói uma aplicação completa, com banco e autenticação. É o formato mais próximo de trabalho real entre os materiais gratuitos de front.",
+      "url": "https://nextjs.org/learn",
+      "thumbnailEmoji": "▲",
+      "prerequisites": [
+        "React",
+        "TypeScript básico"
+      ],
+      "syllabus": [
+        "Roteamento e layouts",
+        "Busca de dados",
+        "Renderização no servidor",
+        "Autenticação",
+        "Deploy"
+      ]
+    },
+    {
+      "key": "nextjs-docs",
+      "title": "Next.js — Documentação",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Referência do framework. Consulte para entender App Router, Server Components e cache — três assuntos em que material de terceiro envelhece rápido e engana.",
+      "url": "https://nextjs.org/docs",
+      "thumbnailEmoji": "📄",
+      "prerequisites": [
+        "React"
+      ]
+    },
+    {
+      "key": "webdev-learn-html",
+      "title": "web.dev — Learn HTML",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Retoma HTML em profundidade — metadados, formulários, semântica — que é o que separa uma página que funciona de uma que o Google e o leitor de tela entendem.",
+      "url": "https://web.dev/learn/html",
+      "thumbnailEmoji": "🏗️"
+    },
+    {
+      "key": "vitest-guide",
+      "title": "Vitest — Guia oficial",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Ferramenta de teste padrão em projetos com Vite. O guia mostra como escrever o primeiro teste e como rodá-los em watch — a parte que costuma impedir a prática de virar hábito.",
+      "url": "https://vitest.dev/guide/",
+      "thumbnailEmoji": "🧪",
+      "prerequisites": [
+        "JavaScript moderno"
+      ]
+    },
+    {
+      "key": "testing-library-react",
+      "title": "React Testing Library",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Ensina a testar o que o usuário vê em vez do detalhe interno do componente. É a diferença entre um teste que protege de regressão e um que quebra a cada refatoração.",
+      "url": "https://testing-library.com/docs/react-testing-library/intro/",
+      "thumbnailEmoji": "🔬",
+      "prerequisites": [
+        "React"
+      ]
+    },
+    {
+      "key": "webdev-learn-performance",
+      "title": "web.dev — Learn Performance",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "AVANCADO",
+      "description": "Curso sobre por que uma página demora a aparecer e o que fazer. Cobre Core Web Vitals, que é a métrica pela qual o site é de fato medido em produção.",
+      "url": "https://web.dev/learn/performance",
+      "thumbnailEmoji": "🚀"
+    },
+    {
+      "key": "lighthouse-overview",
+      "title": "Lighthouse — Visão geral",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "A ferramenta que já vem no Chrome e mede performance, acessibilidade e SEO. Serve para transformar 'o site está lento' em um número que dá para perseguir.",
+      "url": "https://developer.chrome.com/docs/lighthouse/overview",
+      "thumbnailEmoji": "🔦"
+    },
+    {
+      "key": "github-pages-quickstart",
+      "title": "GitHub Pages — Publicando seu site",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "Como colocar o portfólio no ar de graça, com domínio do GitHub. Em português. Portfólio que não está publicado não conta para recrutador.",
+      "url": "https://docs.github.com/pt/pages/quickstart",
+      "thumbnailEmoji": "🌐"
+    },
+    {
+      "key": "webdev-learn-accessibility",
+      "title": "web.dev — Learn Accessibility",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Acessibilidade é o detalhe que diferencia portfólio de júnior de portfólio de quem entende a plataforma — e é avaliada em processo seletivo de empresa grande.",
+      "url": "https://web.dev/learn/accessibility",
+      "thumbnailEmoji": "♿"
+    },
+    {
+      "key": "roadmap-sh-frontend",
+      "title": "roadmap.sh — Frontend",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Mapa visual do que se espera de um front-end. Use para decidir o que demonstrar no portfólio e identificar lacunas — não como lista a ser cumprida inteira.",
+      "url": "https://roadmap.sh/frontend",
+      "thumbnailEmoji": "🗺️"
+    },
+    {
+      "key": "tech-interview-handbook",
+      "title": "Tech Interview Handbook",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Guia gratuito que cobre o processo inteiro: currículo, comportamental e negociação. A parte menos técnica é justamente a que costuma eliminar candidato bom.",
+      "url": "https://www.techinterviewhandbook.org/",
+      "thumbnailEmoji": "🎯"
+    },
+    {
+      "key": "frontend-interview-handbook",
+      "title": "Front End Interview Handbook",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Perguntas reais de entrevista de front, com respostas comentadas. Serve para descobrir o que você acha que sabe explicar e na verdade não sabe.",
+      "url": "https://www.frontendinterviewhandbook.com/",
+      "thumbnailEmoji": "💬",
+      "prerequisites": [
+        "JavaScript",
+        "React"
+      ]
+    },
+    {
+      "key": "tech-interview-coding-prep",
+      "title": "Tech Interview Handbook — Preparação para entrevista de código",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Plano de estudo por tema de algoritmo, com o que priorizar quando o tempo é curto. Evita o erro de resolver problema aleatório sem critério.",
+      "url": "https://www.techinterviewhandbook.org/coding-interview-prep/",
+      "thumbnailEmoji": "⌨️",
+      "prerequisites": [
+        "Lógica de programação"
+      ]
     }
   ],
   "nodes": [
@@ -99,6 +440,48 @@
         "mdn-estruturar-conteudo",
         "mdn-css",
         "webdev-learn-css"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que a semântica do HTML muda na prática?",
+          "options": [
+            "Substitui a necessidade de CSS",
+            "Deixa a página carregar mais rápido",
+            "Melhora a compressão do arquivo",
+            "Permite que leitores de tela e buscadores entendam o papel de cada trecho"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "No box model, o que o `padding` controla?",
+          "options": [
+            "A espessura da borda",
+            "O espaço entre o conteúdo e a borda do elemento",
+            "O espaço entre a borda e os elementos vizinhos",
+            "A largura total do elemento"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Duas regras de CSS atingem o mesmo elemento. Qual vence?",
+          "options": [
+            "Sempre a primeira declarada",
+            "A de maior especificidade; havendo empate, a que vier depois",
+            "Sempre a que vier depois no arquivo",
+            "A que tiver menos propriedades"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Para que serve o atributo `alt` numa imagem?",
+          "options": [
+            "Informar a resolução do arquivo",
+            "Nomear a imagem no servidor",
+            "Descrever a imagem para quem não a vê e quando ela falha ao carregar",
+            "Definir o título exibido ao passar o mouse"
+          ],
+          "correctIndex": 2
+        }
       ]
     },
     {
@@ -107,6 +490,440 @@
         "fcc-responsive-web-design",
         "mdn-responsive-design",
         "webdev-learn-design"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual a função de uma media query?",
+          "options": [
+            "Aplicar estilos diferentes conforme características da tela, como a largura",
+            "Detectar qual navegador está sendo usado",
+            "Carregar um CSS diferente por sistema operacional",
+            "Reduzir automaticamente o tamanho das imagens"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que preferir unidades relativas como `rem` a `px` na tipografia?",
+          "options": [
+            "Ocupam menos espaço no arquivo CSS",
+            "São processadas mais rápido",
+            "Funcionam em navegadores antigos",
+            "Acompanham a preferência de tamanho de fonte que a pessoa definiu no navegador"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que a meta tag de viewport resolve?",
+          "options": [
+            "Ativa o modo escuro automaticamente",
+            "Bloqueia o zoom em qualquer situação",
+            "Define a resolução máxima das imagens",
+            "Impede o celular de renderizar a página como se fosse uma tela de desktop"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Qual a diferença central entre Flexbox e Grid?",
+          "options": [
+            "Flexbox não permite alinhamento vertical",
+            "Grid substituiu completamente o Flexbox",
+            "Flexbox organiza em um eixo por vez; Grid trabalha em linhas e colunas ao mesmo tempo",
+            "Grid só funciona em telas grandes"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "javascript",
+      "resources": [
+        "cev-javascript",
+        "mdn-guia-javascript",
+        "javascript-info",
+        "fcc-javascript-algoritmos"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual a diferença entre `let` e `var`?",
+          "options": [
+            "Não há diferença, apenas estilo",
+            "`var` é imutável e `let` não",
+            "`let` só funciona dentro de funções",
+            "`let` respeita o escopo do bloco; `var` vaza para a função inteira"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que `async/await` resolve?",
+          "options": [
+            "Deixa código assíncrono legível na ordem em que se lê, sem encadear callbacks",
+            "Elimina a necessidade de tratar erros",
+            "Faz o código rodar em paralelo em vários núcleos",
+            "Torna qualquer função mais rápida"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "O que caracteriza uma closure?",
+          "options": [
+            "Um laço que nunca termina",
+            "Um objeto que não pode ser alterado",
+            "Uma função que não retorna valor",
+            "Uma função que continua acessando variáveis do escopo onde foi criada"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Qual a diferença entre `==` e `===`?",
+          "options": [
+            "Não há diferença em JavaScript moderno",
+            "`==` só funciona com números",
+            "`===` é mais lento e por isso deve ser evitado",
+            "`===` compara valor e tipo; `==` converte o tipo antes de comparar"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que o event loop faz?",
+          "options": [
+            "Cria uma thread nova para cada requisição",
+            "Gerencia o cache do navegador",
+            "Repete o código até não haver mais erros",
+            "Coordena a execução de tarefas assíncronas numa única thread"
+          ],
+          "correctIndex": 3
+        }
+      ]
+    },
+    {
+      "node": "git",
+      "resources": [
+        "cev-git-github",
+        "progit-ptbr",
+        "github-docs-inicio"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que um commit representa?",
+          "options": [
+            "Uma cópia do projeto enviada ao servidor",
+            "Um backup automático da pasta",
+            "Um ponto do histórico com as alterações que você escolheu registrar",
+            "Uma versão publicada em produção"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Para que serve uma branch?",
+          "options": [
+            "Controlar quem pode acessar o código",
+            "Guardar uma cópia de segurança do repositório",
+            "Dividir o projeto em módulos",
+            "Trabalhar numa mudança isolada sem afetar a linha principal"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Quando acontece um conflito de merge?",
+          "options": [
+            "Quando alguém esquece de fazer commit",
+            "Quando a branch tem nome repetido",
+            "Quando duas alterações mexem na mesma parte do arquivo e o Git não decide sozinho",
+            "Sempre que duas pessoas trabalham no mesmo repositório"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Qual a diferença entre `git fetch` e `git pull`?",
+          "options": [
+            "`fetch` funciona offline e `pull` não",
+            "`fetch` só traz as mudanças; `pull` traz e já integra no seu branch",
+            "São comandos equivalentes",
+            "`pull` é somente leitura e `fetch` escreve"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "react",
+      "resources": [
+        "react-dev-aprender",
+        "react-dev-referencia",
+        "vite-guide"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que é estado num componente React?",
+          "options": [
+            "Uma cópia das propriedades recebidas do pai",
+            "Uma variável global compartilhada por toda a aplicação",
+            "Dado que pertence ao componente e, ao mudar, provoca nova renderização",
+            "O HTML final gerado pelo componente"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Qual a diferença entre props e estado?",
+          "options": [
+            "Estado só existe em componentes de classe",
+            "Props só aceitam texto",
+            "Props vêm de fora e não são alteradas pelo componente; estado é interno e mutável",
+            "Props são mutáveis e estado é fixo"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Para que serve o array de dependências do `useEffect`?",
+          "options": [
+            "Listar os componentes filhos que serão renderizados",
+            "Definir a ordem de execução dos hooks",
+            "Determinar quando o efeito deve rodar de novo",
+            "Guardar o valor anterior do estado"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Por que listas em React precisam de `key`?",
+          "options": [
+            "Porque o HTML exige um id em cada elemento",
+            "Para ordenar os itens automaticamente",
+            "Para o React identificar cada item entre renderizações e não recriar tudo",
+            "Para permitir a remoção de itens"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "typescript",
+      "resources": [
+        "ts-handbook",
+        "total-typescript-essentials",
+        "mdn-scripting"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual o principal ganho do TypeScript sobre o JavaScript?",
+          "options": [
+            "O código executa mais rápido no navegador",
+            "Dispensa a escrita de testes",
+            "Erros de tipo aparecem ao escrever o código, não em produção",
+            "Reduz o tamanho do arquivo final"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "O que é inferência de tipos?",
+          "options": [
+            "O compilador deduz o tipo pelo valor atribuído, sem anotação explícita",
+            "Uma conversão automática entre tipos incompatíveis",
+            "Um aviso emitido quando falta uma anotação",
+            "A checagem feita durante a execução"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Para que servem os generics?",
+          "options": [
+            "Converter tipos automaticamente em tempo de execução",
+            "Permitir que uma variável aceite qualquer valor",
+            "Criar tipos que só existem em bibliotecas",
+            "Escrever código que funciona com vários tipos preservando a informação de tipo"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que acontece com os tipos ao compilar para JavaScript?",
+          "options": [
+            "São mantidos como comentários",
+            "Geram exceções quando violados em produção",
+            "São apagados: não existe checagem de tipo em tempo de execução",
+            "Viram validações automáticas no código gerado"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "nextjs",
+      "resources": [
+        "nextjs-learn",
+        "nextjs-docs",
+        "webdev-learn-html"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que diferencia renderização no servidor de renderização no cliente?",
+          "options": [
+            "No servidor não é possível usar React",
+            "Não há diferença perceptível para quem acessa",
+            "No cliente a página nunca é indexada",
+            "No servidor o HTML já chega pronto; no cliente ele é montado pelo JavaScript do navegador"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Qual a principal vantagem de renderizar no servidor?",
+          "options": [
+            "Elimina a necessidade de banco de dados",
+            "A pessoa vê conteúdo antes do JavaScript carregar, e buscadores conseguem indexá-lo",
+            "Torna o CSS desnecessário",
+            "Reduz o custo de hospedagem"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "No App Router, como se define uma rota?",
+          "options": [
+            "Por decoradores nos componentes",
+            "Pela estrutura de pastas dentro do diretório de rotas",
+            "Por um arquivo central de configuração de rotas",
+            "Por anotações no package.json"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "O que é hidratação?",
+          "options": [
+            "O carregamento das imagens após o texto",
+            "O processo em que o JavaScript assume o HTML já renderizado e o torna interativo",
+            "A limpeza do cache entre navegações",
+            "A compressão dos arquivos estáticos"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "testes",
+      "resources": [
+        "vitest-guide",
+        "testing-library-react",
+        "webdev-learn-performance",
+        "lighthouse-overview"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que um teste de unidade verifica?",
+          "options": [
+            "A compatibilidade entre navegadores",
+            "Uma peça isolada do código, sem depender de banco ou rede",
+            "A performance sob carga",
+            "O sistema inteiro do ponto de vista de quem usa"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Por que testar o que a pessoa vê em vez do estado interno do componente?",
+          "options": [
+            "O teste sobrevive a refatorações e falha só quando o comportamento muda de verdade",
+            "Deixa a suíte mais rápida",
+            "É a única forma suportada pelas ferramentas",
+            "Dispensa a necessidade de mocks"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "O que os Core Web Vitals medem?",
+          "options": [
+            "O tamanho total do repositório",
+            "A cobertura de testes do projeto",
+            "O número de erros no console",
+            "Aspectos da experiência real de carregamento, interatividade e estabilidade visual"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Para que serve um mock num teste?",
+          "options": [
+            "Acelerar a execução do código em produção",
+            "Gerar dados de exemplo para o banco",
+            "Substituir uma dependência externa para isolar o que está sendo testado",
+            "Documentar o comportamento esperado da função"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "portfolio",
+      "resources": [
+        "github-pages-quickstart",
+        "webdev-learn-accessibility",
+        "roadmap-sh-frontend"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que mais pesa num portfólio de quem está começando?",
+          "options": [
+            "O tempo de estudo declarado",
+            "O design da página pessoal",
+            "A quantidade de tecnologias citadas no currículo",
+            "Projetos publicados e acessíveis, com o código disponível para leitura"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Por que acessibilidade importa num projeto de portfólio?",
+          "options": [
+            "Demonstra domínio da plataforma e é avaliada em processos seletivos",
+            "É exigida por lei em qualquer site",
+            "Melhora a posição no ranking de performance",
+            "Reduz o custo de hospedagem"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Qual o problema de um projeto que só existe no repositório?",
+          "options": [
+            "O código fica desatualizado mais rápido",
+            "O GitHub remove projetos sem deploy",
+            "Não é possível receber contribuições",
+            "Quem avalia precisaria clonar e rodar para ver algo, e normalmente não vai fazer isso"
+          ],
+          "correctIndex": 3
+        }
+      ]
+    },
+    {
+      "node": "entrevistas",
+      "resources": [
+        "tech-interview-handbook",
+        "frontend-interview-handbook",
+        "tech-interview-coding-prep"
+      ],
+      "quiz": [
+        {
+          "prompt": "Numa entrevista técnica com problema de código, o que costuma pesar mais?",
+          "options": [
+            "Usar a solução mais curta",
+            "Chegar à resposta no menor tempo possível",
+            "Explicar o raciocínio em voz alta enquanto resolve",
+            "Conhecer de cor a sintaxe da linguagem"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Qual o objetivo da entrevista comportamental?",
+          "options": [
+            "Entender como a pessoa age em situações reais de trabalho e de conflito",
+            "Confirmar as informações do currículo",
+            "Verificar conhecimento técnico de forma indireta",
+            "Testar a resistência a pressão"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que preparar perguntas para quem entrevista?",
+          "options": [
+            "Demonstra que o currículo é verdadeiro",
+            "A decisão é mútua: você também precisa avaliar se quer trabalhar ali",
+            "É esperado apenas por formalidade",
+            "Aumenta o tempo da entrevista a seu favor"
+          ],
+          "correctIndex": 1
+        }
       ]
     }
   ]

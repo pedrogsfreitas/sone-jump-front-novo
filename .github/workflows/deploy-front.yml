@@ -1,0 +1,70 @@
+# Publica o front no Azure Static Web Apps.
+#
+# Antes da primeira execução, criar no repositório:
+#   Secrets   → AZURE_STATIC_WEB_APPS_API_TOKEN  (Static Web App → Gerenciar token de implantação)
+#   Variables → API_BASE_URL                     (URL do App Service, ex.: https://jump-api.azurewebsites.net)
+#
+# API_BASE_URL precisa estar AQUI, e não nas configurações do Static Web App: o Vite
+# substitui `import.meta.env.VITE_*` em tempo de build, gravando o valor dentro do
+# bundle. Configurada no serviço, ela não teria efeito nenhum — o build já teria
+# acontecido com o valor antigo (ou vazio).
+
+name: Deploy front (Azure)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'sone-jump-front-main/**'
+      - '.github/workflows/deploy-front.yml'
+
+concurrency:
+  group: deploy-front
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: build e deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sone-jump-front-main/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: sone-jump-front-main
+        run: npm ci
+
+      - name: Falhar se a URL da API não estiver configurada
+        # Sem esta checagem o build passaria e o site subiria chamando a origem
+        # errada — o erro só apareceria como falha de CORS no navegador de quem
+        # usasse, que é caro de diagnosticar.
+        run: |
+          if [ -z "${{ vars.API_BASE_URL }}" ]; then
+            echo "A variável API_BASE_URL não está definida no repositório."
+            echo "Settings → Secrets and variables → Actions → Variables."
+            exit 1
+          fi
+
+      - name: Build
+        working-directory: sone-jump-front-main
+        env:
+          VITE_API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: npm run build
+
+      - name: Publicar no Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: sone-jump-front-main/dist
+          # O build já foi feito acima, com a variável do Vite no lugar certo.
+          # Deixar o Oryx buildar de novo perderia esse valor.
+          skip_app_build: true
+          skip_api_build: true

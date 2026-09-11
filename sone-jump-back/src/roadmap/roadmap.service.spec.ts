@@ -9,7 +9,7 @@ import {
 } from '../../generated/prisma/enums';
 import { XpService } from '../common/xp/xp.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { RoadmapService } from './roadmap.service';
+import { minimumToPass, RoadmapService } from './roadmap.service';
 
 const USER_ID = 1;
 const FRONTEND = {
@@ -122,6 +122,12 @@ function buildService(
   progress: MockProgress[] = [],
   experienceLevel: OnboardingLevel | null = null,
   certifications: MockCertification[] = [],
+  /**
+   * Substitui o quiz de um nó só neste teste. NODES é fixture compartilhada entre
+   * os describes — mutá-la faria um teste alterar o resultado de outro conforme a
+   * ordem de execução.
+   */
+  quizPorNo: Record<string, MockQuizQuestion[]> = {},
 ) {
   const rows = [...progress];
   const certRows = [...certifications];
@@ -177,7 +183,9 @@ function buildService(
     roadmapNodeQuizQuestion: {
       findMany: jest.fn(({ where }: { where: { nodeId: string } }) =>
         Promise.resolve(
-          NODES.find((n) => n.id === where.nodeId)?.quizQuestions ?? [],
+          quizPorNo[where.nodeId] ??
+            NODES.find((n) => n.id === where.nodeId)?.quizQuestions ??
+            [],
         ),
       ),
     },
@@ -639,5 +647,94 @@ describe('RoadmapService — nível declarado libera etapas iniciais', () => {
     );
     expect(xp.award).not.toHaveBeenCalled();
     expect(rows).toHaveLength(0);
+  });
+});
+
+describe('RoadmapService — aprovação por nota', () => {
+  /**
+   * A tabela documenta a regra e prova a proteção do caso degenerado: com 1 ou 2
+   * perguntas o corte de 70% arredondado viraria "todas certas", reintroduzindo
+   * pela porta dos fundos o 100% que a mudança veio remover.
+   */
+  it.each([
+    [1, 1],
+    [2, 1],
+    [3, 2],
+    [4, 3],
+    [5, 4],
+    [10, 7],
+  ])('com %i perguntas, aprova a partir de %i acertos', (total, esperado) => {
+    expect(minimumToPass(total)).toBe(esperado);
+  });
+
+  it('não exige 100% quando há perguntas suficientes', () => {
+    expect(minimumToPass(5)).toBeLessThan(5);
+    expect(minimumToPass(4)).toBeLessThan(4);
+  });
+
+  function comQuiz(perguntas: number): MockQuizQuestion[] {
+    return Array.from({ length: perguntas }, (_, i) => ({
+      id: `q${i}`,
+      prompt: `pergunta ${i}`,
+      orderIndex: i,
+      options: [
+        { id: `q${i}-ok`, text: 'certa', correct: true },
+        { id: `q${i}-no`, text: 'errada', correct: false },
+      ],
+    }));
+  }
+
+  /** Responde as `acertos` primeiras corretamente e erra o resto. */
+  function respostas(perguntas: number, acertos: number) {
+    const r: Record<string, string> = {};
+    for (let i = 0; i < perguntas; i++) {
+      r[`q${i}`] = i < acertos ? `q${i}-ok` : `q${i}-no`;
+    }
+    return r;
+  }
+
+  it('aprova com 4 de 5 e devolve a contagem', async () => {
+    const { service } = buildService(FRONTEND.id, [], null, [], {
+      'fe-html': comQuiz(5),
+    });
+    const r = await service.gradeQuiz(USER_ID, 'fe-html', respostas(5, 4));
+
+    expect(r.passed).toBe(true);
+    expect(r.correctCount).toBe(4);
+    expect(r.total).toBe(5);
+    expect(r.minimumCorrect).toBe(4);
+  });
+
+  it('reprova com 3 de 5 e ainda assim informa quanto faltou', async () => {
+    const { service } = buildService(FRONTEND.id, [], null, [], {
+      'fe-html': comQuiz(5),
+    });
+    const r = await service.gradeQuiz(USER_ID, 'fe-html', respostas(5, 3));
+
+    // Sem a contagem na reprovação, refazer o quiz vira tentativa às cegas.
+    expect(r.passed).toBe(false);
+    expect(r.correctCount).toBe(3);
+    expect(r.minimumCorrect).toBe(4);
+  });
+
+  it('a resposta nunca revela QUAIS questões foram erradas', async () => {
+    const { service } = buildService(FRONTEND.id, [], null, [], {
+      'fe-html': comQuiz(5),
+    });
+    const r = await service.gradeQuiz(USER_ID, 'fe-html', respostas(5, 3));
+
+    // Saber quais errou permitiria descobrir a alternativa certa por eliminação
+    // em poucas tentativas, que é justamente o que a correção no servidor evita.
+    // A resposta só carrega o agregado; nada por questão.
+    expect(Object.keys(r).sort()).toEqual(
+      ['correctCount', 'minimumCorrect', 'passed', 'roadmap', 'total'].sort(),
+    );
+    const alternativas = r.roadmap.nodes.flatMap((n) =>
+      n.quiz.flatMap((q) => q.options),
+    );
+    expect(alternativas.length).toBeGreaterThan(0);
+    for (const opcao of alternativas) {
+      expect(opcao).not.toHaveProperty('correct');
+    }
   });
 });

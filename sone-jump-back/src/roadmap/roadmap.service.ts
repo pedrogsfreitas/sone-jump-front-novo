@@ -15,6 +15,26 @@ import { PrismaService } from '../prisma/prisma.service';
 const XP_PER_HOUR = 5;
 
 /**
+ * Fração de acertos exigida no quiz da etapa.
+ *
+ * Antes a aprovação exigia 100%. Com uma pergunta por etapa isso significava que
+ * 25% das pessoas passavam no chute e quem errasse não tinha meio-termo — os dois
+ * extremos ao mesmo tempo. Com um corte por nota e mais perguntas, o acaso deixa
+ * de decidir e errar uma questão não anula o estudo.
+ */
+const APPROVAL_RATIO = 0.7;
+
+/**
+ * Quantos acertos aprovam, arredondando para cima. O `Math.min` protege o caso
+ * degenerado: numa etapa com 1 ou 2 perguntas o corte viraria "todas certas", e é
+ * melhor exigir uma a menos do que reintroduzir o 100% pela porta dos fundos.
+ */
+export function minimumToPass(total: number): number {
+  if (total <= 0) return 0;
+  return Math.min(Math.ceil(total * APPROVAL_RATIO), Math.max(1, total - 1));
+}
+
+/**
  * Quantas etapas iniciais o nível declarado dispensa de pré-requisito.
  *
  * Elas ficam `AVAILABLE`, nunca `COMPLETED`: nível é autodeclaração, e marcar como
@@ -175,7 +195,13 @@ export class RoadmapService {
     userId: number,
     nodeId: string,
     answers: Record<string, string>,
-  ): Promise<{ passed: boolean; roadmap: RoadmapDto }> {
+  ): Promise<{
+    passed: boolean;
+    correctCount: number;
+    total: number;
+    minimumCorrect: number;
+    roadmap: RoadmapDto;
+  }> {
     await this.requireUnlockedNode(userId, nodeId);
 
     const questions = await this.prisma.roadmapNodeQuizQuestion.findMany({
@@ -186,16 +212,29 @@ export class RoadmapService {
       throw new ConflictException('Esta etapa não tem quiz de validação.');
     }
 
-    const passed = questions.every((question) => {
+    const correctCount = questions.filter((question) => {
       const chosen = answers[question.id];
       return question.options.some((o) => o.id === chosen && o.correct);
-    });
+    }).length;
+
+    const minimumCorrect = minimumToPass(questions.length);
+    const passed = correctCount >= minimumCorrect;
 
     if (passed) {
       await this.upsertProgress(userId, nodeId, { quizPassedAt: new Date() });
     }
 
-    return { passed, roadmap: await this.listForUser(userId) };
+    // A contagem volta para a tela sempre — inclusive na reprovação, que é quando
+    // ela mais importa: sem saber quanto faltou, refazer o quiz vira tentativa às
+    // cegas. Qual questão errou continua fora, senão a resposta certa vazaria por
+    // eliminação em poucas tentativas.
+    return {
+      passed,
+      correctCount,
+      total: questions.length,
+      minimumCorrect,
+      roadmap: await this.listForUser(userId),
+    };
   }
 
   async updateStatus(

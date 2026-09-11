@@ -107,9 +107,23 @@ export function confirmStudy(nodeId: string) {
   });
 }
 
-/** Manda `perguntaId -> opcaoId` e recebe apenas se passou. */
+export type QuizResult = {
+  passed: boolean;
+  /** Quantas acertou. Vem também na reprovação — sem isso, refazer vira tentativa às cegas. */
+  correctCount: number;
+  total: number;
+  /** Acertos necessários para passar. Calculado no servidor, nunca no cliente. */
+  minimumCorrect: number;
+  roadmap: Roadmap;
+};
+
+/**
+ * Manda `perguntaId -> opcaoId` e recebe o placar agregado. QUAIS questões foram
+ * erradas nunca vem: revelaria a alternativa certa por eliminação em poucas
+ * tentativas.
+ */
 export function submitNodeQuiz(nodeId: string, answers: Record<string, string>) {
-  return apiRequest<{ passed: boolean; roadmap: Roadmap }, { answers: Record<string, string> }>(
+  return apiRequest<QuizResult, { answers: Record<string, string> }>(
     roadmap_endpoints.quiz(nodeId),
     { method: "POST", body: { answers } },
   );

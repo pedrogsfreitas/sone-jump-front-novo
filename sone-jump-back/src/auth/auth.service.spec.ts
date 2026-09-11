@@ -6,6 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { hashCpf } from '../common/crypto/cpf.util';
+import { MailService } from '../common/mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 
@@ -110,7 +111,16 @@ function buildService(mock: ReturnType<typeof buildPrismaMock>) {
   // PrismaService type, so this cast is the intentional seam between test double
   // and production type — narrower than sprinkling `any` through the assertions below.
   const prisma = mock as unknown as PrismaService;
-  return new AuthService(prisma, jwt, buildConfig());
+  // O envio é best-effort no `register`: se o e-mail falhar, o cadastro ainda deve
+  // concluir. O dublê registra as chamadas para os testes poderem afirmar isso.
+  const mail = { send: jest.fn().mockResolvedValue(undefined) };
+  const service = new AuthService(
+    prisma,
+    jwt,
+    buildConfig(),
+    mail as unknown as MailService,
+  );
+  return Object.assign(service, { __mail: mail });
 }
 
 describe('AuthService', () => {

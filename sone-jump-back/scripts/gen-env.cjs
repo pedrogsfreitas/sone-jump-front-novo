@@ -35,7 +35,10 @@ if (!databaseUrl) {
 }
 
 const content = [
-  `DATABASE_URL="${databaseUrl}"`,
+  // Sem aspas de proposito: o `dotenv` do Node as remove, mas o `env_file` do
+  // Docker nao — ele passaria a aspa como parte da string de conexao e o
+  // `docker compose up` falharia com erro de conexao dificil de diagnosticar.
+  `DATABASE_URL=${databaseUrl}`,
   '',
   'NODE_ENV=development',
   'PORT=8080',

@@ -1,0 +1,385 @@
+{
+  "career": "devops",
+  "content": [
+    {
+      "key": "linux-journey",
+      "title": "Linux Journey",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Trilha gratuita que vai de comandos básicos a permissões, processos e rede. Estruturada como curso, não como referência — bom para quem nunca abriu um terminal.",
+      "url": "https://linuxjourney.com/",
+      "thumbnailEmoji": "🐧",
+      "syllabus": [
+        "Navegação e arquivos",
+        "Permissões",
+        "Processos",
+        "Rede",
+        "Empacotamento"
+      ]
+    },
+    {
+      "key": "ubuntu-linha-de-comando",
+      "title": "Ubuntu — Linha de comando para iniciantes",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "Tutorial oficial focado só no terminal. Direto e curto: é o mínimo necessário antes de qualquer coisa de container ou servidor fazer sentido.",
+      "url": "https://ubuntu.com/tutorials/command-line-for-beginners",
+      "thumbnailEmoji": "⌨️"
+    },
+    {
+      "key": "docker-get-started",
+      "title": "Docker — Comece por aqui",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Guia oficial que constrói e roda a primeira imagem. Entender imagem versus contêiner logo no começo evita a maior parte da confusão posterior.",
+      "url": "https://docs.docker.com/get-started/",
+      "thumbnailEmoji": "🐳",
+      "prerequisites": [
+        "Linha de comando"
+      ],
+      "syllabus": [
+        "Imagens e contêineres",
+        "Dockerfile",
+        "Volumes",
+        "Redes"
+      ]
+    },
+    {
+      "key": "play-with-docker",
+      "title": "Play with Docker",
+      "platform": "DOCUMENTACAO",
+      "type": "PROJETO",
+      "level": "INICIANTE",
+      "description": "Ambiente Docker no navegador, sem instalar nada. Serve para praticar antes de mexer na própria máquina — ou quando a instalação local dá problema.",
+      "url": "https://labs.play-with-docker.com/",
+      "thumbnailEmoji": "🎮"
+    },
+    {
+      "key": "docker-compose",
+      "title": "Docker Compose — Documentação",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Como subir vários serviços juntos — aplicação, banco, cache — com um comando. É o formato usado no próprio JUMP para levantar o ambiente.",
+      "url": "https://docs.docker.com/compose/",
+      "thumbnailEmoji": "🎼",
+      "prerequisites": [
+        "Docker"
+      ]
+    },
+    {
+      "key": "github-actions-ptbr",
+      "title": "GitHub Actions — Documentação (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "A ferramenta de CI/CD usada no JUMP, com documentação traduzida. Cobre workflows, jobs e segredos — a base para automatizar teste e deploy.",
+      "url": "https://docs.github.com/pt/actions",
+      "thumbnailEmoji": "⚙️",
+      "prerequisites": [
+        "Git"
+      ]
+    },
+    {
+      "key": "terraform-tutorials",
+      "title": "Terraform — Tutoriais oficiais",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "AVANCADO",
+      "description": "Infraestrutura como código na prática: descrever o servidor num arquivo em vez de clicar no console. Os tutoriais são guiados e rodam em nuvem de verdade.",
+      "url": "https://developer.hashicorp.com/terraform/tutorials",
+      "thumbnailEmoji": "🏗️",
+      "prerequisites": [
+        "Cloud básico"
+      ]
+    },
+    {
+      "key": "kubernetes-basico-ptbr",
+      "title": "Kubernetes — Tutorial básico (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "AVANCADO",
+      "description": "Documentação oficial traduzida, com laboratório interativo. Só faz sentido depois de Docker estar sólido — antes disso, é abstração sobre abstração.",
+      "url": "https://kubernetes.io/pt-br/docs/tutorials/kubernetes-basics/",
+      "thumbnailEmoji": "☸️",
+      "prerequisites": [
+        "Docker"
+      ]
+    },
+    {
+      "key": "google-sre-book",
+      "title": "Google — Site Reliability Engineering (livro)",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "O livro que definiu a disciplina, gratuito na íntegra. Os capítulos sobre SLO e postmortem sem culpados mudam a forma de pensar produção — leia-os primeiro.",
+      "url": "https://sre.google/sre-book/table-of-contents/",
+      "thumbnailEmoji": "📕"
+    },
+    {
+      "key": "prometheus-overview",
+      "title": "Prometheus — Visão geral",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "O padrão de fato para métricas. Entender o modelo de dados explica como se monta alerta que avisa antes do usuário perceber, em vez de depois.",
+      "url": "https://prometheus.io/docs/introduction/overview/",
+      "thumbnailEmoji": "🔥",
+      "prerequisites": [
+        "Containers"
+      ]
+    },
+    {
+      "key": "roadmap-sh-devops",
+      "title": "roadmap.sh — DevOps",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Mapa da área, útil justamente porque DevOps tem muitas ferramentas concorrentes. Ajuda a escolher em que investir tempo e o que só reconhecer de nome.",
+      "url": "https://roadmap.sh/devops",
+      "thumbnailEmoji": "🗺️"
+    }
+  ],
+  "nodes": [
+    {
+      "node": "linux",
+      "resources": [
+        "linux-journey",
+        "ubuntu-linha-de-comando",
+        "progit-ptbr"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que as permissões de um arquivo no Linux controlam?",
+          "options": [
+            "Quais programas podem abri-lo",
+            "Quem pode ler, escrever e executar, separado por dono, grupo e demais",
+            "Quanto espaço o arquivo pode ocupar",
+            "Em que diretório o arquivo pode ficar"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Para que serve um pipe entre dois comandos?",
+          "options": [
+            "Executar os dois comandos ao mesmo tempo",
+            "Enviar a saída do primeiro como entrada do segundo",
+            "Repetir o comando até dar certo",
+            "Salvar a saída num arquivo"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "O que uma porta identifica numa conexão de rede?",
+          "options": [
+            "Qual serviço da máquina deve receber aquele tráfego",
+            "O endereço físico da placa de rede",
+            "O protocolo de criptografia usado",
+            "A velocidade máxima da conexão"
+          ],
+          "correctIndex": 0
+        }
+      ]
+    },
+    {
+      "node": "containers",
+      "resources": [
+        "docker-get-started",
+        "play-with-docker",
+        "docker-compose"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual a diferença entre imagem e contêiner?",
+          "options": [
+            "Contêiner é para produção e imagem para desenvolvimento",
+            "A imagem roda e o contêiner é o arquivo salvo",
+            "São nomes diferentes para a mesma coisa",
+            "A imagem é o modelo imutável; o contêiner é uma execução dela"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Por que um contêiner é mais leve que uma máquina virtual?",
+          "options": [
+            "Compartilha o kernel do sistema hospedeiro em vez de emular um sistema inteiro",
+            "Não precisa de sistema de arquivos",
+            "Ocupa menos espaço porque comprime os arquivos",
+            "Executa apenas um processo por vez"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Para que serve um volume no Docker?",
+          "options": [
+            "Aumentar a memória disponível para o contêiner",
+            "Compartilhar a rede entre contêineres",
+            "Manter dados que devem sobreviver à destruição do contêiner",
+            "Acelerar a construção da imagem"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "ci-cd",
+      "resources": [
+        "github-actions-ptbr",
+        "12factor-ptbr"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual o objetivo de uma pipeline de integração contínua?",
+          "options": [
+            "Substituir a revisão de código por outra pessoa",
+            "Publicar o sistema em produção a cada commit",
+            "Gerar a documentação do projeto",
+            "Verificar automaticamente cada alteração antes que ela chegue à linha principal"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Por que a pipeline deve rodar num ambiente limpo?",
+          "options": [
+            "Reduz o custo de execução",
+            "Permite rodar em paralelo",
+            "Garante que o resultado não depende do que está instalado na máquina de alguém",
+            "Deixa a execução mais rápida"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "O que significa uma pipeline falhar em um teste?",
+          "options": [
+            "O problema é da ferramenta de CI",
+            "A alteração não deve avançar até que a causa seja entendida e corrigida",
+            "A pipeline deve ser executada de novo até passar",
+            "O teste deve ser desativado para desbloquear a entrega"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "cloud",
+      "resources": [
+        "terraform-tutorials",
+        "kubernetes-basico-ptbr"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que caracteriza infraestrutura como código?",
+          "options": [
+            "A infraestrutura se ajusta sozinha conforme a demanda",
+            "O código da aplicação roda diretamente na nuvem",
+            "A infraestrutura é descrita em arquivos versionados, não configurada manualmente",
+            "Os servidores são configurados por interface gráfica"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Qual a principal vantagem de descrever a infraestrutura em arquivos?",
+          "options": [
+            "Dispensa a necessidade de backup",
+            "Elimina a possibilidade de erro humano",
+            "Reduz o custo da nuvem automaticamente",
+            "O ambiente pode ser recriado igual, e a mudança fica registrada no histórico"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que o Kubernetes resolve?",
+          "options": [
+            "Substituir a necessidade de Docker",
+            "Construir imagens de contêiner mais rápido",
+            "Monitorar o custo da infraestrutura",
+            "Orquestrar muitos contêineres: distribuição, escala e substituição dos que falham"
+          ],
+          "correctIndex": 3
+        }
+      ]
+    },
+    {
+      "node": "observabilidade",
+      "resources": [
+        "google-sre-book",
+        "prometheus-overview"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual a diferença entre métrica e log?",
+          "options": [
+            "Métrica é um número agregado ao longo do tempo; log é o registro de um evento específico",
+            "Log é numérico e métrica é textual",
+            "Métricas só existem em produção",
+            "Logs são gerados apenas quando há erro"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "O que é um SLO?",
+          "options": [
+            "Um alvo de confiabilidade acordado, que orienta quando agir",
+            "O limite de gastos com infraestrutura",
+            "O tempo máximo de resposta do servidor",
+            "Um contrato jurídico com o cliente"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que um postmortem deve ser sem culpados?",
+          "options": [
+            "Para reduzir o tempo gasto na análise",
+            "As pessoas só relatam o que realmente aconteceu se não temerem punição",
+            "É uma exigência das ferramentas de monitoramento",
+            "Porque a causa costuma ser sempre técnica"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "carreira",
+      "resources": [
+        "roadmap-sh-devops",
+        "tech-interview-handbook",
+        "system-design-primer"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que um portfólio de DevOps deveria demonstrar?",
+          "options": [
+            "Certificações de todos os provedores de nuvem",
+            "Scripts de automação isolados",
+            "A maior quantidade de ferramentas já utilizadas",
+            "Um ambiente reproduzível, com pipeline e infraestrutura versionadas"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Numa entrevista, como responder sobre um incidente que você causou?",
+          "options": [
+            "Explicando o que aprendeu e o que passou a fazer diferente",
+            "Afirmando que nunca causou nenhum",
+            "Evitando o assunto para não demonstrar fragilidade",
+            "Atribuindo à falta de processo da empresa"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que automatizar uma tarefa repetitiva de operação?",
+          "options": [
+            "Elimina a necessidade de monitoramento",
+            "Reduz a necessidade de documentação",
+            "Remove o erro humano e torna o resultado auditável e repetível",
+            "É sempre mais rápido do que fazer manualmente"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    }
+  ]
+}

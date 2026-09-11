@@ -17,6 +17,7 @@ import {
   updateNodeStatus,
   confirmStudy,
   submitNodeQuiz,
+  type QuizResult,
   type RoadmapCareer,
   type RoadmapNode,
   type RoadmapNodeStatus,
@@ -73,7 +74,9 @@ export default function Roadmap() {
   const [confirmingStudy, setConfirmingStudy] = useState(false);
   const [submittingQuiz, setSubmittingQuiz] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
-  const [quizResult, setQuizResult] = useState<"correct" | "incorrect" | null>(null);
+  // Guarda o placar, não só se passou: na reprovação, saber que faltou 1 acerto
+  // é a diferença entre revisar um ponto e recomeçar a etapa no escuro.
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
 
   // Troca a etapa selecionada e já zera o estado do quiz junto, no mesmo
   // clique — em vez de um useEffect reagindo à mudança depois (o React 19
@@ -137,10 +140,10 @@ export default function Roadmap() {
     setActionError("");
     setSubmittingQuiz(true);
     try {
-      const { passed, roadmap } = await submitNodeQuiz(node.id, quizAnswers);
-      setCareer(roadmap.career);
-      setNodes(roadmap.nodes);
-      setQuizResult(passed ? "correct" : "incorrect");
+      const resultado = await submitNodeQuiz(node.id, quizAnswers);
+      setCareer(resultado.roadmap.career);
+      setNodes(resultado.roadmap.nodes);
+      setQuizResult(resultado);
     } catch (e) {
       setActionError(e instanceof ApiError ? e.message : "Erro ao corrigir o quiz.");
     } finally {
@@ -384,10 +387,18 @@ export default function Roadmap() {
                           </div>
                         ))}
 
-                        {quizResult === "incorrect" && (
-                          <p className="text-xs text-red-400 mb-2">
-                            Não foi dessa vez. Revise o conteúdo e tente de novo.
-                          </p>
+                        {quizResult && !quizResult.passed && (
+                          <div className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
+                            <p className="text-xs text-red-300 font-medium">
+                              {quizResult.correctCount} de {quizResult.total} corretas —
+                              faltaram {quizResult.minimumCorrect - quizResult.correctCount} para
+                              passar.
+                            </p>
+                            <p className="text-xs text-red-400/80 mt-0.5">
+                              Revise o conteúdo e tente de novo. São necessários{" "}
+                              {quizResult.minimumCorrect} acertos.
+                            </p>
+                          </div>
                         )}
                         <button
                           onClick={() => handleSubmitQuiz(selectedNode)}

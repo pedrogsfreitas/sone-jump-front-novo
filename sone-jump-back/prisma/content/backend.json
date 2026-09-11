@@ -1,0 +1,542 @@
+{
+  "career": "backend",
+  "content": [
+    {
+      "key": "cev-algoritmos",
+      "title": "Curso em Vídeo — Algoritmos e Lógica de Programação",
+      "platform": "YOUTUBE",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Lógica antes de linguagem, em português. Ensina a decompor um problema em passos — a habilidade que se transfere para qualquer stack e sem a qual todo o resto vira decoreba.",
+      "url": "https://www.cursoemvideo.com/curso/algoritmos/",
+      "durationMinutes": 1800,
+      "thumbnailEmoji": "🧠",
+      "syllabus": [
+        "Variáveis e tipos",
+        "Condições",
+        "Repetições",
+        "Vetores e matrizes",
+        "Funções"
+      ]
+    },
+    {
+      "key": "refactoring-guru-padroes",
+      "title": "Refactoring Guru — Padrões de Projeto (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Catálogo ilustrado de padrões, traduzido. Use como referência quando um problema de estrutura reaparecer — não para decorar os 23 padrões de uma vez.",
+      "url": "https://refactoring.guru/pt-br/design-patterns",
+      "thumbnailEmoji": "🧩",
+      "prerequisites": [
+        "Orientação a objetos"
+      ]
+    },
+    {
+      "key": "nodejs-introducao-ptbr",
+      "title": "Node.js — Introdução (documentação em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Documentação oficial traduzida: o que é o event loop e por que JavaScript no servidor é assíncrono. Entender isso cedo evita meses escrevendo código que trava sem motivo aparente.",
+      "url": "https://nodejs.org/pt-br/learn/getting-started/introduction-to-nodejs",
+      "thumbnailEmoji": "🟢",
+      "prerequisites": [
+        "JavaScript básico"
+      ]
+    },
+    {
+      "key": "nodejs-api-reference",
+      "title": "Node.js — Referência da API",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Referência dos módulos nativos: fs, http, crypto, streams. É o que se consulta quando a resposta não está numa biblioteca de terceiro.",
+      "url": "https://nodejs.org/docs/latest/api/",
+      "thumbnailEmoji": "📗",
+      "prerequisites": [
+        "Node.js básico"
+      ]
+    },
+    {
+      "key": "ts-handbook-tipos",
+      "title": "TypeScript Handbook — O sistema de tipos",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "No back-end o TypeScript ganha peso: o tipo é o que documenta o contrato entre camadas. Este capítulo cobre a base que o resto do handbook assume.",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/basic-types.html",
+      "thumbnailEmoji": "🔷",
+      "prerequisites": [
+        "JavaScript moderno"
+      ]
+    },
+    {
+      "key": "sqlbolt",
+      "title": "SQLBolt — SQL interativo",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Lições curtas em que cada conceito é exercitado no navegador, sem instalar banco nenhum. O caminho mais rápido de zero até JOIN funcionando.",
+      "url": "https://sqlbolt.com/",
+      "thumbnailEmoji": "⚡",
+      "syllabus": [
+        "SELECT e filtros",
+        "JOIN entre tabelas",
+        "Agregações",
+        "Inserção e atualização"
+      ]
+    },
+    {
+      "key": "fcc-relational-database",
+      "title": "freeCodeCamp — Relational Database",
+      "platform": "FREECODECAMP",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Certificação prática com PostgreSQL e terminal de verdade, não simulador. Ensina modelagem e Bash junto — a combinação que aparece no trabalho real.",
+      "url": "https://www.freecodecamp.org/learn/relational-database/",
+      "durationMinutes": 18000,
+      "thumbnailEmoji": "🐘",
+      "prerequisites": [
+        "SQL básico"
+      ]
+    },
+    {
+      "key": "postgres-tutorial",
+      "title": "PostgreSQL — Tutorial oficial",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "O banco que o JUMP usa. O tutorial cobre criação de tabelas, chaves e transações direto da fonte, sem intermediário que simplifica demais.",
+      "url": "https://www.postgresql.org/docs/current/tutorial.html",
+      "thumbnailEmoji": "📘"
+    },
+    {
+      "key": "use-the-index-luke",
+      "title": "Use The Index, Luke!",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Livro gratuito sobre índices e por que uma consulta fica lenta. É o material que separa quem escreve SQL de quem entende o que o banco faz com ele.",
+      "url": "https://use-the-index-luke.com/",
+      "thumbnailEmoji": "🔍",
+      "prerequisites": [
+        "SQL intermediário"
+      ]
+    },
+    {
+      "key": "mdn-http",
+      "title": "MDN — HTTP (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Métodos, cabeçalhos e cache explicados na fonte. Uma API REST é uma conversa em HTTP: sem isso, escolher entre PUT e PATCH vira chute.",
+      "url": "https://developer.mozilla.org/pt-BR/docs/Web/HTTP",
+      "thumbnailEmoji": "🌐"
+    },
+    {
+      "key": "mdn-http-status",
+      "title": "MDN — Códigos de status HTTP",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "Referência rápida em português. Devolver o status certo é metade do contrato de uma API — 200 com erro no corpo é o defeito mais comum em API de iniciante.",
+      "url": "https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status",
+      "thumbnailEmoji": "🚦"
+    },
+    {
+      "key": "nestjs-docs",
+      "title": "NestJS — Documentação oficial",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "AVANCADO",
+      "description": "O framework usado no back do JUMP. A documentação é bem escrita e cobre injeção de dependência, guards e pipes — os três conceitos que explicam a estrutura do nosso próprio código.",
+      "url": "https://docs.nestjs.com/",
+      "thumbnailEmoji": "🐱",
+      "prerequisites": [
+        "Node.js",
+        "TypeScript"
+      ],
+      "syllabus": [
+        "Controllers e providers",
+        "Módulos",
+        "Middleware e guards",
+        "Pipes e validação",
+        "Testes"
+      ]
+    },
+    {
+      "key": "owasp-autenticacao",
+      "title": "OWASP — Authentication Cheat Sheet",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "O que fazer e o que nunca fazer em login: hash de senha, bloqueio por tentativa, mensagens que não revelam se o e-mail existe. Referência da indústria em segurança.",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",
+      "thumbnailEmoji": "🔐",
+      "prerequisites": [
+        "APIs REST"
+      ]
+    },
+    {
+      "key": "jwt-introducao",
+      "title": "JWT — Introdução",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Como um token é formado e o que ele realmente prova. Importante para entender por que um JWT não deve guardar dado sensível: qualquer um lê o conteúdo.",
+      "url": "https://jwt.io/introduction",
+      "thumbnailEmoji": "🎫"
+    },
+    {
+      "key": "prisma-docs",
+      "title": "Prisma — Documentação",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "O ORM do JUMP. A parte de migrations é a mais importante: é o que mantém o schema do código e o do banco em sincronia — e o que quebrou neste projeto quando foi ignorada.",
+      "url": "https://www.prisma.io/docs",
+      "thumbnailEmoji": "▲",
+      "prerequisites": [
+        "SQL",
+        "TypeScript"
+      ]
+    },
+    {
+      "key": "piramide-de-testes",
+      "title": "The Practical Test Pyramid — Martin Fowler",
+      "platform": "BLOG",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Explica quantos testes de cada tipo escrever e por quê. Resolve a dúvida que trava todo mundo no começo: testar unidade, integração ou ponta a ponta.",
+      "url": "https://martinfowler.com/articles/practical-test-pyramid.html",
+      "thumbnailEmoji": "🔺",
+      "prerequisites": [
+        "Testes automatizados"
+      ]
+    },
+    {
+      "key": "jest-comecando",
+      "title": "Jest — Começando (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "A ferramenta de teste usada no back do JUMP, com documentação traduzida. Cobre mocks, que é o que permite testar um service sem tocar no banco de verdade.",
+      "url": "https://jestjs.io/pt-BR/docs/getting-started",
+      "thumbnailEmoji": "🃏",
+      "prerequisites": [
+        "JavaScript"
+      ]
+    },
+    {
+      "key": "12factor-ptbr",
+      "title": "The Twelve-Factor App (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Doze princípios sobre como uma aplicação deve tratar configuração, dependências e processos. Curto, e é o vocabulário que aparece em toda discussão de arquitetura e deploy.",
+      "url": "https://12factor.net/pt_br/",
+      "thumbnailEmoji": "📋"
+    },
+    {
+      "key": "roadmap-sh-backend",
+      "title": "roadmap.sh — Backend",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Mapa do que se espera de um back-end. Use para achar lacunas e decidir o que mostrar no portfólio — não como lista para cumprir inteira.",
+      "url": "https://roadmap.sh/backend",
+      "thumbnailEmoji": "🗺️"
+    },
+    {
+      "key": "system-design-primer",
+      "title": "System Design Primer",
+      "platform": "GITHUB",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Repositório que ensina a projetar sistemas em escala, com exemplos resolvidos. É o assunto que domina entrevista de back-end pleno em diante.",
+      "url": "https://github.com/donnemartin/system-design-primer",
+      "thumbnailEmoji": "🏛️",
+      "prerequisites": [
+        "APIs REST",
+        "Bancos de dados"
+      ]
+    },
+    {
+      "key": "tech-interview-system-design",
+      "title": "Tech Interview Handbook — System Design",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Versão enxuta e guiada do mesmo tema, com roteiro de como conduzir a conversa na entrevista. Melhor ponto de partida antes de encarar o Primer inteiro.",
+      "url": "https://www.techinterviewhandbook.org/system-design/",
+      "thumbnailEmoji": "🎯"
+    }
+  ],
+  "nodes": [
+    {
+      "node": "logica",
+      "resources": [
+        "cev-algoritmos",
+        "fcc-javascript-algoritmos",
+        "refactoring-guru-padroes"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que é complexidade de tempo de um algoritmo?",
+          "options": [
+            "Quantos segundos o algoritmo leva numa máquina específica",
+            "Como o tempo de execução cresce conforme a entrada aumenta",
+            "Quanta memória ele consome no total",
+            "Quantas linhas de código ele tem"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Por que uma busca em lista ordenada pode ser muito mais rápida?",
+          "options": [
+            "Porque a linguagem usa índices internos",
+            "O processador otimiza automaticamente listas ordenadas",
+            "Dá para descartar metade dos elementos a cada comparação",
+            "Listas ordenadas ocupam menos memória"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Qual a diferença entre uma lista e um mapa (dicionário)?",
+          "options": [
+            "A lista não permite elementos repetidos",
+            "O mapa só aceita números como valor",
+            "O mapa mantém sempre a ordem de inserção",
+            "A lista acessa por posição; o mapa acessa por chave"
+          ],
+          "correctIndex": 3
+        }
+      ]
+    },
+    {
+      "node": "linguagem",
+      "resources": [
+        "nodejs-introducao-ptbr",
+        "ts-handbook-tipos",
+        "nodejs-api-reference"
+      ],
+      "quiz": [
+        {
+          "prompt": "Por que o Node.js é descrito como não bloqueante?",
+          "options": [
+            "Ele executa cada requisição numa thread separada",
+            "Ele compila o código antes de rodar",
+            "Operações de entrada e saída não travam a thread enquanto esperam",
+            "Ele nunca lança exceções"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "O que acontece se um código síncrono e demorado rodar no event loop?",
+          "options": [
+            "Ele trava o processamento de todas as outras requisições",
+            "A requisição é cancelada por timeout",
+            "Nada, o event loop o executa em paralelo",
+            "O Node cria uma thread nova automaticamente"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Qual o papel do TypeScript num projeto de back-end?",
+          "options": [
+            "Documentar e verificar o contrato de dados entre as camadas",
+            "Acelerar a execução do servidor",
+            "Gerar a documentação da API automaticamente",
+            "Substituir a validação de entrada da API"
+          ],
+          "correctIndex": 0
+        }
+      ]
+    },
+    {
+      "node": "bancos",
+      "resources": [
+        "sqlbolt",
+        "fcc-relational-database",
+        "postgres-tutorial",
+        "use-the-index-luke"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que um JOIN faz?",
+          "options": [
+            "Combina linhas de tabelas diferentes a partir de uma condição",
+            "Cria uma tabela nova a partir de outra",
+            "Concatena os resultados de duas consultas",
+            "Junta duas colunas numa só"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Para que serve um índice num banco de dados?",
+          "options": [
+            "Localizar linhas sem varrer a tabela inteira",
+            "Reduzir o espaço ocupado pela tabela",
+            "Impedir a inserção de dados duplicados",
+            "Ordenar permanentemente as linhas no disco"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "O que garante uma transação?",
+          "options": [
+            "Que a consulta será executada mais rápido",
+            "Que os dados serão salvos em disco imediatamente",
+            "Que ninguém mais poderá ler a tabela",
+            "Ou todas as operações do bloco são aplicadas, ou nenhuma é"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que uma chave estrangeira representa?",
+          "options": [
+            "Uma coluna cujo valor não se repete",
+            "Um índice criado automaticamente",
+            "Uma referência a uma linha de outra tabela, com integridade garantida pelo banco",
+            "Uma senha de acesso à tabela"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "apis",
+      "resources": [
+        "mdn-http",
+        "mdn-http-status",
+        "nestjs-docs",
+        "owasp-autenticacao",
+        "jwt-introducao"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual a diferença entre PUT e PATCH?",
+          "options": [
+            "PUT cria e PATCH atualiza",
+            "PUT substitui o recurso inteiro; PATCH altera apenas os campos enviados",
+            "PATCH não pode ter corpo na requisição",
+            "São equivalentes; a escolha é apenas de estilo"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Qual status devolver quando a pessoa não está autenticada?",
+          "options": [
+            "500, porque o servidor não conseguiu processar",
+            "401, reservando o 403 para quem está autenticado mas sem permissão",
+            "400, porque a requisição está incorreta",
+            "403, porque o acesso foi negado"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Por que a mensagem de erro do login não deve dizer se o e-mail existe?",
+          "options": [
+            "Permitiria descobrir quais e-mails estão cadastrados na plataforma",
+            "Deixa a resposta mais lenta",
+            "Não há motivo técnico, é só convenção",
+            "Dificulta o trabalho do suporte"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "O que um JWT garante e o que ele não garante?",
+          "options": [
+            "Garante sigilo total dos dados que carrega",
+            "Garante que expira mesmo sem verificação no servidor",
+            "Garante que não foi alterado, mas não esconde o conteúdo de quem o lê",
+            "Garante que só o servidor consegue lê-lo"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "arquitetura",
+      "resources": [
+        "prisma-docs",
+        "piramide-de-testes",
+        "jest-comecando",
+        "12factor-ptbr"
+      ],
+      "quiz": [
+        {
+          "prompt": "Para que serve uma migration?",
+          "options": [
+            "Copiar os dados de um banco para outro",
+            "Otimizar as consultas mais lentas",
+            "Registrar cada alteração de schema para que qualquer ambiente chegue ao mesmo estado",
+            "Fazer backup antes de uma alteração"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Segundo a pirâmide de testes, o que deve haver em maior quantidade?",
+          "options": [
+            "Testes manuais, por cobrirem casos imprevistos",
+            "Testes de carga, por revelarem problemas de produção",
+            "Testes de unidade, por serem rápidos e baratos de manter",
+            "Testes de ponta a ponta, por serem mais realistas"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Por que configuração deve vir de variáveis de ambiente?",
+          "options": [
+            "É mais rápido do que ler um arquivo",
+            "Permite alterar a configuração sem reiniciar o processo",
+            "O mesmo código roda em ambientes diferentes sem alteração e sem segredo no repositório",
+            "Variáveis de ambiente são criptografadas pelo sistema"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "carreira",
+      "resources": [
+        "roadmap-sh-backend",
+        "tech-interview-system-design",
+        "system-design-primer"
+      ],
+      "quiz": [
+        {
+          "prompt": "Numa entrevista de system design, o que se espera primeiro?",
+          "options": [
+            "Escolher imediatamente o banco de dados",
+            "Esclarecer requisitos e restrições antes de desenhar a solução",
+            "Estimar o custo de infraestrutura",
+            "Desenhar o diagrama completo de uma vez"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Por que um cache é usado num sistema em escala?",
+          "options": [
+            "Aumenta a segurança das requisições",
+            "Garante que os dados nunca se percam",
+            "Evita repetir trabalho caro, ao custo de o dado poder ficar desatualizado",
+            "Elimina a necessidade de banco de dados"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "O que um projeto de portfólio de back-end deveria demonstrar?",
+          "options": [
+            "Interface visual elaborada",
+            "Muitos commits ao longo do tempo",
+            "Uma API funcionando, com testes e instruções claras de execução",
+            "O maior número possível de frameworks usados"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    }
+  ]
+}

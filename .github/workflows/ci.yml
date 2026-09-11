@@ -46,6 +46,13 @@ jobs:
         # Script separado: o `lint` local usa --fix, que na CI mascararia problemas.
         run: npm run lint:ci
 
+      - name: Checagem de tipos (inclui os specs)
+        # `build` exclui os arquivos de teste e o Jest nao checa tipos, entao um
+        # spec com erro de tipo passava despercebido nos dois. Foi assim que o
+        # AuthService ganhou um quarto parametro no construtor e o spec seguiu
+        # chamando com tres, montando o service sem a dependencia de e-mail.
+        run: npm run typecheck
+
       - name: Build
         run: npm run build
 

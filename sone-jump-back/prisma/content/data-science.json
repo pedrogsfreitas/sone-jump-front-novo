@@ -1,0 +1,419 @@
+{
+  "career": "data-science",
+  "content": [
+    {
+      "key": "khan-estatistica-ptbr",
+      "title": "Khan Academy — Estatística e Probabilidade (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Curso gratuito e traduzido, com exercícios corrigidos na hora. Cobre a base que todo o resto da carreira assume: distribuição, média, desvio e inferência.",
+      "url": "https://pt.khanacademy.org/math/statistics-probability",
+      "thumbnailEmoji": "📊",
+      "syllabus": [
+        "Estatística descritiva",
+        "Probabilidade",
+        "Distribuições",
+        "Inferência e testes de hipótese"
+      ]
+    },
+    {
+      "key": "seeing-theory",
+      "title": "Seeing Theory — Probabilidade visual",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "Projeto da Brown University que anima cada conceito de probabilidade. Serve para destravar a intuição quando a fórmula sozinha não fecha na cabeça.",
+      "url": "https://seeing-theory.brown.edu/",
+      "thumbnailEmoji": "🎲"
+    },
+    {
+      "key": "cev-python-mundo1",
+      "title": "Curso em Vídeo — Python 3 (Mundo 1)",
+      "platform": "YOUTUBE",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Python do zero em português, sem pressupor programação anterior. É a linguagem padrão de dados, e começar por ela evita ter que aprender duas coisas ao mesmo tempo.",
+      "url": "https://www.cursoemvideo.com/curso/python-3-mundo-1/",
+      "durationMinutes": 2400,
+      "thumbnailEmoji": "🐍",
+      "syllabus": [
+        "Primeiros comandos",
+        "Condições",
+        "Repetições",
+        "Funções"
+      ]
+    },
+    {
+      "key": "python-tutorial-ptbr",
+      "title": "Python — Tutorial oficial (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Documentação traduzida da linguagem. Use depois do vídeo, para firmar estruturas de dados e compreensões de lista — o que torna código de análise legível.",
+      "url": "https://docs.python.org/pt-br/3/tutorial/",
+      "thumbnailEmoji": "📘",
+      "prerequisites": [
+        "Python básico"
+      ]
+    },
+    {
+      "key": "pandas-user-guide",
+      "title": "pandas — Guia do usuário",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "A biblioteca em que se passa a maior parte do tempo em dados. O guia cobre seleção, agrupamento e junção — as três operações que resolvem quase toda análise.",
+      "url": "https://pandas.pydata.org/docs/user_guide/index.html",
+      "thumbnailEmoji": "🐼",
+      "prerequisites": [
+        "Python"
+      ]
+    },
+    {
+      "key": "numpy-iniciantes",
+      "title": "NumPy — Guia para iniciantes",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "É a base numérica sobre a qual pandas e scikit-learn são construídos. Entender arrays e vetorização explica por que código com laço fica lento em dados.",
+      "url": "https://numpy.org/doc/stable/user/absolute_beginners.html",
+      "thumbnailEmoji": "🔢",
+      "prerequisites": [
+        "Python"
+      ]
+    },
+    {
+      "key": "kaggle-learn",
+      "title": "Kaggle Learn",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Mini-cursos práticos rodando em notebook no navegador, de pandas a machine learning. Cada um leva poucas horas e termina com exercício — bom para manter ritmo.",
+      "url": "https://www.kaggle.com/learn",
+      "thumbnailEmoji": "🏆",
+      "prerequisites": [
+        "Python"
+      ]
+    },
+    {
+      "key": "google-ml-crash-course",
+      "title": "Google — Machine Learning Crash Course",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "AVANCADO",
+      "description": "Curso gratuito do Google com vídeo, texto e exercício em código. Explica o que o modelo realmente faz, em vez de só ensinar a chamar a biblioteca.",
+      "url": "https://developers.google.com/machine-learning/crash-course",
+      "thumbnailEmoji": "🤖",
+      "prerequisites": [
+        "Python",
+        "Estatística básica"
+      ],
+      "syllabus": [
+        "Regressão linear",
+        "Descida de gradiente",
+        "Generalização e overfitting",
+        "Redes neurais",
+        "Dados desbalanceados"
+      ]
+    },
+    {
+      "key": "scikit-learn-guide",
+      "title": "scikit-learn — Guia do usuário",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Referência da biblioteca padrão de ML clássico. A parte de validação cruzada e métricas é a mais importante: é o que separa modelo que funciona de modelo que parece funcionar.",
+      "url": "https://scikit-learn.org/stable/user_guide.html",
+      "thumbnailEmoji": "⚙️",
+      "prerequisites": [
+        "Python",
+        "NumPy"
+      ]
+    },
+    {
+      "key": "matplotlib-tutoriais",
+      "title": "Matplotlib — Tutoriais",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Como produzir os gráficos. Comece pelos tutoriais básicos: eixos, rótulos e legenda resolvem a maior parte do que uma análise precisa comunicar.",
+      "url": "https://matplotlib.org/stable/tutorials/index.html",
+      "thumbnailEmoji": "📈",
+      "prerequisites": [
+        "Python"
+      ]
+    },
+    {
+      "key": "kaggle-datasets",
+      "title": "Kaggle Datasets",
+      "platform": "DOCUMENTACAO",
+      "type": "PROJETO",
+      "level": "INTERMEDIARIO",
+      "description": "Onde achar dados reais para os projetos do portfólio. Análise sobre dado de verdade, com sujeira e valor faltando, vale muito mais que exercício de sala.",
+      "url": "https://www.kaggle.com/datasets",
+      "thumbnailEmoji": "🗂️"
+    },
+    {
+      "key": "roadmap-sh-data-scientist",
+      "title": "roadmap.sh — AI e Data Scientist",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Mapa do que se espera na área. Use para achar lacunas antes de entrevista, não como lista a cumprir inteira.",
+      "url": "https://roadmap.sh/ai-data-scientist",
+      "thumbnailEmoji": "🗺️"
+    }
+  ],
+  "nodes": [
+    {
+      "node": "estatistica",
+      "resources": [
+        "khan-estatistica-ptbr",
+        "seeing-theory"
+      ],
+      "quiz": [
+        {
+          "prompt": "Quando a mediana descreve melhor os dados que a média?",
+          "options": [
+            "Quando os dados seguem distribuição normal",
+            "Quando os dados são todos positivos",
+            "Quando a amostra é muito grande",
+            "Quando há valores extremos que distorcem a média"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que o desvio padrão indica?",
+          "options": [
+            "O maior valor menos o menor valor",
+            "O quanto os valores costumam se afastar da média",
+            "A quantidade de valores acima da média",
+            "O valor mais frequente do conjunto"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Correlação entre duas variáveis implica causalidade?",
+          "options": [
+            "Não; elas podem variar juntas por coincidência ou por causa de um terceiro fator",
+            "Apenas quando a correlação é negativa",
+            "Sim, sempre que a correlação for forte",
+            "Sim, desde que a amostra seja grande"
+          ],
+          "correctIndex": 0
+        }
+      ]
+    },
+    {
+      "node": "python",
+      "resources": [
+        "cev-python-mundo1",
+        "python-tutorial-ptbr",
+        "numpy-iniciantes",
+        "pandas-user-guide"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que um DataFrame representa no pandas?",
+          "options": [
+            "Um arquivo CSV aberto em modo leitura",
+            "Uma tabela com linhas e colunas nomeadas, cada coluna com seu tipo",
+            "Uma lista de listas do Python puro",
+            "Uma conexão com o banco de dados"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Por que operações vetorizadas do NumPy são mais rápidas que um laço em Python?",
+          "options": [
+            "Usam a placa de vídeo automaticamente",
+            "Rodam em várias máquinas ao mesmo tempo",
+            "Reduzem a precisão dos números para ganhar velocidade",
+            "Executam sobre o array inteiro em código otimizado, sem o custo de iterar no interpretador"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Qual o primeiro passo ao receber um conjunto de dados desconhecido?",
+          "options": [
+            "Inspecionar tipos, valores faltantes e distribuição antes de qualquer análise",
+            "Remover todas as linhas com valores nulos",
+            "Treinar um modelo para ver o resultado",
+            "Normalizar todas as colunas numéricas"
+          ],
+          "correctIndex": 0
+        }
+      ]
+    },
+    {
+      "node": "sql-dados",
+      "resources": [
+        "sqlbolt",
+        "fcc-relational-database",
+        "use-the-index-luke"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que GROUP BY faz numa consulta?",
+          "options": [
+            "Agrupa linhas que compartilham um valor para aplicar funções de agregação",
+            "Junta duas tabelas pelo campo em comum",
+            "Ordena o resultado pela coluna indicada",
+            "Remove as linhas duplicadas do resultado"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Qual a diferença entre WHERE e HAVING?",
+          "options": [
+            "HAVING só pode ser usado com JOIN",
+            "WHERE só funciona com números",
+            "HAVING é mais rápido que WHERE",
+            "WHERE filtra linhas antes do agrupamento; HAVING filtra depois, sobre o agregado"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Por que um LEFT JOIN pode devolver linhas com campos nulos?",
+          "options": [
+            "Porque houve erro na condição de junção",
+            "Porque os índices não foram criados",
+            "Porque a tabela da direita está vazia",
+            "Ele mantém as linhas da tabela da esquerda mesmo sem correspondência à direita"
+          ],
+          "correctIndex": 3
+        }
+      ]
+    },
+    {
+      "node": "ml",
+      "resources": [
+        "google-ml-crash-course",
+        "scikit-learn-guide",
+        "kaggle-learn"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que é overfitting?",
+          "options": [
+            "O modelo é simples demais para o problema",
+            "O treino demora mais que o esperado",
+            "Os dados têm colunas demais",
+            "O modelo decora o conjunto de treino e vai mal em dados novos"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Por que separar dados de treino e de teste?",
+          "options": [
+            "Equilibrar as classes do conjunto",
+            "Medir o desempenho em dados que o modelo nunca viu",
+            "Diminuir o consumo de memória",
+            "Reduzir o tempo de treinamento"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Em um problema com classes muito desbalanceadas, por que a acurácia engana?",
+          "options": [
+            "A acurácia só vale para regressão",
+            "A acurácia não pode ser calculada nesse caso",
+            "O treino não converge com classes desbalanceadas",
+            "Um modelo que sempre responde a classe majoritária já acerta quase tudo"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que a validação cruzada resolve?",
+          "options": [
+            "Reduz a chance de o resultado depender de uma divisão específica dos dados",
+            "Corrige automaticamente o desbalanceamento",
+            "Acelera o treinamento do modelo",
+            "Elimina a necessidade de conjunto de teste"
+          ],
+          "correctIndex": 0
+        }
+      ]
+    },
+    {
+      "node": "visualizacao",
+      "resources": [
+        "matplotlib-tutoriais",
+        "seeing-theory"
+      ],
+      "quiz": [
+        {
+          "prompt": "Quando um gráfico de linha é mais adequado que um de barras?",
+          "options": [
+            "Quando se comparam categorias independentes",
+            "Quando os valores são percentuais",
+            "Quando há poucos dados",
+            "Quando se mostra a evolução de um valor ao longo do tempo"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Por que truncar o eixo Y pode ser problemático?",
+          "options": [
+            "Só é aceito em gráficos de dispersão",
+            "Impede o uso de legendas",
+            "Amplia visualmente diferenças pequenas e distorce a leitura",
+            "Deixa o gráfico mais difícil de renderizar"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Qual o objetivo principal de uma visualização numa análise?",
+          "options": [
+            "Substituir a apresentação dos números",
+            "Comunicar um achado de forma que a pessoa entenda sem explicação extensa",
+            "Demonstrar domínio da biblioteca de gráficos",
+            "Incluir o máximo de informação possível numa figura"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "carreira",
+      "resources": [
+        "kaggle-datasets",
+        "roadmap-sh-data-scientist",
+        "tech-interview-handbook"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que diferencia um bom projeto de portfólio em dados?",
+          "options": [
+            "Uma pergunta clara, dados reais e uma conclusão defensável",
+            "A maior quantidade de gráficos possível",
+            "O modelo mais complexo que se conseguiu treinar",
+            "O conjunto de dados com mais linhas"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que documentar as decisões de limpeza dos dados?",
+          "options": [
+            "Elas afetam o resultado e precisam poder ser questionadas e reproduzidas",
+            "Reduz o tamanho do notebook",
+            "É exigência das plataformas de competição",
+            "Acelera a execução do código"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "O que costuma pesar mais numa entrevista de dados?",
+          "options": [
+            "Apresentar a maior acurácia possível",
+            "Explicar o raciocínio por trás da análise e suas limitações",
+            "Ter usado o maior número de algoritmos",
+            "Conhecer de cor a sintaxe das bibliotecas"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    }
+  ]
+}

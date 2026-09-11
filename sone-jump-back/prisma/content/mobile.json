@@ -1,0 +1,354 @@
+{
+  "career": "mobile",
+  "content": [
+    {
+      "key": "react-native-getting-started",
+      "title": "React Native — Documentação oficial",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Ponto de partida oficial. Cobre os componentes que substituem o HTML — View, Text, FlatList — e por que layout em mobile é Flexbox por padrão.",
+      "url": "https://reactnative.dev/docs/getting-started",
+      "thumbnailEmoji": "📱",
+      "prerequisites": [
+        "React"
+      ],
+      "syllabus": [
+        "Componentes principais",
+        "Estilo e layout",
+        "Listas",
+        "Navegação",
+        "Acesso a APIs nativas"
+      ]
+    },
+    {
+      "key": "expo-tutorial",
+      "title": "Expo — Tutorial guiado",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Constrói um app completo do zero. Expo remove a configuração nativa que costuma travar iniciante antes mesmo da primeira tela aparecer.",
+      "url": "https://docs.expo.dev/tutorial/introduction/",
+      "thumbnailEmoji": "🚀",
+      "prerequisites": [
+        "React"
+      ]
+    },
+    {
+      "key": "react-native-network",
+      "title": "React Native — Consumindo APIs",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Como buscar dados de um servidor no app. Documento curto, mas cobre a diferença que pega todo mundo: no emulador, `localhost` não é a sua máquina.",
+      "url": "https://reactnative.dev/docs/network",
+      "thumbnailEmoji": "🌐",
+      "prerequisites": [
+        "React Native básico"
+      ]
+    },
+    {
+      "key": "expo-async-storage",
+      "title": "Expo — AsyncStorage",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Armazenamento local no dispositivo: é o que mantém o usuário logado depois de fechar o app. Simples, e quase sempre a primeira necessidade real de persistência.",
+      "url": "https://docs.expo.dev/versions/latest/sdk/async-storage/",
+      "thumbnailEmoji": "💾",
+      "prerequisites": [
+        "React Native básico"
+      ]
+    },
+    {
+      "key": "tanstack-query",
+      "title": "TanStack Query — Documentação",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Resolve cache, recarga e estado de carregamento de dados remotos. Em mobile pesa mais que na web, porque a conexão cai e o app precisa se recuperar sozinho.",
+      "url": "https://tanstack.com/query/latest/docs/framework/react/overview",
+      "thumbnailEmoji": "🔄",
+      "prerequisites": [
+        "React"
+      ]
+    },
+    {
+      "key": "react-native-performance",
+      "title": "React Native — Performance",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Por que o app trava ao rolar uma lista e o que fazer. Em celular a margem é bem menor que no navegador, então isso aparece cedo em projeto real.",
+      "url": "https://reactnative.dev/docs/performance",
+      "thumbnailEmoji": "⚡",
+      "prerequisites": [
+        "React Native"
+      ]
+    },
+    {
+      "key": "expo-build",
+      "title": "Expo — Gerando builds para publicação",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Como transformar o projeto em arquivo instalável para as lojas. É a etapa que a maioria dos tutoriais pula e que separa projeto de estudo de app publicado.",
+      "url": "https://docs.expo.dev/deploy/build-project/",
+      "thumbnailEmoji": "📦",
+      "prerequisites": [
+        "React Native"
+      ]
+    },
+    {
+      "key": "roadmap-sh-react-native",
+      "title": "roadmap.sh — React Native",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Mapa específico de mobile com React Native. Use para achar lacunas antes de entrevista e decidir o que demonstrar no portfólio.",
+      "url": "https://roadmap.sh/react-native",
+      "thumbnailEmoji": "🗺️"
+    }
+  ],
+  "nodes": [
+    {
+      "node": "fundamentos",
+      "resources": [
+        "cev-algoritmos",
+        "fcc-javascript-algoritmos"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que mais diferencia o desenvolvimento mobile do web?",
+          "options": [
+            "Recursos limitados, conexão instável e o app precisando funcionar em segundo plano",
+            "A impossibilidade de consumir APIs",
+            "A linguagem de programação usada",
+            "A ausência de interface visual"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que a lógica de programação vem antes do framework?",
+          "options": [
+            "O framework muda com o tempo; a capacidade de resolver problemas se transfere",
+            "Porque o framework não permite estruturas de repetição",
+            "Frameworks mobile exigem conhecimento matemático avançado",
+            "Sem lógica não é possível instalar as ferramentas"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "O que significa dizer que o celular tem recursos limitados?",
+          "options": [
+            "Memória, bateria e processamento restringem o que o app pode fazer a cada momento",
+            "O sistema operacional impede o uso de bibliotecas externas",
+            "A tela pequena limita a quantidade de código",
+            "Apenas um app pode rodar por vez"
+          ],
+          "correctIndex": 0
+        }
+      ]
+    },
+    {
+      "node": "javascript-mobile",
+      "resources": [
+        "cev-javascript",
+        "mdn-guia-javascript",
+        "ts-handbook",
+        "javascript-info"
+      ],
+      "quiz": [
+        {
+          "prompt": "Por que o JavaScript moderno importa em React Native?",
+          "options": [
+            "Porque não é possível usar TypeScript",
+            "O app é escrito na linguagem; recursos como async/await e módulos são usados o tempo todo",
+            "Porque o celular só executa JavaScript",
+            "Porque o React Native compila JavaScript para Java"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "O que o TypeScript ajuda a evitar num app mobile?",
+          "options": [
+            "O consumo excessivo de bateria",
+            "Problemas de layout em telas diferentes",
+            "Erros de dados que só apareceriam no dispositivo, depois de publicado",
+            "A necessidade de testes automatizados"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Por que tratar erros de requisição é ainda mais importante em mobile?",
+          "options": [
+            "Porque o sistema encerra apps que lançam exceções",
+            "A conexão cai com frequência e o app precisa se recuperar sem travar",
+            "Porque as APIs mobile são mais instáveis",
+            "Porque não existe console para depurar"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "react-native",
+      "resources": [
+        "react-dev-aprender",
+        "react-native-getting-started",
+        "expo-tutorial"
+      ],
+      "quiz": [
+        {
+          "prompt": "Como o React Native renderiza a interface?",
+          "options": [
+            "Renderiza uma página web dentro do app",
+            "Gera código nativo em tempo de compilação",
+            "Desenha tudo em um canvas próprio",
+            "Usa componentes nativos da plataforma, não elementos HTML"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Qual o sistema de layout padrão do React Native?",
+          "options": [
+            "Tabelas, como no HTML antigo",
+            "Flexbox, aplicado por padrão a todos os componentes",
+            "Grid, como no CSS moderno",
+            "Posicionamento absoluto"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Por que usar FlatList em vez de renderizar a lista inteira?",
+          "options": [
+            "Ela funciona offline",
+            "Ela renderiza apenas o que está visível, o que evita travamento em listas longas",
+            "Ela reduz o tamanho do aplicativo",
+            "Ela ordena os itens automaticamente"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "estado-dados",
+      "resources": [
+        "react-native-network",
+        "expo-async-storage",
+        "tanstack-query"
+      ],
+      "quiz": [
+        {
+          "prompt": "Por que `localhost` não funciona no emulador ao chamar sua API local?",
+          "options": [
+            "Para o emulador, `localhost` é o próprio dispositivo virtual, não a sua máquina",
+            "Porque o emulador bloqueia conexões HTTP",
+            "Porque falta configurar o certificado",
+            "Porque a API precisa estar publicada"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Para que serve o armazenamento local no dispositivo?",
+          "options": [
+            "Acelerar a renderização das telas",
+            "Guardar dados entre execuções, como manter a pessoa logada",
+            "Compartilhar dados com outros aplicativos",
+            "Substituir o banco de dados do servidor"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Por que uma biblioteca de cache de dados remotos é mais útil em mobile?",
+          "options": [
+            "Porque reduz o tamanho do aplicativo",
+            "Ela lida com reconexão, revalidação e estado de carregamento, que em mobile falham muito",
+            "Porque substitui o armazenamento local",
+            "Porque o React Native não permite fetch"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "publicacao",
+      "resources": [
+        "react-native-performance",
+        "expo-build"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que costuma causar travamento ao rolar uma lista?",
+          "options": [
+            "Usar imagens em formato PNG",
+            "Consumir uma API remota",
+            "Ter muitas telas no aplicativo",
+            "Renderizar componentes demais ou refazer trabalho pesado a cada quadro"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que é preciso para publicar um app nas lojas?",
+          "options": [
+            "Gerar uma build assinada e submetê-la para revisão da loja",
+            "Distribuir o arquivo diretamente aos usuários",
+            "Apenas enviar o código-fonte ao repositório",
+            "Publicar o app como site e criar um atalho"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que testar em dispositivo real e não só no emulador?",
+          "options": [
+            "Porque a loja exige um vídeo do app rodando",
+            "O emulador não permite instalar o app",
+            "Desempenho, gestos e comportamento de rede diferem do ambiente simulado",
+            "Porque o emulador não renderiza imagens"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "carreira",
+      "resources": [
+        "roadmap-sh-react-native",
+        "github-pages-quickstart",
+        "tech-interview-handbook"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que fortalece um portfólio mobile?",
+          "options": [
+            "Protótipos em ferramenta de design",
+            "Muitas telas desenhadas sem implementação",
+            "A lista de bibliotecas estudadas",
+            "Um app publicado ou instalável, com o código disponível"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Por que demonstrar tratamento de erro e estado de carregamento?",
+          "options": [
+            "São o que separa um app de demonstração de um app utilizável de verdade",
+            "Aceleram a aprovação na revisão",
+            "Reduzem o tamanho do pacote final",
+            "São exigência das lojas de aplicativos"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "O que costuma ser avaliado numa entrevista de mobile?",
+          "options": [
+            "Conhecimento de design gráfico",
+            "Quantos apps você já publicou",
+            "Domínio de todas as linguagens nativas",
+            "Como você lida com as restrições da plataforma: rede, memória e ciclo de vida"
+          ],
+          "correctIndex": 3
+        }
+      ]
+    }
+  ]
+}

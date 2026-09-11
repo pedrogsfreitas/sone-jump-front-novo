@@ -1,0 +1,364 @@
+{
+  "career": "ux-ui",
+  "content": [
+    {
+      "key": "nng-heuristicas",
+      "title": "Nielsen Norman — As 10 heurísticas de usabilidade",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "Os dez princípios mais citados da área, do grupo que os formulou. Curto, e é o vocabulário com que se justifica uma decisão de design em vez de dizer 'achei melhor'.",
+      "url": "https://www.nngroup.com/articles/ten-usability-heuristics/",
+      "thumbnailEmoji": "🔟"
+    },
+    {
+      "key": "laws-of-ux",
+      "title": "Laws of UX",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INICIANTE",
+      "description": "Princípios de psicologia aplicados a interface — Fitts, Hick, Jakob — cada um com exemplo visual. Explica por que certas interfaces funcionam mesmo sendo feias.",
+      "url": "https://lawsofux.com/",
+      "thumbnailEmoji": "⚖️"
+    },
+    {
+      "key": "figma-design-basics",
+      "title": "Figma — Fundamentos de design",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INICIANTE",
+      "description": "Material da própria Figma sobre hierarquia, espaçamento e tipografia, aplicado na ferramenta que o mercado usa. Teoria e prática no mesmo lugar.",
+      "url": "https://www.figma.com/resource-library/design-basics/",
+      "thumbnailEmoji": "🎨",
+      "syllabus": [
+        "Hierarquia visual",
+        "Tipografia",
+        "Cor e contraste",
+        "Espaçamento e grid"
+      ]
+    },
+    {
+      "key": "nng-metodos-pesquisa",
+      "title": "Nielsen Norman — Qual método de pesquisa usar",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Mapa dos métodos de pesquisa e quando cada um serve. Resolve a dúvida mais comum de quem começa: entrevistar, testar ou medir?",
+      "url": "https://www.nngroup.com/articles/which-ux-research-methods/",
+      "thumbnailEmoji": "🔍"
+    },
+    {
+      "key": "ixdf-literatura",
+      "title": "Interaction Design Foundation — Biblioteca aberta",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Acervo gratuito de artigos e capítulos sobre processo de design, pesquisa e usabilidade. Denso e bem referenciado — bom para aprofundar um tema específico.",
+      "url": "https://www.interaction-design.org/literature",
+      "thumbnailEmoji": "📚"
+    },
+    {
+      "key": "nng-teste-usabilidade",
+      "title": "Nielsen Norman — Teste de usabilidade em 101",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Como conduzir um teste sem induzir a resposta, e por que cinco participantes já revelam a maior parte dos problemas. Aplicável a projeto de estudante sem orçamento.",
+      "url": "https://www.nngroup.com/articles/usability-testing-101/",
+      "thumbnailEmoji": "🧪"
+    },
+    {
+      "key": "material-design-3",
+      "title": "Material Design 3 — Fundamentos",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Design system de referência do Google, documentado em detalhe. Serve para estudar como um sistema real resolve cor, tipografia e componente de forma consistente.",
+      "url": "https://m3.material.io/foundations",
+      "thumbnailEmoji": "🧱"
+    },
+    {
+      "key": "material-design-guidelines",
+      "title": "Material Design — Guidelines",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Diretrizes de movimento, elevação e interação. Complementa os fundamentos com o que costuma faltar em portfólio de iniciante: comportamento, não só aparência.",
+      "url": "https://material.io/design",
+      "thumbnailEmoji": "📐"
+    },
+    {
+      "key": "storybook-docs",
+      "title": "Storybook — Documentação",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "AVANCADO",
+      "description": "Ferramenta em que design system vira componente navegável e testável. É a ponte entre o que o designer desenha e o que a pessoa desenvolvedora entrega.",
+      "url": "https://storybook.js.org/docs",
+      "thumbnailEmoji": "📖",
+      "prerequisites": [
+        "Componentes de interface"
+      ]
+    },
+    {
+      "key": "mdn-acessibilidade",
+      "title": "MDN — Acessibilidade (em português)",
+      "platform": "DOCUMENTACAO",
+      "type": "CURSO",
+      "level": "INTERMEDIARIO",
+      "description": "Acessibilidade do lado de quem implementa, em português: leitor de tela, navegação por teclado e contraste. Design inacessível não chega ao usuário, por melhor que pareça.",
+      "url": "https://developer.mozilla.org/pt-BR/docs/Learn_web_development/Core/Accessibility",
+      "thumbnailEmoji": "♿"
+    },
+    {
+      "key": "roadmap-sh-ux",
+      "title": "roadmap.sh — UX Design",
+      "platform": "DOCUMENTACAO",
+      "type": "ARTIGO",
+      "level": "INTERMEDIARIO",
+      "description": "Mapa da área, útil porque UX mistura pesquisa, design visual e produto. Ajuda a decidir onde se aprofundar em vez de tentar tudo ao mesmo tempo.",
+      "url": "https://roadmap.sh/ux-design",
+      "thumbnailEmoji": "🗺️"
+    }
+  ],
+  "nodes": [
+    {
+      "node": "principios",
+      "resources": [
+        "nng-heuristicas",
+        "laws-of-ux",
+        "figma-design-basics"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que é hierarquia visual?",
+          "options": [
+            "A separação entre design e desenvolvimento",
+            "A ordem em que os elementos aparecem no código",
+            "A quantidade de níveis de navegação da interface",
+            "A organização dos elementos de modo que o olhar perceba primeiro o mais importante"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "Por que consistência importa numa interface?",
+          "options": [
+            "Facilita a tradução para outros idiomas",
+            "Reduz a quantidade de código necessária",
+            "A pessoa aprende o padrão uma vez e o aplica no resto do produto",
+            "Torna a interface mais bonita"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "O que a heurística de visibilidade do estado do sistema exige?",
+          "options": [
+            "Que a interface informe o que está acontecendo, em tempo razoável",
+            "Que o design seja o mesmo em todas as telas",
+            "Que todas as funções estejam visíveis na tela inicial",
+            "Que o sistema registre as ações da pessoa"
+          ],
+          "correctIndex": 0
+        }
+      ]
+    },
+    {
+      "node": "pesquisa",
+      "resources": [
+        "nng-metodos-pesquisa",
+        "ixdf-literatura"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual a diferença entre pesquisa qualitativa e quantitativa?",
+          "options": [
+            "Quantitativa é feita antes e qualitativa depois",
+            "Qualitativa não exige participantes",
+            "Qualitativa investiga o porquê do comportamento; quantitativa mede quanto ele acontece",
+            "Qualitativa usa questionário e quantitativa usa entrevista"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "O que é uma pergunta enviesada numa entrevista?",
+          "options": [
+            "Uma que sugere a resposta esperada e contamina o resultado",
+            "Uma feita no início da conversa",
+            "Uma sobre a experiência anterior da pessoa",
+            "Uma que exige resposta longa"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que observar o comportamento vale mais que perguntar sobre ele?",
+          "options": [
+            "Entrevistas exigem mais participantes",
+            "As pessoas costumam relatar o que acreditam fazer, que difere do que fazem",
+            "A observação é mais rápida de conduzir",
+            "O comportamento é sempre consciente"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    },
+    {
+      "node": "prototipagem",
+      "resources": [
+        "figma-design-basics",
+        "material-design-guidelines"
+      ],
+      "quiz": [
+        {
+          "prompt": "Qual o objetivo de um wireframe?",
+          "options": [
+            "Testar estrutura e fluxo antes de investir em acabamento visual",
+            "Definir a paleta de cores do produto",
+            "Substituir a pesquisa com usuários",
+            "Servir como especificação final para o desenvolvimento"
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Por que prototipar antes de implementar?",
+          "options": [
+            "Porque o protótipo pode ser entregue como produto",
+            "Porque o código não permite experimentação",
+            "Descobrir problemas quando mudar ainda é barato",
+            "Para reduzir o número de reuniões"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "O que caracteriza um protótipo de baixa fidelidade?",
+          "options": [
+            "Não pode ser testado com pessoas",
+            "É feito apenas em papel",
+            "Contém o conteúdo final do produto",
+            "Representa estrutura e fluxo sem detalhe visual, e por isso é rápido de mudar"
+          ],
+          "correctIndex": 3
+        }
+      ]
+    },
+    {
+      "node": "design-system",
+      "resources": [
+        "material-design-3",
+        "storybook-docs",
+        "webdev-learn-accessibility"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que é um design system?",
+          "options": [
+            "Uma biblioteca de ícones",
+            "Um conjunto de componentes e regras compartilhados entre design e código",
+            "Um arquivo com todas as telas do produto",
+            "Um manual de identidade visual da marca"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Qual o principal ganho de um design system?",
+          "options": [
+            "Elimina a necessidade de pesquisa com usuários",
+            "Garante que a interface seja acessível",
+            "Consistência e velocidade: a decisão é tomada uma vez e reutilizada",
+            "Reduz o tamanho da aplicação"
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Por que tokens de design são usados em vez de valores fixos?",
+          "options": [
+            "Tokens são exigidos pelas ferramentas de design",
+            "Valores fixos não funcionam em todas as telas",
+            "Uma mudança no token se propaga por todo o produto de uma vez",
+            "Tokens ocupam menos memória"
+          ],
+          "correctIndex": 2
+        }
+      ]
+    },
+    {
+      "node": "acessibilidade",
+      "resources": [
+        "mdn-acessibilidade",
+        "nng-teste-usabilidade",
+        "lighthouse-overview"
+      ],
+      "quiz": [
+        {
+          "prompt": "Por que contraste de cor importa?",
+          "options": [
+            "Cores contrastantes carregam mais rápido",
+            "É uma preferência estética atual",
+            "Melhora o posicionamento em buscadores",
+            "Texto com pouco contraste fica ilegível para muita gente e sob luz forte"
+          ],
+          "correctIndex": 3
+        },
+        {
+          "prompt": "O que a navegação por teclado atende?",
+          "options": [
+            "Apenas quem usa leitor de tela",
+            "Quem não usa mouse, por deficiência motora ou por preferência",
+            "Quem acessa por conexão lenta",
+            "Somente aplicações desktop"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Quantos participantes costumam revelar a maior parte dos problemas num teste de usabilidade?",
+          "options": [
+            "No mínimo trinta",
+            "Um, desde que represente o público",
+            "Ao menos cem, para ter validade estatística",
+            "Cerca de cinco"
+          ],
+          "correctIndex": 3
+        }
+      ]
+    },
+    {
+      "node": "carreira",
+      "resources": [
+        "roadmap-sh-ux",
+        "github-pages-quickstart",
+        "tech-interview-handbook"
+      ],
+      "quiz": [
+        {
+          "prompt": "O que um estudo de caso de portfólio deve mostrar?",
+          "options": [
+            "Apenas as telas finais, bem apresentadas",
+            "O problema, as decisões tomadas e o porquê de cada uma",
+            "As ferramentas dominadas",
+            "A quantidade de horas investidas"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Por que incluir o que não deu certo no estudo de caso?",
+          "options": [
+            "Reduz a expectativa de quem avalia",
+            "Demonstra processo e capacidade de aprender com o resultado",
+            "É exigência das plataformas de portfólio",
+            "Preenche espaço quando o projeto é pequeno"
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "O que costuma pesar mais numa entrevista de UX?",
+          "options": [
+            "O domínio da ferramenta de prototipagem",
+            "Conseguir justificar as decisões de design com argumento, não com preferência",
+            "O número de projetos no portfólio",
+            "A beleza das telas apresentadas"
+          ],
+          "correctIndex": 1
+        }
+      ]
+    }
+  ]
+}
