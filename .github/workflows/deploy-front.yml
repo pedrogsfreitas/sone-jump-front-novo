@@ -67,4 +67,3 @@ jobs:
           # O build já foi feito acima, com a variável do Vite no lugar certo.
           # Deixar o Oryx buildar de novo perderia esse valor.
           skip_app_build: true
-          skip_api_build: true
