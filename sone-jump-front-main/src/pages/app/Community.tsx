@@ -9,10 +9,12 @@ import {
   Briefcase,
   Flame,
   BookOpen,
+  Trash2,
 } from "lucide-react";
 import {
   getPosts,
   createPost,
+  deletePost,
   likePost,
   unlikePost,
   getComments,
@@ -26,7 +28,11 @@ import {
 } from "../../services/community/community";
 import { getJobs, type Job } from "../../services/jobs/jobs";
 import { getLives, type LiveSession } from "../../services/lives/lives";
+import { getMe } from "../../services/users/users";
 import { ApiError } from "../../services/api";
+
+const POST_MAX_LENGTH = 2000;
+const COMMENT_MAX_LENGTH = 500;
 
 const AVATAR_COLORS: Record<string, string> = {
   purple: "bg-purple-600",
@@ -70,19 +76,22 @@ export default function Community() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [lives, setLives] = useState<LiveSession[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [postText, setPostText] = useState("");
   const [posting, setPosting] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
 
   const [openComments, setOpenComments] = useState<number | null>(null);
   const [comments, setComments] = useState<Record<number, Comment[]>>({});
   const [commentText, setCommentText] = useState("");
+  const [feedFilter, setFeedFilter] = useState<"todos" | "meus">("todos");
 
   useEffect(() => {
-    Promise.all([getPosts(), getGroups(), getJobs(), getLives()])
-      .then(([p, g, j, l]) => {
+    Promise.all([getPosts(), getGroups(), getJobs(), getLives(), getMe()])
+      .then(([p, g, j, l, me]) => {
         setPosts(p);
         setGroups(g);
         setJobs(j.slice(0, 3));
@@ -92,6 +101,7 @@ export default function Community() {
             .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
             .slice(0, 2),
         );
+        setCurrentUserId(me.id);
       })
       .catch((e) => setError(e instanceof ApiError ? e.message : "Erro ao carregar comunidade."))
       .finally(() => setLoading(false));
@@ -109,6 +119,22 @@ export default function Community() {
       setError(e instanceof ApiError ? e.message : "Erro ao publicar.");
     } finally {
       setPosting(false);
+    }
+  }
+
+  async function handleDeletePost(post: Post) {
+    const confirmed = window.confirm("Apagar esta publicação? Essa ação não pode ser desfeita.");
+    if (!confirmed) return;
+
+    setError("");
+    setDeletingPostId(post.id);
+    try {
+      await deletePost(post.id);
+      setPosts((prev) => prev.filter((p) => p.id !== post.id));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erro ao apagar publicação.");
+    } finally {
+      setDeletingPostId(null);
     }
   }
 
@@ -188,11 +214,13 @@ export default function Community() {
 
   if (loading) return <div className="min-h-screen bg-[#050505] text-zinc-400 p-6">Carregando comunidade...</div>;
 
+  const filteredPosts = feedFilter === "meus" ? posts.filter((p) => p.author.id === currentUserId) : posts;
+
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Comunidade</h1>
-        <p className="text-zinc-400 text-sm mt-1">Compartilhe conquistas, conecte-se e cresça junto</p>
+        <h1 className="text-2xl font-bold text-white">Junte-se ao Papo</h1>
+        <p className="text-zinc-400 text-sm mt-1">Publique conquistas, entre em grupos e fique de olho nas vagas</p>
       </div>
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
@@ -204,12 +232,16 @@ export default function Community() {
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
             <textarea
               value={postText}
-              onChange={(e) => setPostText(e.target.value)}
+              onChange={(e) => setPostText(e.target.value.slice(0, POST_MAX_LENGTH))}
               placeholder="Compartilhe uma conquista, aprendizado ou dúvida..."
+              maxLength={POST_MAX_LENGTH}
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-sm text-white placeholder-zinc-500 resize-none focus:outline-none focus:border-purple-500 transition-colors"
               rows={3}
             />
-            <div className="flex justify-end mt-3">
+            <div className="flex justify-between items-center mt-3">
+              <span className="text-xs text-zinc-500">
+                {postText.length}/{POST_MAX_LENGTH}
+              </span>
               <button
                 onClick={handlePublish}
                 className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
@@ -221,13 +253,33 @@ export default function Community() {
             </div>
           </div>
 
+          {/* Feed Filter */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFeedFilter("todos")}
+              className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
+                feedFilter === "todos" ? "bg-purple-600 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => setFeedFilter("meus")}
+              className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
+                feedFilter === "meus" ? "bg-purple-600 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"
+              }`}
+            >
+              Meus Posts
+            </button>
+          </div>
+
           {/* Feed Posts */}
-          {posts.length === 0 && (
+          {filteredPosts.length === 0 && (
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-center text-sm text-zinc-500">
-              Nenhuma publicação ainda. Seja o primeiro a compartilhar!
+              {feedFilter === "meus" ? "Você ainda não publicou nada." : "Nenhuma publicação ainda. Seja o primeiro a compartilhar!"}
             </div>
           )}
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <div key={post.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
               {/* Post Header */}
               <div className="flex items-start gap-3">
@@ -248,6 +300,16 @@ export default function Community() {
                   </div>
                   <p className="text-xs text-zinc-500">{timeAgo(post.createdAt)}</p>
                 </div>
+                {post.author.id === currentUserId && (
+                  <button
+                    onClick={() => handleDeletePost(post)}
+                    disabled={deletingPostId === post.id}
+                    title="Apagar publicação"
+                    className="shrink-0 p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-40"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               {/* Post Content */}
@@ -297,6 +359,7 @@ export default function Community() {
                       onChange={(e) => setCommentText(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddComment(post.id)}
                       placeholder="Escreva um comentário..."
+                      maxLength={COMMENT_MAX_LENGTH}
                       className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
                     />
                     <button
@@ -317,31 +380,71 @@ export default function Community() {
         <div className="w-full lg:w-80 shrink-0 space-y-5">
           {/* Groups */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-semibold text-white">Grupos por Trilha</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-purple-400" />
+                <h3 className="text-sm font-semibold text-white">Grupos por Trilha</h3>
+              </div>
+              <span className="text-xs text-zinc-500">
+                {groups.filter((g) => g.joined).length} de {groups.length}
+              </span>
             </div>
-            <div className="space-y-3">
-              {groups.map((g) => (
-                <div key={g.id} className="flex items-center gap-3">
-                  <span className="text-lg">{g.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white">{g.name}</p>
-                    <p className="text-xs text-zinc-500">{g.membersCount.toLocaleString("pt-BR")} membros</p>
-                  </div>
-                  <button
-                    onClick={() => toggleGroup(g)}
-                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                      g.joined
-                        ? "bg-purple-600 text-white hover:bg-purple-500"
-                        : "border border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
-                    }`}
-                  >
-                    {g.joined ? "Participando" : "Entrar"}
-                  </button>
+
+            {/* Seus Grupos */}
+            <div className="mb-5">
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Seus Grupos</p>
+              {groups.filter((g) => g.joined).length === 0 ? (
+                <p className="text-xs text-zinc-500">
+                  Você ainda não participa de nenhum grupo. Entre em um abaixo pra começar.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {groups
+                    .filter((g) => g.joined)
+                    .map((g) => (
+                      <div key={g.id} className="flex items-center gap-3">
+                        <span className="text-lg">{g.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-white">{g.name}</p>
+                          <p className="text-xs text-zinc-500">{g.membersCount.toLocaleString("pt-BR")} membros</p>
+                        </div>
+                        <button
+                          onClick={() => toggleGroup(g)}
+                          className="text-xs px-3 py-1 rounded-full bg-purple-600 text-white hover:bg-purple-500 transition-colors"
+                        >
+                          Participando
+                        </button>
+                      </div>
+                    ))}
                 </div>
-              ))}
+              )}
             </div>
+
+            {/* Descobrir Grupos */}
+            {groups.filter((g) => !g.joined).length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Descobrir Grupos</p>
+                <div className="space-y-3">
+                  {groups
+                    .filter((g) => !g.joined)
+                    .map((g) => (
+                      <div key={g.id} className="flex items-center gap-3">
+                        <span className="text-lg">{g.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-white">{g.name}</p>
+                          <p className="text-xs text-zinc-500">{g.membersCount.toLocaleString("pt-BR")} membros</p>
+                        </div>
+                        <button
+                          onClick={() => toggleGroup(g)}
+                          className="text-xs px-3 py-1 rounded-full border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 transition-colors"
+                        >
+                          Entrar
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Upcoming Sessions */}
