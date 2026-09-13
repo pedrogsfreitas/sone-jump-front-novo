@@ -46,6 +46,18 @@ export function getSessions() {
   return apiRequest<StudySession[]>(progress_endpoints.sessions);
 }
 
+export function logSession(params: {
+  topic: string;
+  durationMinutes: number;
+  subjectTag?: string;
+  occurredOn?: string;
+}) {
+  return apiRequest<StudySession, typeof params>(progress_endpoints.sessions, {
+    method: "POST",
+    body: params,
+  });
+}
+
 export function getGoals() {
   return apiRequest<Goal[]>(progress_endpoints.goals);
 }
