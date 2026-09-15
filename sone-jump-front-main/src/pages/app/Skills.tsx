@@ -11,6 +11,8 @@ import {
   Tag,
   Trash2,
   Award,
+  X,
+  Link as LinkIcon,
 } from "lucide-react";
 import {
   getChallenges,
@@ -64,6 +66,14 @@ export default function Skills() {
   const [projectGithub, setProjectGithub] = useState("");
   const [projectDemo, setProjectDemo] = useState("");
   const [savingProject, setSavingProject] = useState(false);
+  const [completingId, setCompletingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // Modal "concluir desafio" — pede o link da resolução antes de liberar o
+  // botão. O link ainda NÃO é salvo no back (o endpoint de conclusão não
+  // aceita corpo hoje) — é só a interface já pronta pra quando existir.
+  const [submittingChallenge, setSubmittingChallenge] = useState<Challenge | null>(null);
+  const [submissionUrl, setSubmissionUrl] = useState("");
 
   useEffect(() => {
     Promise.all([getChallenges(), getPortfolio(), getCertifications(), getEmployabilityScore()])
@@ -81,6 +91,7 @@ export default function Skills() {
 
   async function handleCompleteChallenge(id: number) {
     setActionError("");
+    setCompletingId(id);
     try {
       await completeChallenge(id);
       setChallenges((prev) => prev.map((c) => (c.id === id ? { ...c, completed: true } : c)));
@@ -88,12 +99,30 @@ export default function Skills() {
       setScore(sc);
     } catch (e) {
       setActionError(e instanceof ApiError ? e.message : "Erro ao concluir desafio.");
+    } finally {
+      setCompletingId(null);
     }
+  }
+
+  function closeSubmissionModal() {
+    setSubmittingChallenge(null);
+    setSubmissionUrl("");
+  }
+
+  async function handleConfirmSubmission(e: React.FormEvent) {
+    e.preventDefault();
+    if (!submittingChallenge || !submissionUrl.trim()) return;
+    const challengeId = submittingChallenge.id;
+    closeSubmissionModal();
+    // O link em si ainda não vai pra lugar nenhum — o endpoint real de
+    // conclusão não aceita corpo hoje (ver nota no modal). A chamada que
+    // efetivamente conta como "concluído" e dá XP é a mesma de sempre.
+    await handleCompleteChallenge(challengeId);
   }
 
   async function handleCreateProject(e: React.FormEvent) {
     e.preventDefault();
-    if (!projectTitle.trim()) return;
+    if (!projectTitle.trim() || !projectGithub.trim()) return;
     setActionError("");
     setSavingProject(true);
     try {
@@ -117,12 +146,21 @@ export default function Skills() {
   }
 
   async function handleDeleteProject(id: number) {
+    const project = portfolio.find((p) => p.id === id);
+    const confirmed = window.confirm(
+      `Apagar o projeto "${project?.title ?? "este projeto"}" do seu portfólio? Essa ação não pode ser desfeita.`,
+    );
+    if (!confirmed) return;
+
     setActionError("");
+    setDeletingId(id);
     try {
       await deletePortfolioProject(id);
       setPortfolio((prev) => prev.filter((p) => p.id !== id));
     } catch (e) {
       setActionError(e instanceof ApiError ? e.message : "Erro ao remover projeto.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -275,15 +313,15 @@ export default function Skills() {
                         </span>
                       </div>
                       <button
-                        disabled={ch.completed}
-                        onClick={() => handleCompleteChallenge(ch.id)}
+                        disabled={ch.completed || completingId === ch.id}
+                        onClick={() => setSubmittingChallenge(ch)}
                         className={`mt-auto w-full text-sm font-medium py-2 rounded-lg transition-colors ${
                           ch.completed
                             ? "bg-green-600/20 text-green-400 border border-green-500/30 cursor-default"
-                            : "bg-purple-600 hover:bg-purple-500 text-white"
+                            : "bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-50"
                         }`}
                       >
-                        {ch.completed ? "Concluído" : "Concluir Desafio"}
+                        {ch.completed ? "Concluído" : completingId === ch.id ? "Concluindo..." : "Concluir Desafio"}
                       </button>
                     </div>
                   );
@@ -323,12 +361,15 @@ export default function Skills() {
                   />
                   <div className="flex gap-3">
                     <input
+                      type="url"
                       value={projectGithub}
                       onChange={(e) => setProjectGithub(e.target.value)}
-                      placeholder="Link do GitHub (opcional)"
+                      placeholder="Link do GitHub"
+                      required
                       className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500"
                     />
                     <input
+                      type="url"
                       value={projectDemo}
                       onChange={(e) => setProjectDemo(e.target.value)}
                       placeholder="Link do demo (opcional)"
@@ -337,7 +378,7 @@ export default function Skills() {
                   </div>
                   <button
                     type="submit"
-                    disabled={savingProject}
+                    disabled={savingProject || !projectGithub.trim()}
                     className="bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {savingProject ? "Salvando..." : "Salvar Projeto"}
@@ -357,7 +398,8 @@ export default function Skills() {
                       <div className="h-28 bg-gradient-to-br from-purple-600 to-blue-600 opacity-80" />
                       <button
                         onClick={() => handleDeleteProject(p.id)}
-                        className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-red-600/80 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        disabled={deletingId === p.id}
+                        className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-red-600/80 rounded-lg opacity-0 group-hover:opacity-100 disabled:opacity-100 transition-opacity"
                       >
                         <Trash2 className="w-3.5 h-3.5 text-white" />
                       </button>
@@ -456,6 +498,62 @@ export default function Skills() {
           </div>
         </div>
       </div>
+
+      {/* Modal de submissão do desafio — pede o link da resolução antes de
+          concluir. Ver nota dentro do modal: esse link ainda não é salvo no
+          back, é a interface já pronta pra quando o endpoint aceitar. */}
+      {submittingChallenge && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={closeSubmissionModal}
+        >
+          <form
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleConfirmSubmission}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm p-5"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-lg font-bold text-white">Concluir desafio</h3>
+              <button
+                type="button"
+                onClick={closeSubmissionModal}
+                className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+              >
+                <X size={15} className="text-zinc-400" />
+              </button>
+            </div>
+            <p className="text-sm text-zinc-400 mb-4">{submittingChallenge.title}</p>
+
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+              Link da resolução (repositório, PR ou gist)
+            </label>
+            <div className="relative mb-2">
+              <LinkIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <input
+                type="url"
+                value={submissionUrl}
+                onChange={(e) => setSubmissionUrl(e.target.value)}
+                placeholder="https://github.com/seu-usuario/seu-repo"
+                required
+                autoFocus
+                className="w-full bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+              />
+            </div>
+            <p className="text-xs text-amber-400/80 mb-5">
+              ⚠ Por enquanto este link ainda não é salvo — a validação por link é uma
+              melhoria pendente no back. A conclusão em si (XP e progresso) já é real.
+            </p>
+
+            <button
+              type="submit"
+              disabled={!submissionUrl.trim()}
+              className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl transition-colors"
+            >
+              Confirmar conclusão
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
