@@ -13,7 +13,7 @@ import {
   type Goal,
 } from "../../services/progress/progress";
 import { ApiError } from "../../services/api";
-import { formatDate, formatDuration } from "../../utils/format";
+import { formatDateOnly, formatDuration } from "../../utils/format";
 
 // `toISOString()` converte pra UTC — em qualquer horário da noite aqui no Brasil
 // (UTC-3), isso já é "amanhã" em UTC, e as datas mínima/máxima do campo de data
@@ -135,32 +135,39 @@ export default function Progress() {
 
     setSessionError("");
     setLoggingSession(true);
+    let session: StudySession;
     try {
-      const session = await logSession({
+      session = await logSession({
         topic: sessionTopic.trim(),
         durationMinutes: minutes,
         subjectTag: sessionTag.trim() || undefined,
         occurredOn: sessionDate || undefined,
       });
-      // O back já devolve a lista ordenada por data (mais recente primeiro), mas só
-      // colocar a sessão nova no topo bagunçava essa ordem quando a data dela não
-      // era a mais recente — reordena de novo depois de inserir.
-      setSessions((prev) =>
-        [session, ...prev].sort(
-          (a, b) => new Date(b.occurredOn).getTime() - new Date(a.occurredOn).getTime(),
-        ),
-      );
-      // Duração e sequência mudam no servidor ao registrar uma sessão — busca de
-      // novo em vez de tentar recalcular isso aqui (XP e streak nunca são
-      // confiados do cliente).
-      const freshSummary = await getSummary();
-      setSummary(freshSummary);
-      closeSessionModal();
     } catch (e) {
       setSessionError(e instanceof ApiError ? e.message : "Erro ao registrar sessão.");
-    } finally {
       setLoggingSession(false);
+      return;
     }
+    setLoggingSession(false);
+
+    // O back já devolve a lista ordenada por data (mais recente primeiro), mas só
+    // colocar a sessão nova no topo bagunçava essa ordem quando a data dela não
+    // era a mais recente — reordena de novo depois de inserir.
+    setSessions((prev) =>
+      [session, ...prev].sort(
+        (a, b) => new Date(b.occurredOn).getTime() - new Date(a.occurredOn).getTime(),
+      ),
+    );
+    closeSessionModal();
+
+    // Duração e sequência mudam no servidor ao registrar uma sessão — busca de
+    // novo em vez de tentar recalcular isso aqui (XP e streak nunca são
+    // confiados do cliente). Fica fora do try de propósito: a sessão já foi
+    // gravada, e mostrar erro no modal levaria a pessoa a registrar de novo,
+    // ganhando XP em dobro. Se falhar, o resumo só fica desatualizado até recarregar.
+    getSummary()
+      .then(setSummary)
+      .catch(() => undefined);
   }
 
   async function handleAdjustGoal(goal: Goal, delta: number) {
@@ -180,6 +187,11 @@ export default function Progress() {
   }
 
   async function handleDeleteGoal(goal: Goal) {
+    const confirmed = window.confirm(
+      `Apagar a meta "${goal.title}"? Essa ação não pode ser desfeita.`,
+    );
+    if (!confirmed) return;
+
     setGoalActionError("");
     setGoalActionId(goal.id);
     try {
@@ -298,7 +310,7 @@ export default function Progress() {
                 </div>
                 {goal.dueDate && (
                   <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-3 py-1 rounded-full">
-                    até {formatDate(goal.dueDate)}
+                    até {formatDateOnly(goal.dueDate)}
                   </span>
                 )}
 
@@ -362,7 +374,7 @@ export default function Progress() {
               <tbody>
                 {sessions.map((s) => (
                   <tr key={s.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors">
-                    <td className="px-5 py-3 text-zinc-400">{formatDate(s.occurredOn)}</td>
+                    <td className="px-5 py-3 text-zinc-400">{formatDateOnly(s.occurredOn)}</td>
                     <td className="px-5 py-3 text-white">{s.topic}</td>
                     <td className="px-5 py-3 text-zinc-300">{formatDuration(s.durationMinutes)}</td>
                     <td className="px-5 py-3">
@@ -510,7 +522,7 @@ export default function Progress() {
                 inputMode="numeric"
                 value={sessionMinutes}
                 onChange={(e) => setSessionMinutes(sanitizeDigits(e.target.value))}
-                onBlur={() => setSessionMinutes((m) => (m === "" ? "1" : m))}
+                onBlur={() => setSessionMinutes((m) => String(Math.min(600, Math.max(1, Number(m || 1)))))}
                 className="w-full bg-zinc-800 border border-zinc-700 text-white text-center rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-purple-500 transition-colors"
               />
               <button

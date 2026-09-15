@@ -28,8 +28,8 @@ import {
 } from "../../services/community/community";
 import { getJobs, type Job } from "../../services/jobs/jobs";
 import { getLives, type LiveSession } from "../../services/lives/lives";
-import { getMe } from "../../services/users/users";
 import { ApiError } from "../../services/api";
+import { getToken, getUserId } from "../../services/auth-storage";
 
 const POST_MAX_LENGTH = 2000;
 const COMMENT_MAX_LENGTH = 500;
@@ -76,7 +76,6 @@ export default function Community() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [lives, setLives] = useState<LiveSession[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -90,8 +89,8 @@ export default function Community() {
   const [feedFilter, setFeedFilter] = useState<"todos" | "meus">("todos");
 
   useEffect(() => {
-    Promise.all([getPosts(), getGroups(), getJobs(), getLives(), getMe()])
-      .then(([p, g, j, l, me]) => {
+    Promise.all([getPosts(), getGroups(), getJobs(), getLives()])
+      .then(([p, g, j, l]) => {
         setPosts(p);
         setGroups(g);
         setJobs(j.slice(0, 3));
@@ -101,7 +100,6 @@ export default function Community() {
             .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
             .slice(0, 2),
         );
-        setCurrentUserId(me.id);
       })
       .catch((e) => setError(e instanceof ApiError ? e.message : "Erro ao carregar comunidade."))
       .finally(() => setLoading(false));
@@ -214,12 +212,15 @@ export default function Community() {
 
   if (loading) return <div className="min-h-screen bg-[#050505] text-zinc-400 p-6">Carregando comunidade...</div>;
 
+  // Só serve para decidir o que mostrar (botão de apagar, filtro "Meus Posts").
+  // Quem é dono de fato é o back, que valida o token em cada DELETE.
+  const currentUserId = getUserId(getToken());
   const filteredPosts = feedFilter === "meus" ? posts.filter((p) => p.author.id === currentUserId) : posts;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Junte-se ao Papo</h1>
+        <h1 className="text-2xl font-bold text-white">Comunidade</h1>
         <p className="text-zinc-400 text-sm mt-1">Publique conquistas, entre em grupos e fique de olho nas vagas</p>
       </div>
 
