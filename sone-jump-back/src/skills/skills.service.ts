@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { XpService } from '../common/xp/xp.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CompleteChallengeDto } from './dto/complete-challenge.dto';
 import { CreatePortfolioProjectDto } from './dto/create-portfolio-project.dto';
 import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
@@ -32,7 +33,9 @@ export class SkillsService {
       }),
       this.prisma.userChallengeCompletion.findMany({ where: { userId } }),
     ]);
-    const completedIds = new Set(completions.map((c) => c.challengeId));
+    const completionByChallenge = new Map(
+      completions.map((c) => [c.challengeId, c]),
+    );
 
     return challenges.map((challenge) => ({
       id: challenge.id,
@@ -42,11 +45,17 @@ export class SkillsService {
       timeLabel: challenge.timeLabel,
       description: challenge.description,
       tags: challenge.tags.map((t) => t.skill.name),
-      completed: completedIds.has(challenge.id),
+      completed: completionByChallenge.has(challenge.id),
+      submissionUrl:
+        completionByChallenge.get(challenge.id)?.submissionUrl ?? null,
     }));
   }
 
-  async completeChallenge(userId: number, challengeId: number) {
+  async completeChallenge(
+    userId: number,
+    challengeId: number,
+    dto: CompleteChallengeDto,
+  ) {
     const challenge = await this.prisma.challenge.findUnique({
       where: { id: challengeId },
       include: { tags: true },
@@ -59,7 +68,7 @@ export class SkillsService {
     if (already) throw new ConflictException('Desafio já concluído.');
 
     await this.prisma.userChallengeCompletion.create({
-      data: { userId, challengeId },
+      data: { userId, challengeId, submissionUrl: dto.submissionUrl },
     });
     await this.xp.award(userId, challenge.xpReward);
 
@@ -78,7 +87,7 @@ export class SkillsService {
       });
     }
 
-    return { completed: true };
+    return { completed: true, submissionUrl: dto.submissionUrl };
   }
 
   listPortfolio(userId: number) {

@@ -16,6 +16,7 @@ import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CommunityService } from './community.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
+import { ListPostsQueryDto } from './dto/list-posts-query.dto';
 import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 @Controller('community')
@@ -26,7 +27,7 @@ export class CommunityController {
   @Get('posts')
   listPosts(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() query: FullListQueryDto,
+    @Query() query: ListPostsQueryDto,
   ) {
     return this.communityService.listPosts(user.id, query);
   }

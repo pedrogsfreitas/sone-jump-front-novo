@@ -9,23 +9,18 @@ import {
   registerDecorator,
   ValidationOptions,
 } from 'class-validator';
+import {
+  dayKeyFromInput,
+  daysBetween,
+  today,
+} from '../../common/time/calendar';
+import { MAX_BACKDATE_DAYS } from '../progress.constants';
 
 /**
- * Mirrors MAX_BACKDATE_DAYS in progress.service.ts, which stays the authoritative
- * check (it also covers the request that omits occurredOn and defaults to now).
- * Kept duplicated rather than imported to avoid a DTO -> service circular import.
- */
-const MAX_BACKDATE_DAYS = 3;
-
-/** UTC calendar day — the same criterion progress.service.ts applyStreak uses. */
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-/**
- * Accepts a date only between today and MAX_BACKDATE_DAYS ago. Future dates would
- * let a client bank XP ahead of time and poison lastStudyDate; unbounded past dates
- * let a streak be fabricated retroactively.
+ * Aceita só datas entre hoje e MAX_BACKDATE_DAYS atrás, no calendário de São Paulo.
+ * Datas futuras deixariam o cliente acumular XP adiantado; datas sem limite no passado
+ * permitiriam fabricar sequência retroativa. O service repete a checagem — ela também
+ * cobre a requisição sem `occurredOn`, que usa hoje.
  */
 function IsRecentPastDate(options?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -37,12 +32,8 @@ function IsRecentPastDate(options?: ValidationOptions) {
       validator: {
         validate(value: unknown): boolean {
           if (typeof value !== 'string') return false;
-          const parsed = new Date(value);
-          if (Number.isNaN(parsed.getTime())) return false;
-          const daysAgo = Math.round(
-            (Date.parse(dateKey(new Date())) - Date.parse(dateKey(parsed))) /
-              86_400_000,
-          );
+          if (Number.isNaN(new Date(value).getTime())) return false;
+          const daysAgo = daysBetween(dayKeyFromInput(value), today());
           return daysAgo >= 0 && daysAgo <= MAX_BACKDATE_DAYS;
         },
         defaultMessage(): string {
@@ -68,7 +59,7 @@ export class LogStudySessionDto {
   @Length(0, 40)
   subjectTag?: string;
 
-  /** Defaults to today (server time) when omitted. */
+  /** Sem o campo, vale o dia de hoje em São Paulo. */
   @IsOptional()
   @IsDateString()
   @IsRecentPastDate()

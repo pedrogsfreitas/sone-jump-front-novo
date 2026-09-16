@@ -204,23 +204,19 @@ export default function Progress() {
     }
   }
 
-  const hoursThisMonth = Math.round(
-    sessions
-      .filter((s) => new Date(s.occurredOn).getMonth() === new Date().getMonth())
-      .reduce((sum, s) => sum + s.durationMinutes, 0) / 60,
-  );
-
   const stats = [
-    { label: "Horas Este Mês", value: `${hoursThisMonth}h`, icon: Clock, color: "text-blue-400" },
+    { label: "Horas Este Mês", value: formatDuration(summary.minutesThisMonth), icon: Clock, color: "text-blue-400" },
     { label: "Sessões Esta Semana", value: String(summary.sessionsThisWeek), icon: Target, color: "text-purple-400" },
     { label: "Sequência", value: `${summary.streakCurrentDays} dias`, icon: Flame, color: "text-orange-400" },
     { label: "XP Acumulado", value: summary.xpTotal.toLocaleString("pt-BR"), icon: Zap, color: "text-yellow-400" },
   ];
 
-  // Derive "this week" from the sessions we already fetched, bucketed by weekday.
+  // Semana e mês vêm calculados do back, no calendário de São Paulo. Derivar das
+  // sessões carregadas aqui misturava semanas e meses (a lista traz as 50 mais
+  // recentes, de qualquer data) e deslocava o dia por causa do fuso.
   const weekDays = WEEKDAY_LABELS.map((day, idx) => ({
     day,
-    count: sessions.filter((s) => new Date(s.occurredOn).getDay() === idx).length,
+    count: summary.sessionsByWeekday[idx] ?? 0,
   }));
 
   return (

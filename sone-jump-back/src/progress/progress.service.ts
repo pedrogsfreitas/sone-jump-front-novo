@@ -5,47 +5,27 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import {
+  dayKeyFromInput,
+  daysBetween,
+  fromDateColumn,
+  startOfMonth,
+  startOfWeek,
+  toDateColumn,
+  today,
+  weekdayOf,
+} from '../common/time/calendar';
+import { computeStreak, currentStreakAsOf } from '../common/time/streak';
 import { XpService } from '../common/xp/xp.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { LogStudySessionDto } from './dto/log-study-session.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
-
-/** 1 XP per minute studied — deliberately server-computed, never trusts a client-supplied value. */
-const XP_PER_MINUTE = 1;
-
-/** 12 h of logged study in one day is already generous; past it, it's XP fabrication. */
-const MAX_DAILY_MINUTES = 720;
-
-/**
- * How far back a session may be backdated. Without this, a streak can be fabricated
- * by logging one session per day across an arbitrary stretch of the past.
- */
-const MAX_BACKDATE_DAYS = 3;
-
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function daysBetween(a: string, b: string): number {
-  return Math.round(
-    (new Date(b).getTime() - new Date(a).getTime()) / 86_400_000,
-  );
-}
-
-function startOfWeek(): Date {
-  const now = new Date();
-  const day = now.getUTCDay(); // 0 = Sunday
-  const diffToMonday = day === 0 ? 6 : day - 1;
-  const monday = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() - diffToMonday,
-    ),
-  );
-  return monday;
-}
+import {
+  MAX_BACKDATE_DAYS,
+  MAX_DAILY_MINUTES,
+  XP_PER_MINUTE,
+} from './progress.constants';
 
 @Injectable()
 export class ProgressService {
@@ -55,12 +35,10 @@ export class ProgressService {
   ) {}
 
   async logSession(userId: number, dto: LogStudySessionDto) {
-    const occurredOn = dto.occurredOn ? new Date(dto.occurredOn) : new Date();
+    const todayKey = today();
+    const day = dto.occurredOn ? dayKeyFromInput(dto.occurredOn) : todayKey;
+    const daysAgo = daysBetween(day, todayKey);
     const xpEarned = Math.round(dto.durationMinutes * XP_PER_MINUTE);
-
-    // Same UTC calendar-day criterion applyStreak uses — see dateKey/daysBetween.
-    const day = dateKey(occurredOn);
-    const daysAgo = daysBetween(day, dateKey(new Date()));
 
     if (daysAgo < 0)
       throw new BadRequestException('Data da sessão não pode estar no futuro.');
@@ -69,8 +47,9 @@ export class ProgressService {
         `Data da sessão não pode ser anterior a ${MAX_BACKDATE_DAYS} dias.`,
       );
 
+    const occurredOn = toDateColumn(day);
     const { _sum } = await this.prisma.studySession.aggregate({
-      where: { userId, occurredOn: new Date(day) },
+      where: { userId, occurredOn },
       _sum: { durationMinutes: true },
     });
     const minutesAlreadyLogged = _sum.durationMinutes ?? 0;
@@ -91,7 +70,7 @@ export class ProgressService {
       },
     });
 
-    await this.applyStreak(userId, occurredOn);
+    await this.refreshStreak(userId);
     await this.xp.award(userId, xpEarned);
 
     return session;
@@ -106,10 +85,25 @@ export class ProgressService {
   }
 
   async summary(userId: number) {
-    const [user, sessionsThisWeek, skillProgress] = await Promise.all([
+    const todayKey = today();
+    const [user, weekByDay, month, skillProgress] = await Promise.all([
       this.prisma.user.findUniqueOrThrow({ where: { id: userId } }),
-      this.prisma.studySession.count({
-        where: { userId, occurredOn: { gte: startOfWeek() } },
+      this.prisma.studySession.groupBy({
+        by: ['occurredOn'],
+        where: {
+          userId,
+          occurredOn: { gte: toDateColumn(startOfWeek(todayKey)) },
+        },
+        _count: { _all: true },
+      }),
+      // Agregado aqui, e não somado no front: a tela só recebe as 50 sessões mais
+      // recentes, e quem registra várias por dia passa disso dentro do mesmo mês.
+      this.prisma.studySession.aggregate({
+        where: {
+          userId,
+          occurredOn: { gte: toDateColumn(startOfMonth(todayKey)) },
+        },
+        _sum: { durationMinutes: true },
       }),
       this.prisma.userSkillProgress.findMany({
         where: { userId },
@@ -117,12 +111,25 @@ export class ProgressService {
       }),
     ]);
 
+    // Índice 0 = domingo, a mesma ordem dos rótulos do gráfico no front.
+    const sessionsByWeekday = [0, 0, 0, 0, 0, 0, 0];
+    for (const row of weekByDay) {
+      sessionsByWeekday[weekdayOf(fromDateColumn(row.occurredOn))] +=
+        row._count._all;
+    }
+
     return {
       xpTotal: user.xpTotal,
       level: user.level,
-      streakCurrentDays: user.streakCurrentDays,
+      streakCurrentDays: currentStreakAsOf(
+        user.streakCurrentDays,
+        user.lastStudyDate,
+        todayKey,
+      ),
       streakLongestDays: user.streakLongestDays,
-      sessionsThisWeek,
+      sessionsThisWeek: sessionsByWeekday.reduce((sum, n) => sum + n, 0),
+      sessionsByWeekday,
+      minutesThisMonth: month._sum.durationMinutes ?? 0,
       skills: skillProgress.map((s) => ({ name: s.skill.name, pct: s.pct })),
     };
   }
@@ -167,25 +174,30 @@ export class ProgressService {
     return goal;
   }
 
-  private async applyStreak(userId: number, occurredOn: Date) {
-    const user = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-    });
-    const day = dateKey(occurredOn);
-    const last = user.lastStudyDate ? dateKey(user.lastStudyDate) : null;
-
-    if (last === day) return; // already logged a session today, streak unchanged
-
-    const isConsecutiveDay = last !== null && daysBetween(last, day) === 1;
-    const streakCurrentDays = isConsecutiveDay ? user.streakCurrentDays + 1 : 1;
-    const streakLongestDays = Math.max(
-      user.streakLongestDays,
-      streakCurrentDays,
-    );
+  /** Ver `computeStreak` para por que a sequência é recalculada, e não incrementada. */
+  private async refreshStreak(userId: number) {
+    const [days, user] = await Promise.all([
+      this.prisma.studySession.findMany({
+        where: { userId },
+        distinct: ['occurredOn'],
+        select: { occurredOn: true },
+      }),
+      this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { streakLongestDays: true },
+      }),
+    ]);
+    const streak = computeStreak(days.map((d) => fromDateColumn(d.occurredOn)));
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { streakCurrentDays, streakLongestDays, lastStudyDate: occurredOn },
+      data: {
+        streakCurrentDays: streak.current,
+        // O recorde nunca diminui: pode ter sido registrado antes deste cálculo
+        // existir, quando não havia sessão guardada para cada dia contado.
+        streakLongestDays: Math.max(user.streakLongestDays, streak.longest),
+        lastStudyDate: streak.lastDay ? toDateColumn(streak.lastDay) : null,
+      },
     });
   }
 }

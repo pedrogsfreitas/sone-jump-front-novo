@@ -69,11 +69,11 @@ export default function Skills() {
   const [completingId, setCompletingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Modal "concluir desafio" — pede o link da resolução antes de liberar o
-  // botão. O link ainda NÃO é salvo no back (o endpoint de conclusão não
-  // aceita corpo hoje) — é só a interface já pronta pra quando existir.
+  // Modal "concluir desafio": o link da resolução é obrigatório e fica salvo junto
+  // com a conclusão.
   const [submittingChallenge, setSubmittingChallenge] = useState<Challenge | null>(null);
   const [submissionUrl, setSubmissionUrl] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
 
   useEffect(() => {
     Promise.all([getChallenges(), getPortfolio(), getCertifications(), getEmployabilityScore()])
@@ -89,35 +89,39 @@ export default function Skills() {
 
   const filteredChallenges = filter === "todos" ? challenges : challenges.filter((c) => c.difficulty === filter);
 
-  async function handleCompleteChallenge(id: number) {
-    setActionError("");
-    setCompletingId(id);
-    try {
-      await completeChallenge(id);
-      setChallenges((prev) => prev.map((c) => (c.id === id ? { ...c, completed: true } : c)));
-      const sc = await getEmployabilityScore();
-      setScore(sc);
-    } catch (e) {
-      setActionError(e instanceof ApiError ? e.message : "Erro ao concluir desafio.");
-    } finally {
-      setCompletingId(null);
-    }
-  }
-
   function closeSubmissionModal() {
     setSubmittingChallenge(null);
     setSubmissionUrl("");
+    setSubmissionError("");
   }
 
   async function handleConfirmSubmission(e: React.FormEvent) {
     e.preventDefault();
-    if (!submittingChallenge || !submissionUrl.trim()) return;
+    const url = submissionUrl.trim();
+    if (!submittingChallenge || !url) return;
     const challengeId = submittingChallenge.id;
+
+    setSubmissionError("");
+    setCompletingId(challengeId);
+    try {
+      await completeChallenge(challengeId, url);
+    } catch (e) {
+      // O modal continua aberto com o link digitado: o erro mais comum é o link
+      // recusado pelo back (sem https, por exemplo), e a pessoa só precisa corrigir.
+      setSubmissionError(e instanceof ApiError ? e.message : "Erro ao concluir desafio.");
+      setCompletingId(null);
+      return;
+    }
+
+    setChallenges((prev) =>
+      prev.map((c) => (c.id === challengeId ? { ...c, completed: true, submissionUrl: url } : c)),
+    );
+    setCompletingId(null);
     closeSubmissionModal();
-    // O link em si ainda não vai pra lugar nenhum — o endpoint real de
-    // conclusão não aceita corpo hoje (ver nota no modal). A chamada que
-    // efetivamente conta como "concluído" e dá XP é a mesma de sempre.
-    await handleCompleteChallenge(challengeId);
+    // A conclusão já foi gravada; se o score falhar, só fica desatualizado até recarregar.
+    getEmployabilityScore()
+      .then(setScore)
+      .catch(() => undefined);
   }
 
   async function handleCreateProject(e: React.FormEvent) {
@@ -323,6 +327,17 @@ export default function Skills() {
                       >
                         {ch.completed ? "Concluído" : completingId === ch.id ? "Concluindo..." : "Concluir Desafio"}
                       </button>
+                      {ch.completed && ch.submissionUrl && (
+                        <a
+                          href={ch.submissionUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                        >
+                          <LinkIcon size={12} />
+                          Ver resolução
+                        </a>
+                      )}
                     </div>
                   );
                 })}
@@ -499,9 +514,7 @@ export default function Skills() {
         </div>
       </div>
 
-      {/* Modal de submissão do desafio — pede o link da resolução antes de
-          concluir. Ver nota dentro do modal: esse link ainda não é salvo no
-          back, é a interface já pronta pra quando o endpoint aceitar. */}
+      {/* Modal de conclusão do desafio — o link da resolução é obrigatório. */}
       {submittingChallenge && (
         <div
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -539,17 +552,22 @@ export default function Skills() {
                 className="w-full bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
-            <p className="text-xs text-amber-400/80 mb-5">
-              ⚠ Por enquanto este link ainda não é salvo — a validação por link é uma
-              melhoria pendente no back. A conclusão em si (XP e progresso) já é real.
+            <p className="text-xs text-zinc-500 mb-5">
+              O link fica salvo no seu histórico e aparece no card do desafio.
             </p>
+
+            {submissionError && (
+              <div className="mb-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+                {submissionError}
+              </div>
+            )}
 
             <button
               type="submit"
-              disabled={!submissionUrl.trim()}
+              disabled={!submissionUrl.trim() || completingId === submittingChallenge.id}
               className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl transition-colors"
             >
-              Confirmar conclusão
+              {completingId === submittingChallenge.id ? "Concluindo..." : "Confirmar conclusão"}
             </button>
           </form>
         </div>

@@ -7,6 +7,7 @@ import { PostType } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
+import { ListPostsQueryDto } from './dto/list-posts-query.dto';
 import { FullListQueryDto } from '../common/pagination/pagination.dto';
 
 const AUTHOR_SELECT = {
@@ -20,8 +21,31 @@ const AUTHOR_SELECT = {
 export class CommunityService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listPosts(userId: number, query: FullListQueryDto) {
+  /**
+   * Três recortes, decididos pelos parâmetros:
+   * - nada: feed geral, só o que foi publicado fora de grupos;
+   * - `groupId`: feed daquele grupo — leitura aberta a qualquer usuário logado, para
+   *   quem ainda não entrou poder ver do que se trata;
+   * - `author=me`: tudo o que o próprio usuário publicou, em qualquer lugar, a menos
+   *   que `groupId` restrinja a um grupo.
+   *
+   * O filtro por autor fica aqui, e não no front, porque o front recebe só uma página:
+   * filtrando lá, publicações antigas sumiam de "Meus Posts" quando o feed crescia.
+   */
+  async listPosts(userId: number, query: ListPostsQueryDto) {
+    if (query.groupId !== undefined)
+      await this.assertGroupExists(query.groupId);
+
+    const where =
+      query.author === 'me'
+        ? {
+            authorId: userId,
+            ...(query.groupId !== undefined && { groupId: query.groupId }),
+          }
+        : { groupId: query.groupId ?? null };
+
     const posts = await this.prisma.post.findMany({
+      where,
       include: {
         author: { select: AUTHOR_SELECT },
         _count: { select: { likes: true, comments: true } },
@@ -37,6 +61,7 @@ export class CommunityService {
       type: post.type,
       content: post.content,
       createdAt: post.createdAt,
+      groupId: post.groupId,
       author: post.author,
       likesCount: post._count.likes,
       commentsCount: post._count.comments,
@@ -44,12 +69,22 @@ export class CommunityService {
     }));
   }
 
-  createPost(userId: number, dto: CreatePostDto) {
+  async createPost(userId: number, dto: CreatePostDto) {
+    if (dto.groupId !== undefined) {
+      await this.assertGroupExists(dto.groupId);
+      const membership = await this.prisma.groupMember.findUnique({
+        where: { userId_groupId: { userId, groupId: dto.groupId } },
+      });
+      if (!membership)
+        throw new ForbiddenException('Entre no grupo para publicar nele.');
+    }
+
     return this.prisma.post.create({
       data: {
         authorId: userId,
         type: dto.type ?? PostType.GENERAL,
         content: dto.content,
+        groupId: dto.groupId,
       },
     });
   }

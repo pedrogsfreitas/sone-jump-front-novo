@@ -13,6 +13,9 @@ export type ProgressSummary = {
   streakCurrentDays: number;
   streakLongestDays: number;
   sessionsThisWeek: number;
+  /** Sessões da semana atual (segunda a domingo), indexadas 0 = domingo. */
+  sessionsByWeekday: number[];
+  minutesThisMonth: number;
   skills: { name: string; pct: number }[];
 };
 

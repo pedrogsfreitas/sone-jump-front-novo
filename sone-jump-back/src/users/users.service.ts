@@ -8,6 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { User } from '../../generated/prisma/client';
 import { decryptCpf, maskCpf } from '../common/crypto/cpf.util';
+import { today } from '../common/time/calendar';
+import { currentStreakAsOf } from '../common/time/streak';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { SetCareerDto } from './dto/set-career.dto';
@@ -148,7 +150,13 @@ export class UsersService {
       focusMode: user.focusMode,
       xpTotal: user.xpTotal,
       level: user.level,
-      streakCurrentDays: user.streakCurrentDays,
+      // A mesma leitura do resumo de progresso: sem estudo hoje ou ontem, a sequência
+      // exibida é 0 — o valor guardado só é atualizado quando uma sessão é registrada.
+      streakCurrentDays: currentStreakAsOf(
+        user.streakCurrentDays,
+        user.lastStudyDate,
+        today(),
+      ),
       streakLongestDays: user.streakLongestDays,
       createdAt: user.createdAt,
       lastAccessAt: user.lastAccessAt,

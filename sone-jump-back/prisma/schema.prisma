@@ -496,6 +496,10 @@ model UserChallengeCompletion {
   challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   completedAt DateTime  @default(now())
 
+  /// Link da resolução (repositório, PR, gist). Obrigatório para concluir a partir
+  /// de agora; nulo só nas conclusões registradas antes de o campo existir.
+  submissionUrl String?
+
   @@id([userId, challengeId])
 }
 
@@ -592,10 +596,17 @@ model Post {
   content   String
   createdAt DateTime @default(now())
 
+  /// Nulo = feed geral. Preenchido = publicação feita dentro de um grupo, que só
+  /// aparece no feed daquele grupo. Cascade porque o conteúdo foi escrito para o
+  /// contexto do grupo; sem ele, cairia no feed geral sem sentido nenhum.
+  groupId Int?
+  group   Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   likes    PostLike[]
   comments PostComment[]
 
-  @@index([authorId])
+  @@index([authorId, createdAt])
+  @@index([groupId, createdAt])
 }
 
 model PostLike {
@@ -626,6 +637,7 @@ model Group {
   icon String?
 
   members GroupMember[]
+  posts   Post[]
 }
 
 model GroupMember {

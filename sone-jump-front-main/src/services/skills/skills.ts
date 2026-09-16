@@ -19,6 +19,8 @@ export type Challenge = {
   description: string;
   tags: string[];
   completed: boolean;
+  /** Link informado ao concluir. Nulo se não concluiu, ou se concluiu antes de o link ser exigido. */
+  submissionUrl: string | null;
 };
 
 export type PortfolioProject = {
@@ -59,10 +61,11 @@ export function getChallenges() {
   return apiRequest<Challenge[]>(skills_endpoints.challenges);
 }
 
-export function completeChallenge(id: number) {
-  return apiRequest<{ completed: true }>(skills_endpoints.completeChallenge(id), {
-    method: "POST",
-  });
+export function completeChallenge(id: number, submissionUrl: string) {
+  return apiRequest<{ completed: true; submissionUrl: string }, { submissionUrl: string }>(
+    skills_endpoints.completeChallenge(id),
+    { method: "POST", body: { submissionUrl } },
+  );
 }
 
 export function getPortfolio() {
