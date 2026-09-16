@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { addDays, dayKeyOf, toDateColumn } from '../common/time/calendar';
 import { XpService } from '../common/xp/xp.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { LogStudySessionDto } from './dto/log-study-session.dto';
@@ -30,11 +31,9 @@ interface MockUser {
   lastStudyDate: Date | null;
 }
 
-/** UTC day key N days before NOW — same criterion the service uses. */
+/** Dia de São Paulo N dias antes do "agora" fixado — o mesmo critério do service. */
 function utcDay(daysAgo: number): string {
-  return new Date(NOW.getTime() - daysAgo * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
+  return addDays(dayKeyOf(new Date()), -daysAgo);
 }
 
 function dayOf(d: Date): string {
@@ -70,12 +69,18 @@ function buildService() {
         return Promise.resolve(created);
       }),
       aggregate: jest.fn(
-        ({ where }: { where: { userId: number; occurredOn: Date } }) => {
+        ({
+          where,
+        }: {
+          where: { userId: number; occurredOn: Date | { gte: Date } };
+        }) => {
           const total = sessions
             .filter(
               (s) =>
                 s.userId === where.userId &&
-                dayOf(s.occurredOn) === dayOf(where.occurredOn),
+                (where.occurredOn instanceof Date
+                  ? dayOf(s.occurredOn) === dayOf(where.occurredOn)
+                  : s.occurredOn >= where.occurredOn.gte),
             )
             .reduce((sum, s) => sum + s.durationMinutes, 0);
           // Prisma returns null, not 0, when nothing matches.
@@ -84,6 +89,44 @@ function buildService() {
           });
         },
       ),
+      // `distinct: ['occurredOn']` — um registro por dia estudado.
+      findMany: jest.fn(({ where }: { where: { userId: number } }) => {
+        const days = new Map<string, Date>();
+        for (const s of sessions.filter((x) => x.userId === where.userId))
+          days.set(dayOf(s.occurredOn), s.occurredOn);
+        return Promise.resolve(
+          [...days.values()].map((occurredOn) => ({ occurredOn })),
+        );
+      }),
+      groupBy: jest.fn(
+        ({
+          where,
+        }: {
+          where: { userId: number; occurredOn: { gte: Date } };
+        }) => {
+          const counts = new Map<string, number>();
+          for (const s of sessions) {
+            if (
+              s.userId !== where.userId ||
+              s.occurredOn < where.occurredOn.gte
+            )
+              continue;
+            counts.set(
+              dayOf(s.occurredOn),
+              (counts.get(dayOf(s.occurredOn)) ?? 0) + 1,
+            );
+          }
+          return Promise.resolve(
+            [...counts].map(([day, n]) => ({
+              occurredOn: toDateColumn(day),
+              _count: { _all: n },
+            })),
+          );
+        },
+      ),
+    },
+    userSkillProgress: {
+      findMany: jest.fn(() => Promise.resolve([])),
     },
     user: {
       findUniqueOrThrow: jest.fn(({ where }: { where: { id: number } }) =>
@@ -336,5 +379,124 @@ describe('LogStudySessionDto — validação de occurredOn', () => {
 
   it('aceita ausência do campo (é opcional)', async () => {
     expect(await erros()).toHaveLength(0);
+  });
+});
+
+describe('ProgressService — dia no calendário de São Paulo', () => {
+  afterEach(() => {
+    jest.setSystemTime(NOW);
+  });
+
+  it('sessão registrada às 22h30 conta para o dia de hoje, não para amanhã', async () => {
+    // 2026-08-19T01:30Z = 18/08 às 22h30 em São Paulo
+    jest.setSystemTime(new Date('2026-08-19T01:30:00.000Z'));
+    const { service, sessions } = buildService();
+
+    await service.logSession(USER_ID, dto());
+
+    expect(dayOf(sessions[0].occurredOn)).toBe('2026-08-18');
+  });
+
+  it('às 22h30, a data mais antiga oferecida pelo front (3 dias) é aceita', async () => {
+    jest.setSystemTime(new Date('2026-08-19T01:30:00.000Z'));
+    const { service } = buildService();
+
+    await expect(
+      service.logSession(USER_ID, dto({ occurredOn: '2026-08-15' })),
+    ).resolves.toBeDefined();
+  });
+
+  it('às 22h30, o DTO também aceita a data de 3 dias atrás', async () => {
+    jest.setSystemTime(new Date('2026-08-19T01:30:00.000Z'));
+    const instance = plainToInstance(LogStudySessionDto, {
+      topic: 'Estudo',
+      durationMinutes: 60,
+      occurredOn: '2026-08-15',
+    });
+    expect(await validate(instance)).toHaveLength(0);
+  });
+});
+
+describe('ProgressService — sequência', () => {
+  it('sessão retroativa registrada depois da de hoje não quebra a sequência', async () => {
+    const { service, user } = buildService();
+    await service.logSession(USER_ID, dto({ occurredOn: utcDay(0) }));
+    await service.logSession(USER_ID, dto({ occurredOn: utcDay(1) }));
+
+    expect(user().streakCurrentDays).toBe(2);
+    expect(dayOf(user().lastStudyDate!)).toBe(utcDay(0));
+  });
+
+  it('o recorde guardado nunca diminui', async () => {
+    const { service, user } = buildService();
+    user().streakLongestDays = 12;
+
+    await service.logSession(USER_ID, dto());
+
+    expect(user().streakCurrentDays).toBe(1);
+    expect(user().streakLongestDays).toBe(12);
+  });
+
+  it('resumo mostra 0 quando o último estudo foi anteontem', async () => {
+    const { service, user } = buildService();
+    Object.assign(user(), {
+      streakCurrentDays: 5,
+      lastStudyDate: toDateColumn(utcDay(2)),
+    });
+
+    const summary = await service.summary(USER_ID);
+
+    expect(summary.streakCurrentDays).toBe(0);
+  });
+
+  it('resumo mantém a sequência quando o último estudo foi ontem', async () => {
+    const { service, user } = buildService();
+    Object.assign(user(), {
+      streakCurrentDays: 5,
+      lastStudyDate: toDateColumn(utcDay(1)),
+    });
+
+    expect((await service.summary(USER_ID)).streakCurrentDays).toBe(5);
+  });
+});
+
+describe('ProgressService.summary — semana e mês', () => {
+  afterEach(() => {
+    jest.setSystemTime(NOW);
+  });
+
+  it('minutos do mês ignoram o mês anterior', async () => {
+    // 02/09 em São Paulo: dias 30 e 31/08 ainda estão na janela de 3 dias.
+    jest.setSystemTime(new Date('2026-09-02T15:00:00.000Z'));
+    const { service } = buildService();
+    await service.logSession(
+      USER_ID,
+      dto({ durationMinutes: 100, occurredOn: '2026-08-31' }),
+    );
+    await service.logSession(
+      USER_ID,
+      dto({ durationMinutes: 40, occurredOn: '2026-09-01' }),
+    );
+    await service.logSession(
+      USER_ID,
+      dto({ durationMinutes: 20, occurredOn: '2026-09-02' }),
+    );
+
+    expect((await service.summary(USER_ID)).minutesThisMonth).toBe(60);
+  });
+
+  it('sessões por dia da semana contam só a semana atual, a partir de segunda', async () => {
+    // Quarta, 16/09. A semana começa na segunda, 14/09.
+    jest.setSystemTime(new Date('2026-09-16T15:00:00.000Z'));
+    const { service } = buildService();
+    await service.logSession(USER_ID, dto({ occurredOn: '2026-09-13' })); // domingo anterior
+    await service.logSession(USER_ID, dto({ occurredOn: '2026-09-14' })); // segunda
+    await service.logSession(USER_ID, dto({ occurredOn: '2026-09-16' })); // quarta
+    await service.logSession(USER_ID, dto({ occurredOn: '2026-09-16' }));
+
+    const summary = await service.summary(USER_ID);
+
+    expect(summary.sessionsByWeekday).toEqual([0, 1, 0, 2, 0, 0, 0]);
+    expect(summary.sessionsThisWeek).toBe(3);
   });
 });

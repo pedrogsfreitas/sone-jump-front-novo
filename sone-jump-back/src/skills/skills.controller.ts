@@ -12,6 +12,7 @@ import {
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { CompleteChallengeDto } from './dto/complete-challenge.dto';
 import { CreatePortfolioProjectDto } from './dto/create-portfolio-project.dto';
 import { SkillsService } from './skills.service';
 import { FullListQueryDto } from '../common/pagination/pagination.dto';
@@ -43,8 +44,9 @@ export class SkillsController {
   completeChallenge(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CompleteChallengeDto,
   ) {
-    return this.skillsService.completeChallenge(user.id, id);
+    return this.skillsService.completeChallenge(user.id, id, dto);
   }
 
   @Get('portfolio')

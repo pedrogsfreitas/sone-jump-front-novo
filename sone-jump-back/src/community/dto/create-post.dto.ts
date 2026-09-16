@@ -1,4 +1,11 @@
-import { IsEnum, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Min,
+} from 'class-validator';
 import { PostType } from '../../../generated/prisma/enums';
 
 export class CreatePostDto {
@@ -9,4 +16,10 @@ export class CreatePostDto {
   @IsString()
   @Length(1, 2000)
   content: string;
+
+  /** Publicar dentro de um grupo. Exige participar dele. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  groupId?: number;
 }

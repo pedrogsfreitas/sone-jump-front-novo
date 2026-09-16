@@ -25,6 +25,7 @@ import {
   type Post,
   type Comment,
   type Group,
+  type PostFilters,
 } from "../../services/community/community";
 import { getJobs, type Job } from "../../services/jobs/jobs";
 import { getLives, type LiveSession } from "../../services/lives/lives";
@@ -87,11 +88,21 @@ export default function Community() {
   const [comments, setComments] = useState<Record<number, Comment[]>>({});
   const [commentText, setCommentText] = useState("");
   const [feedFilter, setFeedFilter] = useState<"todos" | "meus">("todos");
+  // Nulo = feed geral.
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  // Qual recorte está de fato na tela. Enquanto difere do pedido, o feed está carregando.
+  const [loadedFeedKey, setLoadedFeedKey] = useState<string | null>(null);
+
+  const feedFilters: PostFilters = {
+    groupId: selectedGroupId ?? undefined,
+    author: feedFilter === "meus" ? "me" : undefined,
+  };
+  const feedKey = `${selectedGroupId ?? "geral"}:${feedFilter}`;
+  const postsLoading = loadedFeedKey !== feedKey;
 
   useEffect(() => {
-    Promise.all([getPosts(), getGroups(), getJobs(), getLives()])
-      .then(([p, g, j, l]) => {
-        setPosts(p);
+    Promise.all([getGroups(), getJobs(), getLives()])
+      .then(([g, j, l]) => {
         setGroups(g);
         setJobs(j.slice(0, 3));
         setLives(
@@ -105,13 +116,33 @@ export default function Community() {
       .finally(() => setLoading(false));
   }, []);
 
+  // O feed é buscado de novo a cada troca de recorte. Filtrar aqui no cliente não
+  // funcionava: a API devolve uma página, e publicações antigas sumiam do filtro.
+  useEffect(() => {
+    let cancelled = false;
+    getPosts({ groupId: selectedGroupId ?? undefined, author: feedFilter === "meus" ? "me" : undefined })
+      .then((p) => {
+        if (cancelled) return;
+        setPosts(p);
+        setLoadedFeedKey(feedKey);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof ApiError ? e.message : "Erro ao carregar publicações.");
+        setLoadedFeedKey(feedKey);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedGroupId, feedFilter, feedKey]);
+
   async function handlePublish() {
     if (!postText.trim()) return;
     setPosting(true);
     try {
-      await createPost(postText.trim());
+      await createPost(postText.trim(), { groupId: selectedGroupId ?? undefined });
       setPostText("");
-      const fresh = await getPosts();
+      const fresh = await getPosts(feedFilters);
       setPosts(fresh);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erro ao publicar.");
@@ -212,10 +243,20 @@ export default function Community() {
 
   if (loading) return <div className="min-h-screen bg-[#050505] text-zinc-400 p-6">Carregando comunidade...</div>;
 
-  // Só serve para decidir o que mostrar (botão de apagar, filtro "Meus Posts").
-  // Quem é dono de fato é o back, que valida o token em cada DELETE.
+  // Só decide se o botão de apagar aparece. Quem é dono de fato é o back, que valida
+  // o token em cada DELETE.
   const currentUserId = getUserId(getToken());
-  const filteredPosts = feedFilter === "meus" ? posts.filter((p) => p.author.id === currentUserId) : posts;
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
+  // Ler o feed de um grupo é aberto; publicar nele exige participar.
+  const canPost = !selectedGroup || selectedGroup.joined;
+  const groupNameById = new Map(groups.map((g) => [g.id, g.name]));
+
+  let emptyFeedMessage = "Nenhuma publicação ainda. Seja o primeiro a compartilhar!";
+  if (feedFilter === "meus") {
+    emptyFeedMessage = selectedGroup ? "Você ainda não publicou neste grupo." : "Você ainda não publicou nada.";
+  } else if (selectedGroup) {
+    emptyFeedMessage = "Nenhuma publicação neste grupo ainda.";
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6">
@@ -229,12 +270,38 @@ export default function Community() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Main Feed */}
         <div className="flex-1 min-w-0 space-y-5">
+          {/* Feed do grupo selecionado */}
+          {selectedGroup && (
+            <div className="flex items-center justify-between gap-3 bg-zinc-900 border border-purple-500/30 rounded-xl px-4 py-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-lg">{selectedGroup.icon}</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{selectedGroup.name}</p>
+                  <p className="text-xs text-zinc-500">Feed do grupo</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedGroupId(null)}
+                className="shrink-0 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                Voltar ao feed geral
+              </button>
+            </div>
+          )}
+
           {/* Post Composer */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
             <textarea
               value={postText}
               onChange={(e) => setPostText(e.target.value.slice(0, POST_MAX_LENGTH))}
-              placeholder="Compartilhe uma conquista, aprendizado ou dúvida..."
+              placeholder={
+                !canPost
+                  ? "Entre no grupo para publicar aqui."
+                  : selectedGroup
+                    ? `Publique algo em ${selectedGroup.name}...`
+                    : "Compartilhe uma conquista, aprendizado ou dúvida..."
+              }
+              disabled={!canPost}
               maxLength={POST_MAX_LENGTH}
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-sm text-white placeholder-zinc-500 resize-none focus:outline-none focus:border-purple-500 transition-colors"
               rows={3}
@@ -243,14 +310,25 @@ export default function Community() {
               <span className="text-xs text-zinc-500">
                 {postText.length}/{POST_MAX_LENGTH}
               </span>
-              <button
-                onClick={handlePublish}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                disabled={!postText.trim() || posting}
-              >
-                <Send className="w-4 h-4" />
-                {posting ? "Publicando..." : "Publicar"}
-              </button>
+              {canPost ? (
+                <button
+                  onClick={handlePublish}
+                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                  disabled={!postText.trim() || posting}
+                >
+                  <Send className="w-4 h-4" />
+                  {posting ? "Publicando..." : "Publicar"}
+                </button>
+              ) : (
+                selectedGroup && (
+                  <button
+                    onClick={() => toggleGroup(selectedGroup)}
+                    className="text-sm px-4 py-2 rounded-lg border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 transition-colors"
+                  >
+                    Entrar no grupo
+                  </button>
+                )
+              )}
             </div>
           </div>
 
@@ -275,12 +353,13 @@ export default function Community() {
           </div>
 
           {/* Feed Posts */}
-          {filteredPosts.length === 0 && (
+          {postsLoading && <p className="text-sm text-zinc-500 px-1">Carregando publicações...</p>}
+          {!postsLoading && posts.length === 0 && (
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-center text-sm text-zinc-500">
-              {feedFilter === "meus" ? "Você ainda não publicou nada." : "Nenhuma publicação ainda. Seja o primeiro a compartilhar!"}
+              {emptyFeedMessage}
             </div>
           )}
-          {filteredPosts.map((post) => (
+          {!postsLoading && posts.map((post) => (
             <div key={post.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
               {/* Post Header */}
               <div className="flex items-start gap-3">
@@ -292,6 +371,10 @@ export default function Community() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-white">{post.author.fullName}</span>
+                    {/* Em "Meus Posts" do feed geral aparecem publicações de grupos: diz de onde vieram. */}
+                    {post.groupId !== null && !selectedGroup && (
+                      <span className="text-xs text-purple-400">em {groupNameById.get(post.groupId) ?? "um grupo"}</span>
+                    )}
                     {postTypeLabel[post.type].label && (
                       <span className="flex items-center gap-1 text-xs text-zinc-500">
                         {postTypeLabel[post.type].icon}
@@ -405,10 +488,20 @@ export default function Community() {
                     .map((g) => (
                       <div key={g.id} className="flex items-center gap-3">
                         <span className="text-lg">{g.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-white">{g.name}</p>
+                        <button
+                          onClick={() => setSelectedGroupId(g.id)}
+                          title={`Ver publicações de ${g.name}`}
+                          className="group/grupo flex-1 min-w-0 text-left"
+                        >
+                          <p
+                            className={`text-xs font-medium truncate transition-colors ${
+                              selectedGroupId === g.id ? "text-purple-400" : "text-white group-hover/grupo:text-purple-300"
+                            }`}
+                          >
+                            {g.name}
+                          </p>
                           <p className="text-xs text-zinc-500">{g.membersCount.toLocaleString("pt-BR")} membros</p>
-                        </div>
+                        </button>
                         <button
                           onClick={() => toggleGroup(g)}
                           className="text-xs px-3 py-1 rounded-full bg-purple-600 text-white hover:bg-purple-500 transition-colors"
@@ -431,10 +524,20 @@ export default function Community() {
                     .map((g) => (
                       <div key={g.id} className="flex items-center gap-3">
                         <span className="text-lg">{g.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-white">{g.name}</p>
+                        <button
+                          onClick={() => setSelectedGroupId(g.id)}
+                          title={`Ver publicações de ${g.name}`}
+                          className="group/grupo flex-1 min-w-0 text-left"
+                        >
+                          <p
+                            className={`text-xs font-medium truncate transition-colors ${
+                              selectedGroupId === g.id ? "text-purple-400" : "text-white group-hover/grupo:text-purple-300"
+                            }`}
+                          >
+                            {g.name}
+                          </p>
                           <p className="text-xs text-zinc-500">{g.membersCount.toLocaleString("pt-BR")} membros</p>
-                        </div>
+                        </button>
                         <button
                           onClick={() => toggleGroup(g)}
                           className="text-xs px-3 py-1 rounded-full border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 transition-colors"
