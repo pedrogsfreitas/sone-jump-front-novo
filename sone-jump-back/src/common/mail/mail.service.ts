@@ -61,9 +61,14 @@ export class MailService {
 
       if (!response.ok) {
         // O corpo do erro do provedor não volta para o cliente: a resposta do
-        // endpoint é sempre genérica para não revelar quais e-mails existem.
+        // endpoint é sempre genérica para não revelar quais e-mails existem. Mas
+        // vai para o log do servidor, porque só o status não diferencia chave
+        // inválida de domínio não verificado — e foi essa distinção que faltou
+        // quando os e-mails paravam de chegar sem explicação. Truncado para o log
+        // não virar despejo de resposta de terceiro.
+        const detail = await response.text().catch(() => '');
         this.logger.error(
-          `Falha ao enviar e-mail para ${to}: HTTP ${response.status}`,
+          `Falha ao enviar e-mail para ${to}: HTTP ${response.status} ${detail.slice(0, 500)}`.trimEnd(),
         );
       }
     } catch (error) {

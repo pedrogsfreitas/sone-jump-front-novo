@@ -89,8 +89,82 @@ jobs:
         # `tsc -b && vite build` — o build já é a checagem de tipos.
         run: npm run build
 
+      - name: Testes
+        # Vitest + Testing Library. O fuso vem fixado em vitest.config.ts: a CI roda
+        # em UTC e os testes de data dependem do calendário de São Paulo.
+        run: npm test
+
       - name: Auditoria de segurança
         run: npm audit --audit-level=high
+
+  # A API inteira, de verdade: HTTP, guards, validação, Prisma e Postgres. Os testes
+  # unitários mockam o banco, então erros que só aparecem no SQL (coluna que não existe,
+  # filtro por `null`, agregação por data) passariam despercebidos por eles.
+  e2e:
+    name: e2e (API + banco)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sone-jump-back
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      NODE_ENV: test
+      PORT: 8080
+      CORS_ORIGIN: http://localhost:5173
+      APP_URL: http://localhost:5173
+      # Valores descartáveis, só para satisfazer a validação de ambiente: este banco
+      # nasce e morre com o job, e nada aqui vale fora dele.
+      JWT_ACCESS_SECRET: ci-access-secret-com-mais-de-32-caracteres
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_SECRET: ci-refresh-secret-com-mais-de-32-caracteres
+      JWT_REFRESH_TTL_DAYS: 30
+      COOKIE_SECRET: ci-cookie-secret-16plus
+      CPF_HMAC_SECRET: '1111111111111111111111111111111111111111111111111111111111111111'
+      CPF_ENC_KEY: '2222222222222222222222222222222222222222222222222222222222222222'
+      # RESEND_API_KEY ausente de propósito: sem chave, o MailService escreve o e-mail
+      # no log em vez de chamar o provedor. Nenhuma mensagem sai da CI.
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: sone-jump-back/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar client do Prisma
+        run: npx prisma generate
+
+      - name: Aplicar migrations
+        run: npx prisma migrate deploy
+
+      - name: Seed
+        # Desafios e grupos precisam existir: os testes de conclusão de desafio e de
+        # feed de grupo usam os do catálogo em vez de inventar dados próprios.
+        run: npm run db:seed
+
+      - name: Testes e2e
+        run: npm run test:e2e
 
   # Garante que o schema, as migrations e o banco não voltem a divergir: reaplica
   # todas as migrations num Postgres limpo e verifica que o resultado bate com o

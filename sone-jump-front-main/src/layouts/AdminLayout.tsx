@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, FileText, Handshake, BarChart2, Briefcase,
-  LogOut, Shield
+  MessagesSquare, LogOut, Shield
 } from 'lucide-react'
 import { apiRequest, ensureSession } from '../services/api'
 import { clearToken, getRole, getToken } from '../services/auth-storage'
@@ -19,6 +19,7 @@ const adminNav = [
   { to: '/admin/conteudos', icon: FileText, label: 'Conteúdos' },
   { to: '/admin/parceiros', icon: Handshake, label: 'Parceiros' },
   { to: '/admin/vagas', icon: Briefcase, label: 'Vagas' },
+  { to: '/admin/grupos', icon: MessagesSquare, label: 'Grupos' },
   { to: '/admin/relatorios', icon: BarChart2, label: 'Relatórios' },
 ]
 

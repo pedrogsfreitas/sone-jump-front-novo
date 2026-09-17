@@ -4,6 +4,8 @@ import { AdminContentController } from './content/admin-content.controller';
 import { AdminContentService } from './content/admin-content.service';
 import { AuditLogController } from './audit-log.controller';
 import { AuditLogService } from './audit-log.service';
+import { AdminGroupsController } from './groups/admin-groups.controller';
+import { AdminGroupsService } from './groups/admin-groups.service';
 import { AdminJobsController } from './jobs/admin-jobs.controller';
 import { AdminJobsService } from './jobs/admin-jobs.service';
 import { AdminPartnersController } from './partners/admin-partners.controller';
@@ -22,6 +24,7 @@ import { AdminUsersService } from './users/admin-users.service';
     AdminPartnersController,
     AdminReportsController,
     AdminJobsController,
+    AdminGroupsController,
   ],
   providers: [
     AuditLogService,
@@ -30,6 +33,7 @@ import { AdminUsersService } from './users/admin-users.service';
     AdminPartnersService,
     AdminReportsService,
     AdminJobsService,
+    AdminGroupsService,
   ],
 })
 export class AdminModule {}

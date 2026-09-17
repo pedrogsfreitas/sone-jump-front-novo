@@ -26,6 +26,7 @@ import AdminUsers from './pages/admin/AdminUsers'
 import AdminConteudos from './pages/admin/AdminConteudos'
 import AdminParceiros from './pages/admin/AdminParceiros'
 import AdminVagas from './pages/admin/AdminVagas'
+import AdminGrupos from './pages/admin/AdminGrupos'
 import AdminRelatorios from './pages/admin/AdminRelatorios'
 
 export default function App() {
@@ -63,6 +64,7 @@ export default function App() {
           <Route path="conteudos" element={<AdminConteudos />} />
           <Route path="parceiros" element={<AdminParceiros />} />
           <Route path="vagas" element={<AdminVagas />} />
+          <Route path="grupos" element={<AdminGrupos />} />
           <Route path="relatorios" element={<AdminRelatorios />} />
         </Route>
       </Routes>
