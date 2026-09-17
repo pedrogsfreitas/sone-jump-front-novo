@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { MapPin, CheckCircle2, XCircle, Briefcase } from "lucide-react";
+import { MapPin, CheckCircle2, Target, Briefcase, X } from "lucide-react";
 import {
   getJobs,
   applyToJob,
   getMyApplications,
   type Job,
   type JobApplicationStatus,
+  type RemoteType,
 } from "../../services/jobs/jobs";
 import { getSkillProgress } from "../../services/skills/skills";
 import { ApiError } from "../../services/api";
@@ -32,6 +33,12 @@ function formatSalary(min: number | null, max: number | null): string {
 const RING_RADIUS = 54;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
+const REMOTE_TYPE_LABEL: Record<RemoteType, string> = {
+  REMOTO: "Remoto",
+  HIBRIDO: "Híbrido",
+  PRESENCIAL: "Presencial",
+};
+
 /** Rótulo e cor de cada estado do funil de candidatura. */
 const APPLICATION_STATUS: Record<JobApplicationStatus, { label: string; className: string }> = {
   APLICADO: { label: "Candidatura Enviada", className: "bg-zinc-800 text-zinc-400" },
@@ -49,6 +56,8 @@ export default function Market() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [applying, setApplying] = useState<number | null>(null);
+  const [remoteFilter, setRemoteFilter] = useState<RemoteType | "TODAS">("TODAS");
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   useEffect(() => {
     Promise.all([getJobs(), getSkillProgress(), getMyApplications()])
@@ -74,6 +83,8 @@ export default function Market() {
   }
 
   if (loading) return <div className="min-h-screen bg-[#050505] text-zinc-400 p-6">Carregando mercado...</div>;
+
+  const displayedJobs = remoteFilter === "TODAS" ? jobs : jobs.filter((j) => j.remoteType === remoteFilter);
 
   const mySkills = skills.filter((s) => s.pct >= 50).map((s) => s.name);
   const missingSkills = skills.filter((s) => s.pct < 50).map((s) => s.name);
@@ -147,17 +158,34 @@ export default function Market() {
 
       {/* Vagas Compatíveis */}
       <div>
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Briefcase className="w-5 h-5 text-purple-400" />
-          Vagas Compatíveis
-        </h2>
-        {jobs.length === 0 ? (
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-purple-400" />
+            Vagas Compatíveis
+          </h2>
+          <div className="flex gap-2">
+            {(["TODAS", "REMOTO", "HIBRIDO", "PRESENCIAL"] as const).map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setRemoteFilter(opt)}
+                className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
+                  remoteFilter === opt
+                    ? "bg-purple-600 text-white"
+                    : "bg-zinc-800 text-zinc-400 hover:text-white"
+                }`}
+              >
+                {opt === "TODAS" ? "Todas" : REMOTE_TYPE_LABEL[opt]}
+              </button>
+            ))}
+          </div>
+        </div>
+        {displayedJobs.length === 0 ? (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center text-sm text-zinc-500">
-            Nenhuma vaga disponível no momento.
+            {jobs.length === 0 ? "Nenhuma vaga disponível no momento." : "Nenhuma vaga com esse filtro."}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {jobs.map((job) => {
+            {displayedJobs.map((job) => {
               const applicationStatus = statusByJobId.get(job.id);
               const applied = applicationStatus !== undefined;
               return (
@@ -167,13 +195,26 @@ export default function Market() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-xl ${jobColor(job.id)} flex items-center justify-center text-white font-bold text-sm`}
-                      >
-                        {job.companyName.charAt(0).toUpperCase()}
-                      </div>
+                      {job.companyLogoUrl ? (
+                        <img
+                          src={job.companyLogoUrl}
+                          alt={job.companyName}
+                          className="w-10 h-10 rounded-xl object-cover bg-zinc-800 shrink-0"
+                        />
+                      ) : (
+                        <div
+                          className={`w-10 h-10 rounded-xl ${jobColor(job.id)} flex items-center justify-center text-white font-bold text-sm shrink-0`}
+                        >
+                          {job.companyName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div>
-                        <p className="text-white font-semibold text-sm">{job.title}</p>
+                        <button
+                          onClick={() => setSelectedJob(job)}
+                          className="text-white font-semibold text-sm text-left hover:text-purple-300 transition-colors"
+                        >
+                          {job.title}
+                        </button>
                         <p className="text-zinc-400 text-xs">{job.companyName}</p>
                       </div>
                     </div>
@@ -186,7 +227,7 @@ export default function Market() {
 
                   <div className="flex items-center gap-1 text-zinc-400 text-xs">
                     <MapPin className="w-3 h-3" />
-                    {job.location} · {job.remoteType === "REMOTO" ? "Remoto" : job.remoteType === "HIBRIDO" ? "Híbrido" : "Presencial"}
+                    {job.location} · {REMOTE_TYPE_LABEL[job.remoteType]}
                   </div>
 
                   <p className="text-zinc-300 text-sm font-medium">{formatSalary(job.salaryMin, job.salaryMax)}</p>
@@ -199,21 +240,29 @@ export default function Market() {
                     ))}
                   </div>
 
-                  <button
-                    onClick={() => handleApply(job.id)}
-                    disabled={applied || applying === job.id}
-                    className={`mt-1 w-full py-2 rounded-xl text-sm font-semibold transition-colors ${
-                      applicationStatus
-                        ? APPLICATION_STATUS[applicationStatus].className
-                        : "bg-purple-600 hover:bg-purple-500 text-white"
-                    } disabled:cursor-default`}
-                  >
-                    {applicationStatus
-                      ? APPLICATION_STATUS[applicationStatus].label
-                      : applying === job.id
-                        ? "Enviando..."
-                        : "Candidatar-se"}
-                  </button>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      onClick={() => setSelectedJob(job)}
+                      className="px-3 py-2 rounded-xl text-sm font-medium border border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors"
+                    >
+                      Ver detalhes
+                    </button>
+                    <button
+                      onClick={() => handleApply(job.id)}
+                      disabled={applied || applying === job.id}
+                      className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                        applicationStatus
+                          ? APPLICATION_STATUS[applicationStatus].className
+                          : "bg-purple-600 hover:bg-purple-500 text-white"
+                      } disabled:cursor-default`}
+                    >
+                      {applicationStatus
+                        ? APPLICATION_STATUS[applicationStatus].label
+                        : applying === job.id
+                          ? "Enviando..."
+                          : "Candidatar-se"}
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -243,20 +292,116 @@ export default function Market() {
             </div>
 
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-              <h3 className="text-red-400 font-semibold text-sm mb-3 flex items-center gap-1">
-                <XCircle className="w-4 h-4" />
+              <h3 className="text-amber-400 font-semibold text-sm mb-3 flex items-center gap-1">
+                <Target className="w-4 h-4" />
                 Skills a Desenvolver
               </h3>
               <div className="flex flex-wrap gap-2">
                 {missingSkills.length === 0 && <p className="text-xs text-zinc-500">Todas as suas skills estão acima de 50%.</p>}
                 {missingSkills.map((s) => (
-                  <span key={s} className="bg-red-500/10 text-red-400 border border-red-500/20 text-xs px-3 py-1 rounded-full flex items-center gap-1">
-                    <XCircle className="w-3 h-3" />
+                  <span key={s} className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                    <Target className="w-3 h-3" />
                     {s}
                   </span>
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de detalhe da vaga */}
+      {selectedJob && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedJob(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                {selectedJob.companyLogoUrl ? (
+                  <img
+                    src={selectedJob.companyLogoUrl}
+                    alt={selectedJob.companyName}
+                    className="w-12 h-12 rounded-xl object-cover bg-zinc-800 shrink-0"
+                  />
+                ) : (
+                  <div
+                    className={`w-12 h-12 rounded-xl ${jobColor(selectedJob.id)} flex items-center justify-center text-white font-bold shrink-0`}
+                  >
+                    {selectedJob.companyName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-lg font-bold text-white">{selectedJob.title}</h3>
+                  <p className="text-zinc-400 text-sm">{selectedJob.companyName}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedJob(null)}
+                className="shrink-0 p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+              >
+                <X size={15} className="text-zinc-400" />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-4 text-xs text-zinc-400">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {selectedJob.location} · {REMOTE_TYPE_LABEL[selectedJob.remoteType]}
+              </span>
+              <span>·</span>
+              <span>{formatSalary(selectedJob.salaryMin, selectedJob.salaryMax)}</span>
+              {selectedJob.match !== null && (
+                <>
+                  <span>·</span>
+                  <span className={`px-2 py-0.5 rounded-lg border ${matchColor(selectedJob.match)}`}>
+                    {selectedJob.match}% compatível
+                  </span>
+                </>
+              )}
+            </div>
+
+            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-line mb-4">
+              {selectedJob.description}
+            </p>
+
+            <div className="flex flex-wrap gap-1 mb-5">
+              {selectedJob.skills.map((s) => (
+                <span key={s} className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md border border-zinc-700">
+                  {s}
+                </span>
+              ))}
+            </div>
+
+            {selectedJob.partner && (
+              <p className="text-xs text-zinc-500 mb-5">Vaga divulgada em parceria com {selectedJob.partner.name}.</p>
+            )}
+
+            {(() => {
+              const applicationStatus = statusByJobId.get(selectedJob.id);
+              const applied = applicationStatus !== undefined;
+              return (
+                <button
+                  onClick={() => handleApply(selectedJob.id)}
+                  disabled={applied || applying === selectedJob.id}
+                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    applicationStatus
+                      ? APPLICATION_STATUS[applicationStatus].className
+                      : "bg-purple-600 hover:bg-purple-500 text-white"
+                  } disabled:cursor-default`}
+                >
+                  {applicationStatus
+                    ? APPLICATION_STATUS[applicationStatus].label
+                    : applying === selectedJob.id
+                      ? "Enviando..."
+                      : "Candidatar-se"}
+                </button>
+              );
+            })()}
           </div>
         </div>
       )}
