@@ -12,6 +12,13 @@ import { PrismaService } from '../src/prisma/prisma.service';
  * Sobe a aplicação com a mesma configuração do `main.ts` — prefixo, validação e filtro
  * de exceções. Sem o filtro, os testes veriam o formato de erro padrão do Nest, e não
  * o `{ message }` que o front realmente recebe.
+ *
+ * O `listen(0)` no fim não é detalhe: quando o servidor NÃO está escutando, o supertest
+ * sobe um listener efêmero por requisição e o fecha ao receber a resposta. Duas
+ * requisições simultâneas compartilham a mesma porta, a primeira a terminar fecha o
+ * servidor, e a outra — junto com todo o resto da suíte — morre com ECONNRESET. Isso
+ * passou na máquina local e quebrou na CI, mais lenta. Com o servidor escutando desde o
+ * início, o supertest só se conecta, e quem controla o ciclo de vida é o `app.close()`.
  */
 export async function createTestApp(): Promise<{
   app: INestApplication<App>;
@@ -32,7 +39,8 @@ export async function createTestApp(): Promise<{
     }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
-  await app.init();
+  // Porta 0 = o sistema escolhe uma livre.
+  await app.listen(0);
 
   return { app, prisma: app.get(PrismaService) };
 }
@@ -94,9 +102,13 @@ export async function registrarELogar(
  */
 export async function limpar(
   prisma: PrismaService,
-  usuarios: UsuarioE2E[],
+  usuarios: (UsuarioE2E | undefined)[],
 ): Promise<void> {
-  const ids = usuarios.map((u) => u.id);
+  // Aceita `undefined` de propósito: se o `beforeAll` falhar antes de criar os
+  // usuários, a limpeza não pode estourar por cima e esconder o erro de verdade.
+  const ids = usuarios.filter((u) => u !== undefined).map((u) => u.id);
+  if (ids.length === 0) return;
+
   await prisma.auditLog.deleteMany({ where: { adminUserId: { in: ids } } });
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
 }

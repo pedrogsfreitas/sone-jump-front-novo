@@ -1,3 +1,4 @@
+import type { Server } from 'http';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -50,6 +51,36 @@ describe('Comunidade — feeds e grupos (e2e)', () => {
 
   const comoAutor = () => `Bearer ${autor.token}`;
   const comoLeitor = () => `Bearer ${leitor.token}`;
+
+  /**
+   * Guarda de regressão do ciclo de vida do servidor de teste.
+   *
+   * Com o servidor NÃO escutando, o supertest sobe um listener efêmero por requisição
+   * e o fecha ao receber a resposta. Em requisições simultâneas, a primeira a terminar
+   * fechava o servidor e as seguintes morriam com ECONNRESET — a suíte inteira caía na
+   * CI e passava localmente, porque depende de tempo.
+   *
+   * A asserção é sobre o estado do servidor, e não sobre o resultado de requisições
+   * paralelas: `close()` não derruba conexões já abertas, então aquele teste passaria
+   * mesmo com o defeito presente. Aqui, desfazer o `listen(0)` do helper reprova sempre.
+   */
+  it('o servidor de teste fica escutando durante toda a suíte', async () => {
+    // `App` do supertest é genérico demais para expor `listening`; aqui é um http.Server.
+    const servidor = () => app.getHttpServer() as unknown as Server;
+    expect(servidor().listening).toBe(true);
+
+    await Promise.all(
+      Array.from({ length: 6 }, () =>
+        request(app.getHttpServer())
+          .get('/api/community/groups')
+          .set('Authorization', comoAutor())
+          .expect(200),
+      ),
+    );
+
+    // Depois das simultâneas, o servidor continua de pé para o resto da suíte.
+    expect(servidor().listening).toBe(true);
+  });
 
   it('publicar em grupo sem participar é 403', async () => {
     await request(app.getHttpServer())

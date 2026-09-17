@@ -1,11 +1,9 @@
 import { randomUUID } from 'crypto';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import cookieParser from 'cookie-parser';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { createTestApp } from './helpers';
 
 interface RegisterResponseBody {
   id: number;
@@ -39,23 +37,9 @@ describe('Auth flow (e2e)', () => {
   };
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.use(cookieParser());
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    await app.init();
-
-    prisma = app.get(PrismaService);
+    // Mesma montagem das outras suítes — inclusive o servidor escutando de verdade,
+    // que é o que impede o supertest de fechar a conexão no meio do caminho.
+    ({ app, prisma } = await createTestApp());
   });
 
   afterAll(async () => {
